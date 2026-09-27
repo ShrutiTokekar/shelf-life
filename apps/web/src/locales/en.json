@@ -1,0 +1,107 @@
+{
+  "app": {
+    "name": "Shelf Life",
+    "slogan": "Use it before you lose it."
+  },
+  "nav": {
+    "primary": "Primary",
+    "today": "Today",
+    "pantry": "Pantry",
+    "list": "List",
+    "groceryList": "Grocery list",
+    "recipes": "Recipes",
+    "scan": "Scan receipt",
+    "uploadReceipt": "Upload receipt",
+    "listWithCount_one": "{{label}}, {{count}} item to buy",
+    "listWithCount_other": "{{label}}, {{count}} items to buy",
+    "reminders": "Reminders",
+    "remindersWithCount_one": "Reminders, {{count}} unread",
+    "remindersWithCount_other": "Reminders, {{count}} unread",
+    "account": "Account, {{name}}",
+    "highContrast": "High contrast",
+    "tools": "Display and account"
+  },
+  "textSize": {
+    "label": "Text size",
+    "default": "Default text size",
+    "large": "Large text size",
+    "largest": "Largest text size"
+  },
+  "skip": {
+    "main": "Skip to main content",
+    "today": "Skip to today's priorities",
+    "signIn": "Skip to sign in",
+    "setup": "Skip to home list setup"
+  },
+  "offline": {
+    "banner": "Offline, changes will sync"
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Try again",
+    "genericError": "Something went wrong. Check your connection and try again."
+  },
+  "welcome": {
+    "description": "Scan your receipts, track what’s expiring, and share one grocery list with everyone at home.",
+    "continueWithGoogle": "Continue with Google",
+    "inviteHelper": "Got an invite link? Just open it and sign in to join the list.",
+    "invitePending": "Sign in to join the list you were invited to.",
+    "privacy": "Receipts are read on your phone, never uploaded.",
+    "signInFailed": "Google sign-in didn’t finish. Please try again.",
+    "offline": "You’re offline. Signing in needs a connection."
+  },
+  "onboarding": {
+    "title": "Name your home list",
+    "body": "Your home list owns your pantry. You can share it and make more lists later.",
+    "nameLabel": "List name",
+    "nameHint": "For example: Home, Apartment 4B",
+    "colorLabel": "Color label",
+    "colorHint": "Pantry items from this list show this color and name.",
+    "create": "Create home list",
+    "offline": "You’re offline. Creating your home list needs a connection.",
+    "failed": "We couldn’t create your list. Please try again."
+  },
+  "colors": {
+    "navy": "Navy",
+    "olive": "Olive",
+    "amber": "Amber",
+    "terra": "Terracotta",
+    "gray": "Gray"
+  },
+  "today": {
+    "title": "Today",
+    "emptyTitle": "Your shelves are empty",
+    "emptyBody": "Scan a grocery receipt and we’ll tell you what to use first.",
+    "emptyAction": "Scan your first receipt"
+  },
+  "placeholder": {
+    "body": "This page is on its way. For now, head back to Today.",
+    "action": "Go to Today"
+  },
+  "pages": {
+    "pantry": "Pantry",
+    "scan": "Scan receipt",
+    "reviewScan": "Review scan",
+    "lists": "Your lists",
+    "list": "Grocery list",
+    "newList": "New shared list",
+    "shareList": "Share a list",
+    "addItem": "Add to list",
+    "shop": "Shopping mode",
+    "analyze": "AI pantry analysis",
+    "recipes": "Cook with what’s left",
+    "savedRecipes": "Saved recipes",
+    "recipe": "Recipe",
+    "cook": "Cook along",
+    "reminders": "Reminders",
+    "profile": "Profile",
+    "receipts": "Receipt history",
+    "receipt": "Receipt",
+    "notFound": "Page not found"
+  },
+  "join": {
+    "title": "You’re invited to a list",
+    "body": "Sign in with Google and you’ll join the list right after.",
+    "signedInBody": "Thanks! You’ll be added to the list once list sharing is switched on."
+  }
+}

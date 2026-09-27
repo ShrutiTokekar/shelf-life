@@ -1,0 +1,83 @@
+/*
+ * Shelf Life design tokens (SRS section 4). The only place raw color values live.
+ * Components use these through Tailwind classes (bg-navy, text-ink…) or var(--token).
+ */
+:root {
+  /* 4.1 Color */
+  --cream: #fffbf3;
+  --shelf: #f6f0e3;
+  --white: #ffffff;
+  --line: #e9e1d0;
+  --periwinkle: #c8cfed;
+  --navy: #4d5c9f;
+  --ink: #2b3360;
+  --slate: #555c80;
+  --sage: #c0d3b4;
+  --olive: #7a8567;
+  --olive-dark: #46512f;
+  --apricot: #ffe2a8;
+  --apricot-lid: #edb35a;
+  --apricot-border: #f1ce8e;
+  --apricot-dark: #6b3a00;
+  --peach: #f1d7bf;
+  --terra-light: #f6d3c8;
+  --terra: #b5553f;
+  --terra-dark: #7e2e1c;
+
+  /* List colors for pantry labels */
+  --list-navy: #4d5c9f;
+  --list-olive: #7a8567;
+  --list-amber: #d9962e;
+  --list-terra: #b5553f;
+  --list-gray: #8a8fa8;
+
+  /* Borders (thicken in high contrast) */
+  --border-color: var(--line);
+  --border-width: 2px;
+  --text-secondary: var(--slate);
+
+  /* Focus ring (SRS 7 Button: 3 px navy, 2 px offset) */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+
+  /* 4.2 Type families */
+  --font-wordmark: 'Agbalumo', 'Abril Fatface', Georgia, serif;
+  --font-display: 'Abril Fatface', Georgia, serif;
+  --font-ui: 'Fredoka', ui-rounded, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* 4.3 Page padding */
+  --page-pad: 1.25rem; /* 20 px mobile */
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --page-pad: 3.5rem; /* 56 px web */
+  }
+}
+
+/* A11Y-6: text size setting. Everything is in rem, so this scales the whole UI. */
+:root[data-text-size='default'] {
+  font-size: 100%;
+}
+:root[data-text-size='large'] {
+  font-size: 115%;
+}
+:root[data-text-size='largest'] {
+  font-size: 130%;
+}
+
+/* A11Y-7: high contrast swaps slate to ink, borders to slate and thickens them. */
+:root[data-contrast='high'] {
+  --slate: #2b3360;
+  --text-secondary: var(--ink);
+  --border-color: #555c80;
+  --line: #555c80;
+}
+@media (prefers-contrast: more) {
+  :root {
+    --slate: #2b3360;
+    --text-secondary: var(--ink);
+    --border-color: #555c80;
+    --line: #555c80;
+  }
+}
