@@ -1,0 +1,105 @@
+@import 'tailwindcss';
+@import './fonts.css';
+@import './tokens.css';
+
+/* Map tokens into Tailwind so classes like bg-navy / text-ink resolve to the CSS variables. */
+@theme inline {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-cream: var(--cream);
+  --color-shelf: var(--shelf);
+  --color-white: var(--white);
+  --color-line: var(--line);
+  --color-border: var(--border-color);
+  --color-periwinkle: var(--periwinkle);
+  --color-navy: var(--navy);
+  --color-ink: var(--ink);
+  --color-slate: var(--slate);
+  --color-secondary: var(--text-secondary);
+  --color-sage: var(--sage);
+  --color-olive: var(--olive);
+  --color-olive-dark: var(--olive-dark);
+  --color-apricot: var(--apricot);
+  --color-apricot-lid: var(--apricot-lid);
+  --color-apricot-border: var(--apricot-border);
+  --color-apricot-dark: var(--apricot-dark);
+  --color-peach: var(--peach);
+  --color-terra-light: var(--terra-light);
+  --color-terra: var(--terra);
+  --color-terra-dark: var(--terra-dark);
+  --color-list-navy: var(--list-navy);
+  --color-list-olive: var(--list-olive);
+  --color-list-amber: var(--list-amber);
+  --color-list-terra: var(--list-terra);
+  --color-list-gray: var(--list-gray);
+
+  --font-wordmark: var(--font-wordmark);
+  --font-display: var(--font-display);
+  --font-ui: var(--font-ui);
+
+  --radius-chip: 999px;
+  --radius-button: 1rem;
+  --radius-button-sm: 0.875rem;
+  --radius-card: 1.25rem;
+  --radius-hero: 1.625rem;
+
+  --breakpoint-lg: 64rem; /* 1024 px: desktop layout */
+}
+
+@layer base {
+  html {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--cream);
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    color: var(--ink);
+  }
+  /* A11Y-4: one visible 3 px navy focus ring everywhere. */
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--navy);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+@utility bordered {
+  border: var(--border-width) solid var(--border-color);
+}
+
+@utility page-x {
+  padding-inline: var(--page-pad);
+}
+
+/* A11Y-7: reduce motion when the user or OS asks for it. */
+@layer base {
+  :root[data-motion='reduce'] *,
+  :root[data-motion='reduce'] *::before,
+  :root[data-motion='reduce'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
