@@ -4,7 +4,7 @@ Use it before you lose it. A mobile-first PWA and desktop web app that tracks ki
 
 ## Requirements
 
-- Node 20+ (see `.nvmrc`) and pnpm (`corepack enable`)
+- Node 24 LTS (see `.nvmrc`) and pnpm (`corepack enable`)
 - Docker (for local Postgres)
 - A Google OAuth client for sign-in (free)
 
