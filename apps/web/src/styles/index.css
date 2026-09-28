@@ -106,3 +106,26 @@
     }
   }
 }
+
+/* SCN-5 scan-line sweep; hidden when Reduce motion is on (setting or OS preference). */
+@keyframes scan-sweep {
+  from {
+    top: 0%;
+  }
+  to {
+    top: calc(100% - 4rem);
+  }
+}
+@layer components {
+  .scan-line {
+    animation: scan-sweep 2.4s ease-in-out infinite alternate;
+  }
+  :root[data-motion='reduce'] .scan-line {
+    display: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scan-line {
+      display: none;
+    }
+  }
+}

@@ -9,7 +9,7 @@ const tile: Record<ShelfTone, string> = {
   soon: 'bg-apricot text-apricot-dark',
   fresh: 'bg-sage text-olive-dark',
   out: 'bg-shelf text-slate',
-  neutral: 'bg-periwinkle text-navy',
+  neutral: 'bg-periwinkle text-ink',
 };
 
 export type ShelfProps = {

@@ -10,7 +10,9 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "fuse.js": "^7.5.0",
     "uuidv7": "^1.2.1",
     "zod": "^4.6.5"
-  }
+  },
+  "sideEffects": false
 }

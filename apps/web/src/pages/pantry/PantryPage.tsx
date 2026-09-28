@@ -16,7 +16,7 @@ import {
 } from '@shelf-life/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import type { AvatarTone } from '../../components/Avatar/Avatar';
 import { Button } from '../../components/Button/Button';
 import { categoryIcon, CategoryChips } from '../../components/CategoryChips/CategoryChips';
@@ -73,7 +73,11 @@ export function PantryPage() {
   const today = todayIso();
   const [filters, setFilters] = useState<PantryFilters>(NO_FILTERS);
   const [sort, setSort] = useState<Sort>('expiry');
-  const [sheet, setSheet] = useState<SheetState>(null);
+  const [params, setParams] = useSearchParams();
+  // "Add manually" from the scanner (SCN-7) opens the add sheet straight away.
+  const [sheet, setSheet] = useState<SheetState>(() =>
+    params.get('add') === '1' ? { mode: 'add' } : null,
+  );
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   const lists = useMemo(
@@ -306,7 +310,10 @@ export function PantryPage() {
         lists={lists}
         defaultListId={filters.listId ?? me.pantry!.homeListId}
         today={today}
-        onClose={() => setSheet(null)}
+        onClose={() => {
+          setSheet(null);
+          if (params.has('add')) setParams({}, { replace: true });
+        }}
         onSave={(form, meta) => {
           actions.save(form, meta.estimated, editing);
           setSheet(null);

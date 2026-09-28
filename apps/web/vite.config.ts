@@ -37,6 +37,20 @@ export default defineConfig({
       workbox: {
         // Precache the app shell so every page opens offline (SRS 12.4).
         globPatterns: ['**/*.{js,css,html,woff2,svg,png}'],
+        // The OCR engine (~7 MB) isn't precached: it downloads the first time Scan is opened and is
+        // then cached for offline use (approved Milestone 3 decision).
+        globIgnores: ['ocr/**'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/ocr/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'shelf-life-ocr',
+              expiration: { maxEntries: 10 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
       },

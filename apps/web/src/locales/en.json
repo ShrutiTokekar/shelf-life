@@ -32,7 +32,8 @@
     "today": "Skip to today's priorities",
     "signIn": "Skip to sign in",
     "setup": "Skip to home list setup",
-    "pantry": "Skip to items to use first"
+    "pantry": "Skip to items to use first",
+    "scan": "Skip to the scanner"
   },
   "offline": {
     "banner": "Offline, changes will sync"
@@ -239,5 +240,68 @@
   },
   "toast": {
     "dismiss": "Dismiss"
+  },
+  "scan": {
+    "title": "Scan receipt",
+    "close": "Close scanner",
+    "flash": "Flash",
+    "takePhoto": "Take photo",
+    "uploadPhoto": "Upload photo",
+    "receiptFound": "Receipt found",
+    "lockNote": "Processed on your phone. Nothing is uploaded.",
+    "lockNoteDesktop": "Processed on this device. Nothing is uploaded.",
+    "cameraStarting": "Starting the camera…",
+    "cameraDenied": "Camera access is off. You can upload a photo instead, or allow the camera in your browser settings.",
+    "cameraUnavailable": "No camera here. Upload a photo of your receipt instead.",
+    "desktopTitle": "Upload a receipt",
+    "desktopBody": "Add a photo of your grocery receipt. We'll read it right here in your browser.",
+    "dropHere": "Drop a receipt photo here",
+    "or": "or",
+    "choosePhoto": "Choose a photo",
+    "fileHint": "JPG, PNG or HEIC, up to 15 MB",
+    "reading": "Reading your receipt…",
+    "preparing": "Getting the scanner ready. This happens once and then works offline.",
+    "percent": "{{percent}}%",
+    "progressLabel": "Reading progress",
+    "steps": {
+      "clean": "Cleaned up the photo",
+      "cleanActive": "Cleaning up the photo",
+      "read": "Found {{count}} lines of text",
+      "readActive": "Reading the text",
+      "match": "Matched items to groceries",
+      "matchActive": "Matching items to groceries",
+      "expiry": "Estimated expiry dates",
+      "expiryActive": "Estimating expiry dates"
+    },
+    "stepState": {
+      "done": "done",
+      "active": "in progress",
+      "todo": "to do"
+    },
+    "cancel": "Cancel",
+    "cancelled": "Scan cancelled.",
+    "unreadableTitle": "We couldn't read this receipt",
+    "unreadableBody": "Try again in good light with the whole receipt in the frame, or add your items by hand.",
+    "retake": "Retake",
+    "addManually": "Add manually",
+    "failed": "Something went wrong reading the photo. Please try again.",
+    "tryAgain": "Try again"
+  },
+  "review": {
+    "title": "Review scan",
+    "summary": "{{lines}} lines read · {{items}} groceries found",
+    "store": "{{store}} · {{date}}",
+    "unknownStore": "Receipt",
+    "matched": "Matched",
+    "needsLook": "Needs a look",
+    "skipped_one": "{{count}} line skipped",
+    "skipped_other": "{{count}} lines skipped",
+    "interimNote": "Adding these to your pantry comes with the full review screen in the next update. Nothing from this scan is saved yet.",
+    "scanAnother": "Scan another receipt",
+    "emptyTitle": "Nothing scanned yet",
+    "emptyBody": "Scan a receipt and the items we find will show up here.",
+    "confidence": "{{percent}}% sure",
+    "expires": "Use by {{date}}",
+    "est": "est."
   }
 }

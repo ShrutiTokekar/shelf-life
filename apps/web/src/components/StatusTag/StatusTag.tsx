@@ -8,7 +8,7 @@ const styles: Record<StatusTagStatus, string> = {
   soon: 'bg-apricot text-apricot-dark',
   fresh: 'bg-sage text-olive-dark',
   out: 'bg-shelf text-slate',
-  ai: 'bg-periwinkle text-navy',
+  ai: 'bg-periwinkle text-ink',
   skipped: 'bg-shelf text-slate',
 };
 

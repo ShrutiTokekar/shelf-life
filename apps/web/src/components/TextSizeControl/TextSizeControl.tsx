@@ -54,7 +54,7 @@ export function TextSizeControl({ value, onChange, className }: TextSizeControlP
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cx(
               'flex size-11 items-center justify-center rounded-[0.625rem] font-semibold leading-none',
-              checked ? 'bg-periwinkle text-navy' : 'text-ink',
+              checked ? 'bg-periwinkle text-ink' : 'text-ink',
             )}
             style={{ fontSize: `${glyphPx[size]}px` }}
           >

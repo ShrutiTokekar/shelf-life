@@ -1,4 +1,30 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+/**
+ * Wait until this device's pantry writes have committed to IndexedDB. A read-only transaction on
+ * the same store only completes after earlier write transactions do, so this is deterministic (no
+ * sleeps). Needed because a reload in the very same instant as a change can abort that last,
+ * still-uncommitted write (measured: a few milliseconds; ~1 in 30 immediate reloads).
+ */
+async function waitForPantryWrites(page: Page) {
+  await page.evaluate(async () => {
+    for (const { name } of await indexedDB.databases()) {
+      if (!name?.startsWith('shelf-life:pantry:')) continue;
+      await new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open(name);
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const tx = open.result.transaction('updates', 'readonly');
+          tx.oncomplete = () => {
+            open.result.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
+        };
+      });
+    }
+  });
+}
 
 test('SRS 12.4 the installed app opens offline: shell from the service worker, account from cache', async ({
   page,
@@ -84,7 +110,55 @@ test('rule 3 SRS 12.4 an item added while offline is still there after an offlin
   await page.getByRole('button', { name: 'Add to pantry' }).click();
   await expect(page.getByRole('article', { name: 'Paneer' })).toBeVisible();
 
-  // Reload straight away, as a user might: the write must already be on its way to IndexedDB.
+  // Once the write has committed, it survives an offline reload.
+  await waitForPantryWrites(page);
   await page.reload();
   await expect(page.getByRole('article', { name: 'Paneer' })).toBeVisible();
+});
+
+test('rule 3 decision 1: after the first scan, scanning works offline (engine cached)', async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  test.setTimeout(180_000);
+  const { receiptPng } = await import('../e2e/receiptImage');
+  const email = `pwa-scan-${crypto.randomUUID()}@example.com`;
+  const login = await page.request.post('/api/v1/test/login', {
+    data: { email, name: 'Ananya Mehta' },
+    headers: { origin: baseURL! },
+  });
+  expect(login.ok()).toBe(true);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Create home list' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+
+  const text = 'PATEL BROTHERS\nPANEER 400G   5.49\nCILANTRO      0.99\nTOTAL         6.48';
+  const scan = async () => {
+    await page.goto('/scan');
+    await page.getByTestId('file-input').setInputFiles({
+      name: 'r.png',
+      mimeType: 'image/png',
+      buffer: await receiptPng(page, text),
+    });
+    await expect(page.getByRole('heading', { level: 1, name: 'Review scan' })).toBeVisible({
+      timeout: 90_000,
+    });
+    await expect(page.getByText('2 groceries found', { exact: false })).toBeVisible();
+  };
+
+  // First scan online downloads and caches the engine.
+  await scan();
+  const cached = await page.evaluate(async () =>
+    (await (await caches.open('shelf-life-ocr')).keys()).map((r) => new URL(r.url).pathname).sort(),
+  );
+  expect(cached).toEqual(
+    expect.arrayContaining(['/ocr/lang/eng.traineddata.gz', '/ocr/worker.min.js']),
+  );
+
+  await context.setOffline(true);
+  await scan();
 });

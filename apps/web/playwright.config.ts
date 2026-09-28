@@ -21,7 +21,18 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'mobile', use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } } },
+    {
+      name: 'mobile',
+      use: {
+        ...devices['Pixel 7'],
+        viewport: { width: 390, height: 844 },
+        // A fake rear camera for the scanner (SCN-1); no real camera or permission prompt.
+        launchOptions: {
+          args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+        },
+        permissions: ['camera'],
+      },
+    },
     {
       name: 'desktop',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },

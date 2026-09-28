@@ -10,9 +10,14 @@ import { ProfilePage } from './pages/profile/ProfilePage';
 import { TodayPage } from './pages/today/TodayPage';
 import { WelcomePage } from './pages/welcome/WelcomePage';
 
-// Pantry pulls in Yjs, IndexedDB and Radix dialogs; load it only when opened (PERF-2).
+// Pantry pulls in Yjs, IndexedDB and Radix dialogs; Scan pulls in the OCR pipeline. Load them only
+// when opened (PERF-2).
 const PantryPage = lazy(() =>
   import('./pages/pantry/PantryPage').then((m) => ({ default: m.PantryPage })),
+);
+const ScanPage = lazy(() => import('./pages/scan/ScanPage').then((m) => ({ default: m.ScanPage })));
+const ReviewPreviewPage = lazy(() =>
+  import('./pages/scan/ReviewPreviewPage').then((m) => ({ default: m.ReviewPreviewPage })),
 );
 
 const placeholder = (path: string, titleKey: string): RouteObject => ({
@@ -29,6 +34,17 @@ export const routes: RouteObject[] = [
     element: (
       <RequireAuth allowWithoutPantry>
         <OnboardingPage />
+      </RequireAuth>
+    ),
+  },
+  {
+    // Full-screen scanner (Figma 04 has no app nav).
+    path: '/scan',
+    element: (
+      <RequireAuth>
+        <Suspense fallback={<PageSkeleton />}>
+          <ScanPage />
+        </Suspense>
       </RequireAuth>
     ),
   },
@@ -55,8 +71,14 @@ export const routes: RouteObject[] = [
         ),
         handle: { skipLink: { targetId: 'shelves', textKey: 'skip.pantry' } } satisfies RouteHandle,
       },
-      placeholder('scan', 'pages.scan'),
-      placeholder('scan/review', 'pages.reviewScan'),
+      {
+        path: 'scan/review',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ReviewPreviewPage />
+          </Suspense>
+        ),
+      },
       placeholder('lists', 'pages.lists'),
       placeholder('lists/new', 'pages.newList'),
       placeholder('lists/:listId', 'pages.list'),

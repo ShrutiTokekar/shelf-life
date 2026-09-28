@@ -49,7 +49,7 @@ export function Select({ label, options, value, onChange, hint, className }: Sel
                 <RadixSelect.Item
                   key={o.value}
                   value={o.value}
-                  className="flex min-h-11 cursor-default items-center justify-between gap-3 rounded-xl px-3 text-base text-ink outline-none data-[highlighted]:bg-periwinkle data-[highlighted]:text-navy"
+                  className="flex min-h-11 cursor-default items-center justify-between gap-3 rounded-xl px-3 text-base text-ink outline-none data-[highlighted]:bg-periwinkle data-[highlighted]:text-ink"
                 >
                   <span className="flex items-center gap-2">
                     {o.icon}
