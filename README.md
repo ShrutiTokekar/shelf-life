@@ -12,7 +12,6 @@ Use it before you lose it. A mobile-first PWA and desktop web app that tracks ki
 
 ```bash
 pnpm install
-cp .env.example .env        # then fill in the values below
 pnpm db:up                  # start Postgres in Docker
 pnpm db:migrate
 pnpm dev                    # web on https://localhost:5173, API on :8787
