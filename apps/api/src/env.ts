@@ -24,7 +24,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   if (!parsed.success) {
     const problems = parsed.error.issues.map((i) => `  ${i.path.join('.')}: ${i.message}`);
     throw new Error(
-      `Invalid environment. Copy .env.example to .env and fill it in.\n${problems.join('\n')}`,
+      `Invalid environment. Create .env as described in README step 3.\n${problems.join('\n')}`,
     );
   }
   return parsed.data;

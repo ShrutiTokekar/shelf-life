@@ -30,22 +30,25 @@ This starts Postgres 16 on `localhost:5432` (user `postgres`, password `postgres
 
 ### 3. Create your `.env`
 
+Create a file named `.env` in the project root with these contents:
+
 ```bash
-cp .env.example .env
+# Local Postgres from step 2 (leave as is)
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/shelflife
+
+# Random string of 32+ characters: run `openssl rand -base64 32` and paste the result
+BETTER_AUTH_SECRET=
+
+# From step 4
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# Web app origin and API port (leave as is)
+APP_URL=https://localhost:5173
+PORT=8787
 ```
 
-`.env` is git-ignored. Never commit it. For Milestone 1, you need to fill in only these values:
-
-| Variable               | Value                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------ |
-| `DATABASE_URL`         | Leave the default: `postgres://postgres:postgres@localhost:5432/shelflife`     |
-| `BETTER_AUTH_SECRET`   | A random string of 32+ characters. Generate one with `openssl rand -base64 32` |
-| `GOOGLE_CLIENT_ID`     | From step 4                                                                    |
-| `GOOGLE_CLIENT_SECRET` | From step 4                                                                    |
-| `APP_URL`              | Leave the default: `https://localhost:5173`                                    |
-| `PORT`                 | Leave the default: `8787` (the API port)                                       |
-
-Leave the AI, Web Push and sync values empty. They're used from later milestones.
+`.env` is git-ignored. Never commit it or paste its values anywhere public. These are the only variables Milestone 1 needs. Later milestones add AI, Web Push and sync variables (SRS 14.4), and this README will list them when they're needed.
 
 ### 4. Create a Google OAuth client (free)
 
