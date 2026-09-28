@@ -23,6 +23,9 @@
   --terra-light: #f6d3c8;
   --terra: #b5553f;
   --terra-dark: #7e2e1c;
+  --out-lid: #b7bcd6; /* ran-out jar lid and plank (Figma 03/13) */
+  --sage-border: #afc4a1; /* fresh jar border */
+  --peach-dark: #6e4424; /* text on peach avatars */
 
   /* List colors for pantry labels */
   --list-navy: #4d5c9f;

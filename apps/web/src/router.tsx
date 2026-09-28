@@ -1,12 +1,19 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { AppShell, type RouteHandle } from './components/AppShell/AppShell';
 import { RequireAuth } from './components/RequireAuth/RequireAuth';
 import { JoinPage } from './pages/join/JoinPage';
 import { OnboardingPage } from './pages/onboarding/OnboardingPage';
+import { PageSkeleton } from './components/Skeleton/Skeleton';
 import { PlaceholderPage } from './pages/placeholder/PlaceholderPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { TodayPage } from './pages/today/TodayPage';
 import { WelcomePage } from './pages/welcome/WelcomePage';
+
+// Pantry pulls in Yjs, IndexedDB and Radix dialogs; load it only when opened (PERF-2).
+const PantryPage = lazy(() =>
+  import('./pages/pantry/PantryPage').then((m) => ({ default: m.PantryPage })),
+);
 
 const placeholder = (path: string, titleKey: string): RouteObject => ({
   path,
@@ -39,7 +46,15 @@ export const routes: RouteObject[] = [
           skipLink: { targetId: 'priorities', textKey: 'skip.today' },
         } satisfies RouteHandle,
       },
-      placeholder('pantry', 'pages.pantry'),
+      {
+        path: 'pantry',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <PantryPage />
+          </Suspense>
+        ),
+        handle: { skipLink: { targetId: 'shelves', textKey: 'skip.pantry' } } satisfies RouteHandle,
+      },
       placeholder('scan', 'pages.scan'),
       placeholder('scan/review', 'pages.reviewScan'),
       placeholder('lists', 'pages.lists'),

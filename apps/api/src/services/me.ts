@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import type { MeResponse } from '@shelf-life/shared';
 import type { SessionUser } from '../auth';
 import type { Db } from '../db/client';
@@ -25,6 +25,22 @@ export async function getMe(db: Db, user: SessionUser): Promise<MeResponse> {
     .innerJoin(schema.list, eq(schema.list.id, schema.listMember.listId))
     .where(eq(schema.listMember.userId, user.id))
     .orderBy(schema.list.createdAt);
+
+  // Members of every list this user is on (names only, never emails).
+  const listIds = listRows.map((r) => r.list.id);
+  const memberRows = listIds.length
+    ? await db
+        .select({
+          listId: schema.listMember.listId,
+          userId: schema.listMember.userId,
+          role: schema.listMember.role,
+          name: schema.user.name,
+        })
+        .from(schema.listMember)
+        .innerJoin(schema.user, eq(schema.user.id, schema.listMember.userId))
+        .where(inArray(schema.listMember.listId, listIds))
+        .orderBy(schema.listMember.joinedAt, schema.user.name)
+    : [];
 
   const [settingsRow] = await db
     .select()
@@ -61,6 +77,17 @@ export async function getMe(db: Db, user: SessionUser): Promise<MeResponse> {
       shopBy: list.shopBy,
       createdAt: list.createdAt.toISOString(),
       role,
+      members: memberRows
+        .filter((m) => m.listId === list.id)
+        .map((m) => {
+          const name = m.name.trim() || 'Member';
+          return {
+            userId: m.userId,
+            displayName: name,
+            avatarInitial: name.charAt(0).toUpperCase(),
+            role: m.role,
+          };
+        }),
     })),
     settings: settingsRow
       ? {

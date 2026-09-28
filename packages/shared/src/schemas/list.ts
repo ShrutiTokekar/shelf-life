@@ -32,5 +32,17 @@ export const listSchema = z.object({
 });
 export type List = z.infer<typeof listSchema>;
 
-export const listWithRoleSchema = listSchema.extend({ role: listRoleSchema });
+/** A person on a list. Names only; emails are never shared with other members. */
+export const listMemberSchema = z.object({
+  userId: z.string(),
+  displayName: z.string(),
+  avatarInitial: z.string().length(1),
+  role: listRoleSchema,
+});
+export type ListMember = z.infer<typeof listMemberSchema>;
+
+export const listWithRoleSchema = listSchema.extend({
+  role: listRoleSchema,
+  members: z.array(listMemberSchema),
+});
 export type ListWithRole = z.infer<typeof listWithRoleSchema>;

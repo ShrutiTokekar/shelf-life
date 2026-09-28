@@ -31,7 +31,8 @@
     "main": "Skip to main content",
     "today": "Skip to today's priorities",
     "signIn": "Skip to sign in",
-    "setup": "Skip to home list setup"
+    "setup": "Skip to home list setup",
+    "pantry": "Skip to items to use first"
   },
   "offline": {
     "banner": "Offline, changes will sync"
@@ -112,5 +113,131 @@
     "signOutFailed": "We couldn’t sign you out. Check your connection and try again.",
     "signOutOffline": "You’re offline. Signing out needs a connection.",
     "comingSoon": "Lists and people, AI preferences, display and notification settings arrive in a later update."
+  },
+  "pantry": {
+    "title": "Your pantry",
+    "summary_one": "{{count}} item, shelved by what to use first",
+    "summary_other": "{{count}} items, shelved by what to use first",
+    "search": "Search pantry",
+    "searchPlaceholder": "e.g. yogurt",
+    "clearSearch": "Clear search",
+    "addItem": "Add item",
+    "fromList": "From list",
+    "allLists": "All lists",
+    "category": "Category",
+    "all": "All",
+    "sort": "Sort",
+    "sorts": {
+      "expiry": "Expiry",
+      "category": "Category",
+      "location": "Location",
+      "az": "A to Z"
+    },
+    "shelves": {
+      "today": {
+        "title": "Use today",
+        "helper": "Expires before tomorrow"
+      },
+      "soon": {
+        "title": "Use this week",
+        "helper": "Plan meals around these"
+      },
+      "fresh": {
+        "title": "Good for now",
+        "helper": "No rush on these"
+      },
+      "out": {
+        "title": "Ran out",
+        "helper": "Restock or remove"
+      },
+      "az": {
+        "title": "A to Z",
+        "helper": "Everything you have"
+      }
+    },
+    "shelfEmpty": "Nothing here right now.",
+    "count_one": "{{count}} item",
+    "count_other": "{{count}} items",
+    "more": "+{{hidden}} more",
+    "showAll": "Show all",
+    "showFewer": "Show fewer",
+    "showAllLabel": "Show all {{total}} items on {{shelf}}",
+    "noMatches": "Nothing matches these filters.",
+    "clearFilters": "Clear filters",
+    "emptyTitle": "Your pantry is empty",
+    "emptyBody": "Add what’s in your kitchen, or scan a receipt to fill your shelves.",
+    "scanReceipt": "Scan a receipt",
+    "loadSample": "Load sample pantry",
+    "sampleHint": "Development only. Run pnpm db:seed first for more lists and members.",
+    "storageError": "We couldn’t open this device’s storage, so the pantry can’t load. Private browsing can block it.",
+    "jar": {
+      "addedBy": "Added by {{name}}",
+      "usedIt": "Used it",
+      "usedItLabel": "Used it: {{name}}",
+      "edit": "Edit {{name}}",
+      "addToList": "Add to list",
+      "addToListLabel": "Add {{name}} to {{list}}",
+      "onList": "On the list",
+      "onListBy": "On the list · {{name}}",
+      "left": "{{count}} left",
+      "estShort": "· est.",
+      "estSpoken": ", estimated"
+    },
+    "toast": {
+      "usedOne": "Used one {{name}}. {{left}} left.",
+      "ranOut": "{{name}} moved to Ran out.",
+      "added": "{{name}} added to your pantry.",
+      "saved": "{{name}} saved.",
+      "deleted": "{{name}} deleted.",
+      "addedToList": "{{name}} added to {{list}}.",
+      "sampleLoaded": "Sample pantry loaded.",
+      "undo": "Undo",
+      "listUnavailable": "Couldn’t add {{name}} to {{list}}. Try again."
+    },
+    "removedList": "Removed list"
+  },
+  "categories": {
+    "produce": "Produce",
+    "dairy_eggs": "Dairy & eggs",
+    "grains_dals": "Grains & dals",
+    "spices_oils": "Spices & oils",
+    "frozen": "Frozen",
+    "other": "Other"
+  },
+  "locations": {
+    "fridge": "Fridge",
+    "freezer": "Freezer",
+    "cupboard": "Cupboard"
+  },
+  "itemSheet": {
+    "addTitle": "Add an item",
+    "editTitle": "Edit {{name}}",
+    "name": "Name",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "unitHint": "e.g. bag, g, lb. Leave blank for a count.",
+    "location": "Where it’s kept",
+    "category": "Category",
+    "list": "List label",
+    "listHint": "Which list this came from. Shows on the jar.",
+    "expiresOn": "Use by",
+    "estimated": "Estimated from category and location. Change it if you know better.",
+    "note": "Note",
+    "save": "Save",
+    "add": "Add to pantry",
+    "cancel": "Cancel",
+    "ranOut": "Mark as ran out",
+    "delete": "Delete item",
+    "close": "Close",
+    "errors": {
+      "quantity": "Enter a number, or leave it blank."
+    }
+  },
+  "statusTag": {
+    "ai": "AI, confirmed",
+    "skipped": "Skipped, not food"
+  },
+  "toast": {
+    "dismiss": "Dismiss"
   }
 }

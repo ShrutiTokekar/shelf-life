@@ -146,5 +146,140 @@ export function TimeArrow({
   );
 }
 
+// Pantry icons (Figma 03 / 13). Native viewBoxes are kept; `size` scales them.
+
+export const PlusIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 22 22" size={22} {...p}>
+    <path d="M11 4.58v12.84M4.58 11h12.84" />
+  </Icon>
+);
+
+export const SearchIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 20 20" size={20} {...p}>
+    <circle cx="9.17" cy="9.17" r="5.83" />
+    <path d="M16.67 16.67 13.75 13.75" />
+  </Icon>
+);
+
+export const CloseIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Icon>
+);
+
+export const EditIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 20h4L19 9a2.83 2.83 0 0 0-4-4L4 16v4Z" />
+    <path d="m13.5 6.5 4 4" />
+  </Icon>
+);
+
+export const TrashIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+  </Icon>
+);
+
+export const ChevronDownIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m6 9 6 6 6-6" />
+  </Icon>
+);
+
+export const ClockIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <circle cx="9" cy="9" r="6" />
+    <path d="M9 6v3l2.25 1.5" />
+  </Icon>
+);
+
+/** Fresh status and the Produce category share the leaf. */
+export const LeafIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <path d="M3.75 14.25c0-6.75 4.5-10.5 11.25-10.5 0 6.75-3.75 11.25-10.5 11.25" />
+    <path d="m3.75 14.25 6-6" />
+  </Icon>
+);
+
+export const EmptyJarIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <path d="M6 2.25h6V4.5H6V2.25Z" />
+    <path d="M5.25 4.5h7.5a1.5 1.5 0 0 1 1.5 1.5v8.25a1.5 1.5 0 0 1-1.5 1.5h-7.5a1.5 1.5 0 0 1-1.5-1.5V6a1.5 1.5 0 0 1 1.5-1.5Z" />
+  </Icon>
+);
+
+export const CartIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 16 16" size={16} {...p}>
+    <path d="M2.67 3.33H4l1.33 7.34H12l1.33-5.34H4.67" />
+    <circle cx="6.67" cy="12.67" r="1" />
+    <circle cx="11.33" cy="12.67" r="1" />
+  </Icon>
+);
+
+export const GridIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <rect x="3" y="3" width="5.25" height="5.25" rx="1.13" />
+    <rect x="9.75" y="3" width="5.25" height="5.25" rx="1.13" />
+    <rect x="3" y="9.75" width="5.25" height="5.25" rx="1.13" />
+    <rect x="9.75" y="9.75" width="5.25" height="5.25" rx="1.13" />
+  </Icon>
+);
+
+export const MilkIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <path d="M6.75 2.25h4.5V4.5l1.5 2.25v9h-7.5v-9l1.5-2.25V2.25Z" />
+    <path d="M5.25 9.75h7.5" />
+  </Icon>
+);
+
+export const GrainIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <path d="M9 15.75v-9" />
+    <path d="M9 6.75c-2.25 0-3-1.5-3-3 1.5 0 3 .75 3 3Zm0 0c2.25 0 3-1.5 3-3-1.5 0-3 .75-3 3Zm0 3.75c-2.25 0-3-1.5-3-3 1.5 0 3 .75 3 3Zm0 0c2.25 0 3-1.5 3-3-1.5 0-3 .75-3 3Z" />
+  </Icon>
+);
+
+export const SpiceIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <path d="M6.75 2.25h4.5v3h-4.5v-3Z" />
+    <path d="M6 5.25h6l.75 10.5h-7.5L6 5.25Z" />
+    <path d="M7.5 9h.01M10.5 9h.01M9 11.25h.01" />
+  </Icon>
+);
+
+export const SnowIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <path d="M9 2.25v13.5M3.15 5.63l11.7 6.75M3.15 12.38l11.7-6.75" />
+  </Icon>
+);
+
+export const BoxIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <path d="M3 6l6-3 6 3v6l-6 3-6-3V6Z" />
+    <path d="M3 6l6 3m0 0 6-3m-6 3v6" />
+  </Icon>
+);
+
+/** Web 13 uses a fridge glyph on the quantity line. */
+export const FridgeIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 18 18" size={18} {...p}>
+    <rect x="4.5" y="2.25" width="9" height="13.5" rx="1.5" />
+    <path d="M4.5 7.5h9M6.75 4.5v1.5M6.75 9.75v1.5" />
+  </Icon>
+);
+
+export const SparkIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z" />
+  </Icon>
+);
+
+export const SkipIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8" />
+    <path d="m6.5 6.5 11 11" />
+  </Icon>
+);
+
 export { Icon };
 export type { IconProps };

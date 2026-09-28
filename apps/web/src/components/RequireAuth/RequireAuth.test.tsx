@@ -7,7 +7,7 @@ import { renderApp } from '../../test/renderApp';
 describe('RequireAuth', () => {
   it('shows a loading skeleton with a status message first', () => {
     renderApp('/', returningUserMe);
-    expect(screen.getByRole('status')).toHaveTextContent('Loading…');
+    expect(screen.getByText('Loading…').closest('[role="status"]')).toBeInTheDocument();
   });
 
   it('WEL-2 signed-out users go to /welcome', async () => {

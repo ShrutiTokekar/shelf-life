@@ -19,7 +19,8 @@
     "db:up": "docker compose up -d postgres",
     "db:generate": "pnpm --filter @shelf-life/api db:generate",
     "db:migrate": "pnpm --filter @shelf-life/api db:migrate",
-    "stories": "pnpm --filter @shelf-life/web stories"
+    "stories": "pnpm --filter @shelf-life/web stories",
+    "db:seed": "pnpm --filter @shelf-life/api db:seed"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
