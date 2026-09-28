@@ -5,13 +5,17 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const API_TARGET = process.env.API_PROXY_TARGET ?? 'http://localhost:8787';
+// E2E runs on its own port so it never reuses (or fights with) a running `pnpm dev`.
+const WEB_PORT = Number(process.env.WEB_PORT ?? 5173);
 
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
     // Local HTTPS so the camera works in dev (SRS 14.1). Self-signed; no mkcert needed.
-    basicSsl(),
+    // PLAIN_HTTP=1 turns it off for the offline E2E: Chrome won't register a service worker on a
+    // self-signed certificate, but http://localhost counts as a secure context.
+    ...(process.env.PLAIN_HTTP ? [] : [basicSsl()]),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.png'],
@@ -39,13 +43,13 @@ export default defineConfig({
     }),
   ],
   server: {
-    port: 5173,
+    port: WEB_PORT,
     strictPort: true,
     // Same-origin API in dev keeps the SameSite=Lax session cookie working.
     proxy: { '/api': { target: API_TARGET, changeOrigin: false } },
   },
   preview: {
-    port: 5173,
+    port: WEB_PORT,
     strictPort: true,
     proxy: { '/api': { target: API_TARGET, changeOrigin: false } },
   },

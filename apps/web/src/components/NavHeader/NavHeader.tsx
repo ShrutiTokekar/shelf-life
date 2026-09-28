@@ -47,13 +47,19 @@ export function NavHeader({
   ] as const;
 
   return (
-    <header className={cx('flex items-center justify-between gap-6 page-x pt-5', className)}>
-      <Link to="/" className="rounded-xl">
+    // Wraps to a second row when Largest text (130%) meets a narrow desktop (A11Y-6).
+    <header
+      className={cx(
+        'flex flex-wrap items-center justify-between gap-x-6 gap-y-3 page-x pt-5',
+        className,
+      )}
+    >
+      <Link to="/" className="flex min-h-11 items-center rounded-xl">
         <Wordmark size={38} />
       </Link>
 
       <nav aria-label={t('nav.primary')}>
-        <ul className="flex items-start gap-2">
+        <ul className="flex flex-wrap items-start gap-2">
           {tabs.map((tab) => {
             const on = tab.key === active;
             return (
@@ -85,7 +91,7 @@ export function NavHeader({
         </ul>
       </nav>
 
-      <div role="group" aria-label={t('nav.tools')} className="flex items-center gap-3">
+      <div role="group" aria-label={t('nav.tools')} className="flex flex-wrap items-center gap-3">
         <TextSizeControl value={textSize} onChange={onTextSizeChange} />
         <button
           type="button"

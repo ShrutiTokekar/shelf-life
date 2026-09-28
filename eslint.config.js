@@ -38,6 +38,8 @@ export default tseslint.config(
   {
     // CLAUDE.md rule 5: design tokens only, no raw hex values in components.
     files: ['apps/web/src/**/*.{ts,tsx}'],
+    // Tests may hold spec values (e.g. tokens.test.ts checks tokens.css against SRS 4.1).
+    ignores: ['**/*.test.{ts,tsx}'],
     rules: {
       'no-restricted-syntax': [
         'error',

@@ -103,5 +103,14 @@
     "title": "You’re invited to a list",
     "body": "Sign in with Google and you’ll join the list right after.",
     "signedInBody": "Thanks! You’ll be added to the list once list sharing is switched on."
+  },
+  "profile": {
+    "title": "Profile",
+    "account": "Privacy and account",
+    "photoNote": "Receipts are read on your phone, never uploaded.",
+    "signOut": "Sign out",
+    "signOutFailed": "We couldn’t sign you out. Check your connection and try again.",
+    "signOutOffline": "You’re offline. Signing out needs a connection.",
+    "comingSoon": "Lists and people, AI preferences, display and notification settings arrive in a later update."
   }
 }

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectNoSeriousA11yViolations, signInAsNewUser } from './helpers';
+import { expectNoSeriousA11yViolations, ORIGIN, signInAsNewUser } from './helpers';
 
 test.describe('Welcome and sign in', () => {
   test('WEL-2 signed-out users are sent to /welcome', async ({ page }) => {
@@ -27,9 +27,7 @@ test.describe('Welcome and sign in', () => {
     await page.waitForURL(/accounts\.google\.com/);
     const url = new URL(page.url());
     expect(url.searchParams.get('client_id')).toBe('e2e-google-client-id');
-    expect(url.searchParams.get('redirect_uri')).toBe(
-      'https://localhost:5173/api/v1/auth/callback/google',
-    );
+    expect(url.searchParams.get('redirect_uri')).toBe(`${ORIGIN}/api/v1/auth/callback/google`);
   });
 
   test('WEL-3 an invite link opened before sign-in is remembered through sign-in', async ({

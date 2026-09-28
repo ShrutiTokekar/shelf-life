@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 
-export const ORIGIN = 'https://localhost:5173';
+export const ORIGIN = 'https://localhost:5174';
 
 /** Signs in through the test-only API route (exists only when the API runs with NODE_ENV=test). */
 export async function signInAsNewUser(page: Page, name = 'Ananya Mehta') {

@@ -4,6 +4,7 @@ import { RequireAuth } from './components/RequireAuth/RequireAuth';
 import { JoinPage } from './pages/join/JoinPage';
 import { OnboardingPage } from './pages/onboarding/OnboardingPage';
 import { PlaceholderPage } from './pages/placeholder/PlaceholderPage';
+import { ProfilePage } from './pages/profile/ProfilePage';
 import { TodayPage } from './pages/today/TodayPage';
 import { WelcomePage } from './pages/welcome/WelcomePage';
 
@@ -53,7 +54,7 @@ export const routes: RouteObject[] = [
       placeholder('recipes/:id', 'pages.recipe'),
       placeholder('recipes/:id/cook', 'pages.cook'),
       placeholder('reminders', 'pages.reminders'),
-      placeholder('profile', 'pages.profile'),
+      { path: 'profile', element: <ProfilePage /> },
       placeholder('profile/receipts', 'pages.receipts'),
       placeholder('profile/receipts/:id', 'pages.receipt'),
       placeholder('*', 'pages.notFound'),
