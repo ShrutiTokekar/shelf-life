@@ -13,6 +13,7 @@ export const listRoutes = new Hono<AppEnv>()
         shopBy: created.shopBy,
         createdAt: created.createdAt.toISOString(),
         role: 'owner' as const,
+        members: [],
       },
       201,
     );

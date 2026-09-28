@@ -61,13 +61,14 @@ export function NavBottom({ active, listHref, listCount = 0, className }: NavBot
     const accessibleName =
       count > 0 ? t('nav.listWithCount', { label: item.label, count }) : undefined;
     return (
-      <li key={item.key} className="flex justify-center">
+      <li key={item.key} className="flex min-w-0 flex-1 justify-center">
         <Link
           to={item.href}
           aria-current={on ? 'page' : undefined}
           aria-label={accessibleName}
           className={cx(
-            'relative flex min-h-11 w-[3.75rem] flex-col items-center gap-1 rounded-xl pt-1 text-[0.8125rem] leading-tight',
+            // Tabs share the width so labels never clip at 130% text (A11Y-6).
+            'relative flex min-h-11 w-full min-w-11 max-w-[3.75rem] flex-col items-center gap-1 rounded-xl pt-1 text-[0.8125rem] leading-tight',
             on ? 'font-semibold text-navy' : 'font-medium text-slate',
           )}
         >
@@ -86,14 +87,14 @@ export function NavBottom({ active, listHref, listCount = 0, className }: NavBot
     <nav
       aria-label={t('nav.primary')}
       className={cx(
-        'fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white px-4 pt-2.5',
+        'fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white px-2 pt-2.5 min-[380px]:px-4',
         'pb-[max(1.5rem,env(safe-area-inset-bottom))]',
         className,
       )}
     >
-      <ul className="mx-auto flex max-w-[30rem] items-start justify-between">
+      <ul className="mx-auto flex max-w-[30rem] items-start justify-between gap-1">
         {left.map(renderItem)}
-        <li className="flex justify-center">
+        <li className="flex shrink-0 justify-center">
           <Link
             to="/scan"
             aria-label={t('nav.scan')}

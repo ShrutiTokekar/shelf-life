@@ -16,7 +16,7 @@ export type AvatarProps = {
 
 const tones: Record<AvatarTone, string> = {
   periwinkle: 'bg-periwinkle text-navy',
-  peach: 'bg-peach text-ink',
+  peach: 'bg-peach text-peach-dark',
   sage: 'bg-sage text-olive-dark',
   apricot: 'bg-apricot text-apricot-dark',
 };

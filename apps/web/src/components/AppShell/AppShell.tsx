@@ -33,7 +33,7 @@ export function AppShell() {
     <div className="min-h-dvh pb-32 lg:pb-12">
       <SkipLink targetId={skip.targetId} text={t(skip.textKey)} />
       <NavHeader
-        className="hidden lg:flex"
+        className="max-lg:hidden"
         active={active}
         listHref={listHref}
         userName={me.user.displayName}

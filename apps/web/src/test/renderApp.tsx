@@ -3,6 +3,7 @@ import type { MeResponse } from '@shelf-life/shared';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi } from 'vitest';
 import { ApiRequestError, NetworkError } from '../lib/api';
+import { ToastProvider } from '../components/Toast/Toast';
 import { SessionProvider } from '../lib/session';
 import { routes } from '../router';
 
@@ -21,7 +22,9 @@ export function renderApp(route: string, meResults: MeResult | MeResult[]) {
   const router = createMemoryRouter(routes, { initialEntries: [route] });
   const utils = render(
     <SessionProvider load={load}>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </SessionProvider>,
   );
   return { ...utils, router, load };

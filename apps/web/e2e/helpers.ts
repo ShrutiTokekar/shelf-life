@@ -47,9 +47,50 @@ export async function setTextSize(page: Page, size: 'default' | 'large' | 'large
   }, size);
 }
 
+/**
+ * A11Y-6: no sideways scroll or clipping. Three checks:
+ * 1. the page doesn't scroll sideways;
+ * 2. nothing sticks out past the viewport edge (catches fixed elements like the bottom nav, which
+ *    don't add to scroll width); content inside intentional sideways scrollers is ignored;
+ * 3. on phones the layout width still equals the device width: mobile browsers widen the layout
+ *    and zoom out to fit overflowing content, which hides it from checks 1 and 2.
+ */
 export async function expectNoHorizontalScroll(page: Page) {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
+  const result = await page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const clipped = [...document.querySelectorAll<HTMLElement>('body *')]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.right <= vw + 1) return false;
+        for (let p = el.parentElement; p; p = p.parentElement) {
+          if (['auto', 'scroll', 'hidden'].includes(getComputedStyle(p).overflowX)) return false;
+        }
+        return true;
+      })
+      .slice(0, 5)
+      .map(
+        (el) =>
+          `${el.tagName} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}"`,
+      );
+    return {
+      overflow: document.documentElement.scrollWidth - vw,
+      clipped,
+      innerWidth: window.innerWidth,
+    };
+  });
+  expect(result.overflow).toBeLessThanOrEqual(0);
+  expect(result.clipped).toEqual([]);
+  const viewport = page.viewportSize();
+  if (viewport) expect(result.innerWidth).toBe(viewport.width);
+}
+
+/** Signed-in user with a home list, the dev seed (extra lists + members) and the sample pantry. */
+export async function openSeededPantry(page: Page) {
+  await signInAsNewUser(page);
+  await completeOnboarding(page, 'Apartment 4B');
+  const seeded = await page.request.post('/api/v1/test/seed-demo', { headers: { origin: ORIGIN } });
+  expect(seeded.ok()).toBe(true);
+  await page.goto('/pantry');
+  await page.getByRole('button', { name: 'Load sample pantry' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: /Use today/ })).toBeVisible();
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RouterProvider } from 'react-router-dom';
+import { ToastProvider } from './components/Toast/Toast';
 import { SessionProvider } from './lib/session';
 import { createRouter } from './router';
 import { applyUiSettings, useUiSettings } from './stores/uiSettings';
@@ -18,7 +19,9 @@ export function App() {
   useApplyUiSettings();
   return (
     <SessionProvider>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </SessionProvider>
   );
 }

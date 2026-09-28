@@ -85,6 +85,18 @@ The dev server uses a self-signed HTTPS certificate, which the camera needs. The
 
 Sign in with Google. As a new user, you're asked to name your home list, which creates your pantry. Then you land on Today.
 
+### 7. (Optional) Load sample data
+
+To see a realistic pantry without scanning a receipt, sign in once and finish home-list setup, then run:
+
+```bash
+pnpm db:seed --email you@gmail.com
+```
+
+This adds two lists (**Family groceries**, **Diwali party**) and two demo members (**Arjun**, **Meera**) to your account. It only runs locally and is safe to run again.
+
+Next, open **Pantry**. While it's empty, dev builds show a **Load sample pantry** button, which fills your shelves with about 26 items across all four shelves and your lists. Pantry items live in your browser (IndexedDB) until the sync server arrives in Milestone 5, so load the sample in each browser you use. The dates are relative to the day you load it.
+
 ### Troubleshooting
 
 | Problem                                           | Fix                                                                                                   |
@@ -115,6 +127,7 @@ pnpm test:e2e
 | `pnpm lint`                                           | ESLint + Prettier check                                                                    |
 | `pnpm typecheck`                                      | TypeScript in every package                                                                |
 | `pnpm db:up` / `pnpm db:migrate` / `pnpm db:generate` | Postgres in Docker, apply / generate Drizzle migrations                                    |
+| `pnpm db:seed --email you@gmail.com`                  | Dev only: extra lists and demo members for your account                                    |
 | `pnpm stories`                                        | Component demo pages (Ladle)                                                               |
 
 ## Layout

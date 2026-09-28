@@ -28,6 +28,9 @@
   --color-terra-light: var(--terra-light);
   --color-terra: var(--terra);
   --color-terra-dark: var(--terra-dark);
+  --color-out-lid: var(--out-lid);
+  --color-sage-border: var(--sage-border);
+  --color-peach-dark: var(--peach-dark);
   --color-list-navy: var(--list-navy);
   --color-list-olive: var(--list-olive);
   --color-list-amber: var(--list-amber);

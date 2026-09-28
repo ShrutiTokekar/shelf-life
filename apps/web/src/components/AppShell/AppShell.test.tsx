@@ -23,8 +23,8 @@ describe('AppShell', () => {
   });
 
   it('other pages fall back to "Skip to main content"', async () => {
-    renderApp('/pantry', returningUserMe);
-    await screen.findByRole('heading', { level: 1, name: 'Pantry' });
+    renderApp('/reminders', returningUserMe);
+    await screen.findByRole('heading', { level: 1, name: 'Reminders' });
     await userEvent.tab();
     expect(document.activeElement).toHaveTextContent('Skip to main content');
   });
