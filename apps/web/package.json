@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "stories": "ladle serve",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test && playwright test -c playwright.pwa.config.ts",
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {

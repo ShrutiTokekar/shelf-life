@@ -5,5 +5,14 @@
     "jsx": "react-jsx",
     "types": ["vite/client", "vite-plugin-pwa/client", "@testing-library/jest-dom/vitest"]
   },
-  "include": ["src", "e2e", "vite.config.ts", "vitest.config.ts", "playwright.config.ts", ".ladle"]
+  "include": [
+    "src",
+    "e2e",
+    "e2e-pwa",
+    "playwright.pwa.config.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    ".ladle"
+  ]
 }

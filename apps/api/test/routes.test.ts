@@ -117,6 +117,32 @@ describe('rate limit', () => {
   });
 });
 
+describe('POST /api/v1/auth/sign-out', () => {
+  it('PRO-6 ends the session: /me returns 401 afterwards and the cookie is cleared', async () => {
+    const { cookie } = await t.signIn();
+    expect((await t.request('/api/v1/me', { cookie })).status).toBe(200);
+
+    const res = await t.request('/api/v1/auth/sign-out', { method: 'POST', cookie, body: '{}' });
+    expect(res.status).toBe(200);
+    const cleared = res.headers.getSetCookie().find((c) => c.includes('session_token'));
+    expect(cleared).toMatch(/Max-Age=0/);
+
+    expect((await t.request('/api/v1/me', { cookie })).status).toBe(401);
+  });
+
+  it('SEC-2 rejects a cross-site sign-out', async () => {
+    const { cookie } = await t.signIn();
+    const res = await t.request('/api/v1/auth/sign-out', {
+      method: 'POST',
+      cookie,
+      headers: { origin: 'https://evil.example' },
+      body: '{}',
+    });
+    expect(res.status).toBe(403);
+    expect((await t.request('/api/v1/me', { cookie })).status).toBe(200);
+  });
+});
+
 describe('test login route', () => {
   it('sets a session cookie that /me accepts', async () => {
     const res = await t.request('/api/v1/test/login', {

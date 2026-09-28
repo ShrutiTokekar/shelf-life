@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const WEB = 'https://localhost:5173';
+// Separate ports from `pnpm dev` (5173 / 8787) so a running dev server is never reused.
+const WEB_PORT = 5174;
+const WEB = `https://localhost:${WEB_PORT}`;
 const API_PORT = 8788;
 
 /**
@@ -49,7 +51,7 @@ export default defineConfig({
       ignoreHTTPSErrors: true,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
-      env: { API_PROXY_TARGET: `http://localhost:${API_PORT}` },
+      env: { API_PROXY_TARGET: `http://localhost:${API_PORT}`, WEB_PORT: String(WEB_PORT) },
     },
   ],
 });
