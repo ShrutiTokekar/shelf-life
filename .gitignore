@@ -15,3 +15,6 @@ e2e/.auth/
 # Kept local only, not pushed to GitHub
 CLAUDE.md
 docs/
+
+# Tesseract assets copied from node_modules at dev/build time
+apps/web/public/ocr/

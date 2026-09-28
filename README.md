@@ -97,6 +97,10 @@ This adds two lists (**Family groceries**, **Diwali party**) and two demo member
 
 Next, open **Pantry**. While it's empty, dev builds show a **Load sample pantry** button, which fills your shelves with about 26 items across all four shelves and your lists. Pantry items live in your browser (IndexedDB) until the sync server arrives in Milestone 5, so load the sample in each browser you use. The dates are relative to the day you load it.
 
+### Receipt scanning (OCR)
+
+Scanning runs entirely in the browser with Tesseract.js. `pnpm dev` and `pnpm build` copy the OCR engine and English model from `node_modules` into `apps/web/public/ocr/` (git-ignored), so nothing loads from a CDN and no photo or text leaves the device. The first scan downloads about 7 MB; after that the service worker caches it and scanning works offline.
+
 ### Troubleshooting
 
 | Problem                                           | Fix                                                                                                   |

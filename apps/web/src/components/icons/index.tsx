@@ -281,5 +281,26 @@ export const SkipIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const FlashIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
+  </Icon>
+);
+
+export const ImageIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="9" cy="10" r="2" />
+    <path d="m21 16-5-5-9 9" />
+  </Icon>
+);
+
+/** In-progress step marker (Figma 04 "dots"). */
+export const DotsIcon = (p: IconProps) => (
+  <Icon viewBox="0 0 12 12" size={12} {...p}>
+    <circle cx="6" cy="6" r="2" fill="currentColor" stroke="none" />
+  </Icon>
+);
+
 export { Icon };
 export type { IconProps };

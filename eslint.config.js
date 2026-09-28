@@ -15,6 +15,8 @@ export default tseslint.config(
       '**/test-results/**',
       'apps/api/drizzle/**',
       '**/.ladle/build/**',
+      // Vendored Tesseract files copied from node_modules at dev/build time.
+      'apps/web/public/ocr/**',
     ],
   },
   js.configs.recommended,
