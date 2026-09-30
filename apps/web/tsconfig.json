@@ -9,10 +9,12 @@
     "src",
     "e2e",
     "e2e-pwa",
+    "e2e-label",
     "playwright.pwa.config.ts",
     "vite.config.ts",
     "vitest.config.ts",
     "playwright.config.ts",
-    ".ladle"
+    ".ladle",
+    "playwright.label.config.ts"
   ]
 }

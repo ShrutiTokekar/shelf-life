@@ -20,3 +20,6 @@ export * from './scan/match';
 export * from './scan/normalize';
 export * from './scan/parseReceipt';
 export * from './scan/stores';
+export * from './receipt/history';
+export * from './receipt/review';
+export * from './receipt/types';

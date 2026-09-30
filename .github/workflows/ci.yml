@@ -25,6 +25,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test:coverage
+      # SRS 13: receipt accuracy on tests/receipts, reported in the job summary.
+      - run: pnpm receipts:score
       - run: pnpm audit --prod --audit-level high
       - run: pnpm build
 

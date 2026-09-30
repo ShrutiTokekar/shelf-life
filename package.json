@@ -20,7 +20,9 @@
     "db:generate": "pnpm --filter @shelf-life/api db:generate",
     "db:migrate": "pnpm --filter @shelf-life/api db:migrate",
     "stories": "pnpm --filter @shelf-life/web stories",
-    "db:seed": "pnpm --filter @shelf-life/api db:seed"
+    "db:seed": "pnpm --filter @shelf-life/api db:seed",
+    "receipts:label": "pnpm --filter @shelf-life/web receipts:label",
+    "receipts:score": "pnpm --filter @shelf-life/receipt-tests score"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

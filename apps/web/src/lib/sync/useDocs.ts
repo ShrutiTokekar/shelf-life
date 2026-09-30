@@ -1,9 +1,10 @@
-import type { ListItem, PantryItem } from '@shelf-life/shared';
+import type { ListItem, PantryItem, Receipt } from '@shelf-life/shared';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type * as Y from 'yjs';
 import { forgetDoc, getDoc, listDocName, pantryDocName } from './docs';
 import { readListItems } from './listStore';
 import { readItems } from './pantryStore';
+import { readReceipts } from './receiptStore';
 
 export type DocStatus = 'loading' | 'ready' | 'error';
 
@@ -76,6 +77,16 @@ export function usePantry(pantryId: string | null) {
   const { doc, status, retry } = useDocHandle(pantryId ? pantryDocName(pantryId) : null);
   const items = useDocSnapshot(doc, readItems, NO_ITEMS);
   return { doc, items, status, retry };
+}
+
+const NO_RECEIPTS: Receipt[] = [];
+
+/** Live receipts (and pantry items, for "Edit items") from the pantry doc on this device. */
+export function useReceipts(pantryId: string | null) {
+  const { doc, status, retry } = useDocHandle(pantryId ? pantryDocName(pantryId) : null);
+  const receipts = useDocSnapshot(doc, readReceipts, NO_RECEIPTS);
+  const items = useDocSnapshot(doc, readItems, NO_ITEMS);
+  return { doc, receipts, items, status, retry };
 }
 
 /**

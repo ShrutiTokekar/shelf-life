@@ -199,6 +199,16 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
 
+  tests/receipts:
+    dependencies:
+      '@shelf-life/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+
 packages:
 
   '@adobe/css-tools@4.5.0':

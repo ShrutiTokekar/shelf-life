@@ -144,7 +144,7 @@ test('rule 3 decision 1: after the first scan, scanning works offline (engine ca
       mimeType: 'image/png',
       buffer: await receiptPng(page, text),
     });
-    await expect(page.getByRole('heading', { level: 1, name: 'Review scan' })).toBeVisible({
+    await expect(page.getByRole('heading', { level: 1, name: 'Review items' })).toBeVisible({
       timeout: 90_000,
     });
     await expect(page.getByText('2 groceries found', { exact: false })).toBeVisible();
@@ -161,4 +161,10 @@ test('rule 3 decision 1: after the first scan, scanning works offline (engine ca
 
   await context.setOffline(true);
   await scan();
+  // REV-7 offline: the review saves locally and the receipt shows in history (SRS 12.4).
+  await page.getByRole('button', { name: 'Add 2 items to pantry' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Your pantry' })).toBeVisible();
+  await expect(page.getByRole('article', { name: 'Paneer' })).toBeVisible();
+  await page.goto('/profile/receipts');
+  await expect(page.getByRole('link', { name: 'Patel Brothers' })).toBeVisible();
 });

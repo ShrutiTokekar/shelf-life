@@ -50,6 +50,8 @@ export type JarCardProps = {
   onUsed: () => void;
   onEdit: () => void;
   onAddToList: () => void;
+  /** Just added from a receipt: outlined and tagged "New" for a moment (REV-7). */
+  highlighted?: boolean;
 };
 
 /**
@@ -66,6 +68,7 @@ export function JarCard({
   onUsed,
   onEdit,
   onAddToList,
+  highlighted = false,
 }: JarCardProps) {
   const { t } = useTranslation();
   const nameId = useId();
@@ -79,11 +82,19 @@ export function JarCard({
       <span aria-hidden="true" className={cx('h-2.5 w-20 rounded-t-[0.3125rem]', lid[status])} />
       <article
         aria-labelledby={nameId}
+        data-highlighted={highlighted || undefined}
         className={cx(
           'flex w-[10.75rem] flex-col gap-2 rounded-[1.125rem] border-2 bg-white p-3 lg:w-[14.125rem]',
+          'outline-offset-2 transition-[outline-color] duration-500 motion-reduce:transition-none',
+          highlighted ? 'outline-4 outline-navy' : 'outline-transparent',
           body[status],
         )}
       >
+        {highlighted ? (
+          <span className="-mb-1 self-start rounded-chip bg-navy px-2 py-0.5 text-xs font-semibold text-white">
+            {t('pantry.jar.new')}
+          </span>
+        ) : null}
         <div className="flex items-start justify-between gap-2">
           <h3
             id={nameId}

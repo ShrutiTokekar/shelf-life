@@ -1,3 +1,4 @@
+import { draftFromParsed } from '@shelf-life/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
@@ -27,7 +28,8 @@ import {
 import { useCamera } from '../../features/ocr/useCamera';
 import { cx } from '../../lib/cx';
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/useMediaQuery';
-import { useScanResult } from '../../stores/scanResult';
+import { useMe } from '../../lib/session';
+import { useReviewDraft } from '../../stores/reviewDraft';
 
 type Phase = 'capture' | 'reading' | 'unreadable' | 'failed';
 
@@ -39,7 +41,9 @@ export function ScanPage() {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const camera = useCamera();
   const { start: startCamera, stop: stopCamera } = camera;
-  const setResult = useScanResult((s) => s.set);
+  const me = useMe();
+  const homeListId = me.pantry!.homeListId;
+  const setDraft = useReviewDraft((s) => s.set);
   const [phase, setPhase] = useState<Phase>('capture');
   const [progress, setProgress] = useState<ScanProgress | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -74,7 +78,8 @@ export function ScanPage() {
       setProgress(null);
       try {
         const receipt = await runScan(file, { signal: controller.signal, onProgress: setProgress });
-        setResult(receipt);
+        // Items go to the home list unless the user picks another label (REV-6).
+        setDraft(draftFromParsed(receipt, homeListId));
         navigate('/scan/review');
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') {
@@ -89,7 +94,7 @@ export function ScanPage() {
         abortRef.current = null;
       }
     },
-    [navigate, setResult, t, toast],
+    [navigate, setDraft, homeListId, t, toast],
   );
 
   const shutter = async () => {

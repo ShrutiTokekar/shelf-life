@@ -10,14 +10,17 @@ import { ProfilePage } from './pages/profile/ProfilePage';
 import { TodayPage } from './pages/today/TodayPage';
 import { WelcomePage } from './pages/welcome/WelcomePage';
 
-// Pantry pulls in Yjs, IndexedDB and Radix dialogs; Scan pulls in the OCR pipeline. Load them only
-// when opened (PERF-2).
+// Pantry, Review and Receipts pull in Yjs, IndexedDB and Radix dialogs; Scan pulls in the OCR
+// pipeline. Load them only when opened (PERF-2).
 const PantryPage = lazy(() =>
   import('./pages/pantry/PantryPage').then((m) => ({ default: m.PantryPage })),
 );
 const ScanPage = lazy(() => import('./pages/scan/ScanPage').then((m) => ({ default: m.ScanPage })));
-const ReviewPreviewPage = lazy(() =>
-  import('./pages/scan/ReviewPreviewPage').then((m) => ({ default: m.ReviewPreviewPage })),
+const ReviewPage = lazy(() =>
+  import('./pages/scan/ReviewPage').then((m) => ({ default: m.ReviewPage })),
+);
+const ReceiptsPage = lazy(() =>
+  import('./pages/receipts/ReceiptsPage').then((m) => ({ default: m.ReceiptsPage })),
 );
 
 const placeholder = (path: string, titleKey: string): RouteObject => ({
@@ -49,6 +52,17 @@ export const routes: RouteObject[] = [
     ),
   },
   {
+    // Full-screen like the scanner it follows (Figma 05 has no app nav); sticky footer (REV-6).
+    path: '/scan/review',
+    element: (
+      <RequireAuth>
+        <Suspense fallback={<PageSkeleton />}>
+          <ReviewPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
     element: (
       <RequireAuth>
         <AppShell />
@@ -71,14 +85,6 @@ export const routes: RouteObject[] = [
         ),
         handle: { skipLink: { targetId: 'shelves', textKey: 'skip.pantry' } } satisfies RouteHandle,
       },
-      {
-        path: 'scan/review',
-        element: (
-          <Suspense fallback={<PageSkeleton />}>
-            <ReviewPreviewPage />
-          </Suspense>
-        ),
-      },
       placeholder('lists', 'pages.lists'),
       placeholder('lists/new', 'pages.newList'),
       placeholder('lists/:listId', 'pages.list'),
@@ -92,8 +98,18 @@ export const routes: RouteObject[] = [
       placeholder('recipes/:id/cook', 'pages.cook'),
       placeholder('reminders', 'pages.reminders'),
       { path: 'profile', element: <ProfilePage /> },
-      placeholder('profile/receipts', 'pages.receipts'),
-      placeholder('profile/receipts/:id', 'pages.receipt'),
+      {
+        // One page for the list and a receipt: mobile shows one at a time, desktop both (web 16).
+        path: 'profile/receipts/:id?',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ReceiptsPage />
+          </Suspense>
+        ),
+        handle: {
+          skipLink: { targetId: 'receipts', textKey: 'skip.receipts' },
+        } satisfies RouteHandle,
+      },
       placeholder('*', 'pages.notFound'),
     ],
   },

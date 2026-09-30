@@ -74,3 +74,15 @@ export const AllStates = () => (
     />
   </ul>
 );
+
+/** REV-7: just added from a receipt. */
+export const JustAdded = () => (
+  <ul className="flex flex-wrap items-end gap-3 p-2">
+    <JarCard
+      {...common}
+      item={{ ...base, expiresOn: addDays(today, 20) }}
+      status="fresh"
+      highlighted
+    />
+  </ul>
+);

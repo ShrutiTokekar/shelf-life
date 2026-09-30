@@ -6,6 +6,7 @@ import type * as ScanSession from '../../features/ocr/scanSession';
 import { ScanError } from '../../features/ocr/scanSession';
 import { seriousViolations } from '../../test/axe';
 import { returningUserMe } from '../../test/fixtures';
+import { resetMedia, setDesktop } from '../../test/media';
 import { renderApp } from '../../test/renderApp';
 
 const runScan = vi.fn();
@@ -14,20 +15,12 @@ vi.mock('../../features/ocr/scanSession', async (orig) => ({
   runScan: (...a: unknown[]) => runScan(...a),
 }));
 
-function setDesktop(desktop: boolean) {
-  window.matchMedia = ((q: string) => ({
-    matches: desktop && q.includes('1024'),
-    media: q,
-    addEventListener: () => undefined,
-    removeEventListener: () => undefined,
-  })) as unknown as typeof window.matchMedia;
-}
-
 const photo = () => new File([new Uint8Array(10)], 'r.jpg', { type: 'image/jpeg' });
 const receipt: ParsedReceipt = {
   store: 'Patel Brothers',
   receiptDate: null,
   purchasedOn: '2026-09-28',
+  total: null,
   lineCount: 3,
   items: [],
   skipped: [],
@@ -37,8 +30,7 @@ beforeEach(() => {
   runScan.mockReset();
 });
 afterEach(() => {
-  // @ts-expect-error reset the stub
-  delete window.matchMedia;
+  resetMedia();
 });
 
 describe('ScanPage desktop (SCN-2)', () => {

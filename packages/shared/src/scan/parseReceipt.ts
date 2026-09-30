@@ -2,7 +2,7 @@ import { diffDays, type IsoDate } from '../dates';
 import { estimateFoodExpiry } from '../food/dictionary';
 import { DEFAULT_LOCATION, estimateExpiry } from '../pantry/expiry';
 import type { Category, ExpirySource, Location } from '../pantry/types';
-import { classifyLine, parseDate, type ClassifiedLine, type Unit } from './lines';
+import { classifyLine, parseDate, parsePrice, type ClassifiedLine, type Unit } from './lines';
 import { combineConfidence, confidenceBand, isNonFood, matchFood } from './match';
 import { displayName, expandReceiptText, matchKey } from './normalize';
 import { findStore } from './stores';
@@ -34,13 +34,16 @@ export type ParsedItem = {
 export type SkipReason =
   'store_info' | 'total' | 'tax' | 'payment' | 'discount' | 'not_food' | 'other';
 
-export type SkippedLine = { index: number; raw: string; reason: SkipReason };
+/** A line that isn't a grocery; kept (with its price, if any) so it can be restored (REV-5). */
+export type SkippedLine = { index: number; raw: string; price: number | null; reason: SkipReason };
 
 export type ParsedReceipt = {
   store: string | null;
   /** The receipt's date if found and plausible, else null (purchase date then = today). */
   receiptDate: IsoDate | null;
   purchasedOn: IsoDate;
+  /** The amount paid, from the TOTAL line, when it could be read. */
+  total: number | null;
   lineCount: number;
   items: ParsedItem[];
   skipped: SkippedLine[];
@@ -95,50 +98,111 @@ export function parseReceipt(lines: readonly OcrLine[], today: IsoDate): ParsedR
         if (line.unit) prev.unit = line.unit;
         continue;
       }
-      skipped.push({ index: line.index, raw: line.raw, reason: 'other' });
+      skipped.push({ index: line.index, raw: line.raw, price: null, reason: 'other' });
       continue;
     }
     if (line.kind !== 'item') {
-      skipped.push({ index: line.index, raw: line.raw, reason: reasonFor(line.kind) });
+      skipped.push({
+        index: line.index,
+        raw: line.raw,
+        price: line.price,
+        reason: reasonFor(line.kind),
+      });
       continue;
     }
 
-    const expanded = expandReceiptText(line.text);
-    if (isNonFood(expanded) || isNonFood(line.text)) {
-      skipped.push({ index: line.index, raw: line.raw, reason: 'not_food' });
-      continue;
-    }
-
-    const match = matchFood(matchKey(expanded));
-    const usable = match && match.score >= 0.5 ? match : null;
-    const confidence = combineConfidence(line.ocr, usable?.score ?? 0.3);
-    const band = confidenceBand(confidence);
-    const category: Category = usable?.food.category ?? 'other';
-    const location: Location = usable?.food.defaultLocation ?? DEFAULT_LOCATION[category];
-    const expiry = usable
-      ? estimateFoodExpiry(usable.food, location, purchasedOn)
-      : {
-          expiresOn: estimateExpiry(category, location, purchasedOn),
-          source: 'category_default' as const,
-        };
-
-    items.push({
-      index: line.index,
-      raw: line.raw.trim(),
-      name: usable?.food.name ?? displayName(expanded),
-      foodId: usable?.food.foodId ?? null,
-      category,
-      location,
-      quantity: line.quantity,
-      unit: line.unit,
-      price: line.price,
-      confidence,
-      status: band === 'matched' ? 'matched' : 'needs_look',
-      wantsAi: band === 'needs_ai',
-      expiresOn: expiry.expiresOn,
-      expirySource: expiry.source,
-    });
+    const item = parseItemLine(line, purchasedOn);
+    if (item) items.push(item);
+    else skipped.push({ index: line.index, raw: line.raw, price: line.price, reason: 'not_food' });
   }
 
-  return { store, receiptDate, purchasedOn, lineCount: nonEmpty.length, items, skipped };
+  return {
+    store,
+    receiptDate,
+    purchasedOn,
+    total: findTotal(classified),
+    lineCount: nonEmpty.length,
+    items,
+    skipped,
+  };
+}
+
+/** The amount paid: the last TOTAL / BALANCE line, never a subtotal. */
+function findTotal(lines: readonly ClassifiedLine[]): number | null {
+  let total: number | null = null;
+  for (const l of lines) {
+    if (l.kind !== 'total' || l.price === null || l.price <= 0) continue;
+    if (/sub\s?-?total|items?\s?sold|#\s?of\s?items|item\s?count|net\s?sales/i.test(l.raw))
+      continue;
+    total = l.price;
+  }
+  return total;
+}
+
+/**
+ * SRS 8.2 steps 3–5 for one item line: normalize, match, score, estimate expiry. Returns null for
+ * non-food lines. Also used when the user restores a skipped line on the review screen (REV-5).
+ */
+export function parseItemLine(
+  line: Pick<ClassifiedLine, 'index' | 'raw' | 'text' | 'price' | 'quantity' | 'unit'> & {
+    ocr: number;
+  },
+  purchasedOn: IsoDate,
+  opts: { allowNonFood?: boolean } = {},
+): ParsedItem | null {
+  const expanded = expandReceiptText(line.text);
+  if (!opts.allowNonFood && (isNonFood(expanded) || isNonFood(line.text))) return null;
+
+  const match = matchFood(matchKey(expanded));
+  const usable = match && match.score >= 0.5 ? match : null;
+  const confidence = combineConfidence(line.ocr, usable?.score ?? 0.3);
+  const band = confidenceBand(confidence);
+  const category: Category = usable?.food.category ?? 'other';
+  const location: Location = usable?.food.defaultLocation ?? DEFAULT_LOCATION[category];
+  const expiry = usable
+    ? estimateFoodExpiry(usable.food, location, purchasedOn)
+    : {
+        expiresOn: estimateExpiry(category, location, purchasedOn),
+        source: 'category_default' as const,
+      };
+
+  return {
+    index: line.index,
+    raw: line.raw.trim(),
+    name: usable?.food.name ?? (displayName(expanded) || line.raw.trim()),
+    foodId: usable?.food.foodId ?? null,
+    category,
+    location,
+    quantity: line.quantity,
+    unit: line.unit,
+    price: line.price,
+    confidence,
+    status: band === 'matched' ? 'matched' : 'needs_look',
+    wantsAi: band === 'needs_ai',
+    expiresOn: expiry.expiresOn,
+    expirySource: expiry.source,
+  };
+}
+
+/**
+ * REV-5: turn a skipped line back into an item. The user chose to keep it, so it's matched even
+ * when the text looks like something else (a total, a non-food word).
+ */
+export function itemFromSkippedLine(raw: string, index: number, purchasedOn: IsoDate): ParsedItem {
+  const c = classifyLine(raw, index, false, () => false);
+  const text =
+    c.kind === 'item' ? c.text : raw.replace(/\s*-?\$?\s?\d{1,4}[.,]\d{2}.*$/, '').trim() || raw;
+  return parseItemLine(
+    {
+      index,
+      raw,
+      text,
+      price: c.price ?? parsePrice(raw),
+      quantity: c.quantity,
+      unit: c.unit,
+      ocr: 1,
+    },
+    purchasedOn,
+    { allowNonFood: true },
+  )!;
 }

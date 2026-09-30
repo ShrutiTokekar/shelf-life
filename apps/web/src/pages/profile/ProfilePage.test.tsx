@@ -15,6 +15,14 @@ describe('ProfilePage', () => {
     expect(screen.getByText('ananya@example.com')).toBeInTheDocument();
   });
 
+  it('PRO-6 links to Receipt history', async () => {
+    renderApp('/profile', returningUserMe);
+    expect(await screen.findByRole('link', { name: /Receipt history/ })).toHaveAttribute(
+      'href',
+      '/profile/receipts',
+    );
+  });
+
   it('PRO-6 Sign out calls the API, clears the cached account and goes to Welcome', async () => {
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
