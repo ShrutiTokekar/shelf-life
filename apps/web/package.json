@@ -11,7 +11,8 @@
     "stories": "ladle serve",
     "test:e2e": "playwright test && playwright test -c playwright.pwa.config.ts",
     "icons": "node scripts/generate-icons.mjs",
-    "ocr:assets": "node scripts/copy-ocr-assets.mjs"
+    "ocr:assets": "node scripts/copy-ocr-assets.mjs",
+    "receipts:label": "node scripts/copy-ocr-assets.mjs && playwright test -c playwright.label.config.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",

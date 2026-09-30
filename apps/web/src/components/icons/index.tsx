@@ -304,3 +304,29 @@ export const DotsIcon = (p: IconProps) => (
 
 export { Icon };
 export type { IconProps };
+
+export const ChevronLeftIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M15 5l-7 7 7 7" />
+  </Icon>
+);
+
+export const ChevronRightIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M9 5l7 7-7 7" />
+  </Icon>
+);
+
+export const ArrowRightIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 12h15M13 6l6 6-6 6" />
+  </Icon>
+);
+
+/** Receipt with a zig-zag foot (SRS 4.4 "receipt"). */
+export const ReceiptIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21V3Z" />
+    <path d="M9 8h6M9 12h6M9 16h3" />
+  </Icon>
+);

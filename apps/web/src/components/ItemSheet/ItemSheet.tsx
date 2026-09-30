@@ -34,6 +34,8 @@ export type ItemSheetProps = {
   onSave: (form: ItemForm, meta: { estimated: boolean }) => void;
   onRanOut?: () => void;
   onDelete?: () => void;
+  /** The review screen sets one pantry label for the whole receipt (REV-6), so it hides this. */
+  hideList?: boolean;
 };
 
 type Draft = {
@@ -101,6 +103,7 @@ function ItemSheetForm({
   onSave,
   onRanOut,
   onDelete,
+  hideList = false,
 }: ItemSheetProps) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<Draft>(() => draftFrom(item, defaultListId, today));
@@ -238,13 +241,15 @@ function ItemSheetForm({
         onChange={(v) => set('location', v as Location)}
         options={LOCATIONS.map((l) => ({ value: l, label: t(`locations.${l}`) }))}
       />
-      <Select
-        label={t('itemSheet.list')}
-        hint={t('itemSheet.listHint')}
-        value={draft.listId}
-        onChange={(v) => set('listId', v)}
-        options={listOptions}
-      />
+      {hideList ? null : (
+        <Select
+          label={t('itemSheet.list')}
+          hint={t('itemSheet.listHint')}
+          value={draft.listId}
+          onChange={(v) => set('listId', v)}
+          options={listOptions}
+        />
+      )}
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor={ids.date} className="font-semibold text-ink">

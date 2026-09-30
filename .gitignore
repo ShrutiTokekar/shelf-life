@@ -18,3 +18,6 @@ docs/
 
 # Tesseract assets copied from node_modules at dev/build time
 apps/web/public/ocr/
+
+# Real receipt photos for the accuracy set stay on the labeler's machine (SRS 13, rule 1)
+tests/receipts/photos/

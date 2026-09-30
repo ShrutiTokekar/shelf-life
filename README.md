@@ -101,6 +101,12 @@ Next, open **Pantry**. While it's empty, dev builds show a **Load sample pantry*
 
 Scanning runs entirely in the browser with Tesseract.js. `pnpm dev` and `pnpm build` copy the OCR engine and English model from `node_modules` into `apps/web/public/ocr/` (git-ignored), so nothing loads from a CDN and no photo or text leaves the device. The first scan downloads about 7 MB; after that the service worker caches it and scanning works offline.
 
+After a scan, the review screen saves the items and the receipt's text lines to the pantry on this device. Receipt history (Profile → Receipt history) shows that text; the photo itself is never stored.
+
+### Receipt accuracy set
+
+`tests/receipts/` holds the labeled receipts that give the OCR accuracy score (SRS 13). Photos stay on your machine in `tests/receipts/photos/` (git-ignored); only redacted text is committed. See [tests/receipts/README.md](tests/receipts/README.md).
+
 ### Troubleshooting
 
 | Problem                                           | Fix                                                                                                   |
@@ -133,6 +139,8 @@ pnpm test:e2e
 | `pnpm db:up` / `pnpm db:migrate` / `pnpm db:generate` | Postgres in Docker, apply / generate Drizzle migrations                                    |
 | `pnpm db:seed --email you@gmail.com`                  | Dev only: extra lists and demo members for your account                                    |
 | `pnpm stories`                                        | Component demo pages (Ladle)                                                               |
+| `pnpm receipts:label`                                 | Read new photos in `tests/receipts/photos/` on this machine and write draft labels         |
+| `pnpm receipts:score`                                 | Receipt accuracy on the labeled set (also runs in CI)                                      |
 
 ## Layout
 
@@ -141,6 +149,7 @@ apps/web/          React PWA
 apps/api/          Hono API (Better Auth, Drizzle)
 packages/shared/   types, Zod schemas, constants
 packages/ranking/  ranking (pure functions, Milestone 6)
+tests/receipts/    labeled receipt set and accuracy score (text only)
 assets/            logo and fonts
 ```
 

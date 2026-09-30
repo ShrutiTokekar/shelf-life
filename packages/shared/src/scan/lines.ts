@@ -113,7 +113,8 @@ export function classifyLine(
     unit: null,
   };
   const line = raw.trim();
-  if (!LETTERS.test(line) && !PRICE_END.test(line)) return base;
+  if (!LETTERS.test(line) && !PRICE_END.test(line))
+    return parseDate(line) ? { ...base, kind: 'date' } : base;
 
   const weight = WEIGHT.exec(line);
   if (weight)

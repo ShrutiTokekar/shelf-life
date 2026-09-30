@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Button } from '../../components/Button/Button';
 import { ErrorState } from '../../components/ErrorState/ErrorState';
-import { CloudOffIcon, LockIcon } from '../../components/icons';
+import { ChevronRightIcon, CloudOffIcon, LockIcon, ReceiptIcon } from '../../components/icons';
 import { signOut } from '../../lib/api';
 import { useMe, useSession } from '../../lib/session';
 import { useOnlineStatus } from '../../lib/useOnlineStatus';
@@ -69,6 +69,18 @@ export function ProfilePage() {
           <LockIcon size={18} />
           {t('profile.photoNote')}
         </p>
+        {/* PRO-6: Receipt history link. */}
+        <Link
+          to="/profile/receipts"
+          className="-mx-2 flex min-h-12 items-center gap-3 rounded-xl px-2 text-ink"
+        >
+          <ReceiptIcon size={22} className="text-navy" />
+          <span className="flex-1">
+            <span className="block font-semibold">{t('profile.receiptHistory')}</span>
+            <span className="block text-sm text-secondary">{t('profile.receiptHistoryBody')}</span>
+          </span>
+          <ChevronRightIcon size={20} className="text-navy" />
+        </Link>
         {failed ? <ErrorState message={t('profile.signOutFailed')} /> : null}
         {!online ? (
           <p className="flex items-center gap-2 text-sm text-ink">

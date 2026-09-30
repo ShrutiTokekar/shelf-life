@@ -40,12 +40,16 @@ test.describe('Scan receipt (SRS 6.4)', () => {
     await expect(page.getByRole('heading', { name: 'Reading your receipt…' })).toBeVisible();
     await expect(page.getByText(/Nothing is uploaded\./).first()).toBeVisible();
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Review scan' })).toBeVisible({
+    await expect(page.getByRole('heading', { level: 1, name: 'Review items' })).toBeVisible({
       timeout: 90_000,
     });
     await expect(page.getByText('8 groceries found', { exact: false })).toBeVisible();
-    await expect(page.getByText(/^Patel Brothers ·/)).toBeVisible();
-    const names = await page.getByTestId('scanned-item').locator('p:nth-child(2)').allInnerTexts();
+    await expect(page.getByRole('textbox', { name: 'Store name' })).toHaveValue('Patel Brothers');
+    const labels = await page
+      .getByTestId('review-item')
+      .getByRole('checkbox')
+      .evaluateAll((boxes) => boxes.map((b) => b.getAttribute('aria-label')));
+    const names = labels.map((l) => l!.replace(/^Add (.*) to pantry$/, '$1'));
     expect(names).toEqual([
       'Toor dal',
       'Milk',
@@ -72,17 +76,63 @@ test.describe('Scan receipt (SRS 6.4)', () => {
       (await indexedDB.databases()).map((d) => d.name).sort(),
     );
     await upload(page, await receiptPng(page, PATEL));
-    await expect(page.getByRole('heading', { level: 1, name: 'Review scan' })).toBeVisible({
+    await expect(page.getByRole('heading', { level: 1, name: 'Review items' })).toBeVisible({
       timeout: 90_000,
     });
+    // Saving the review writes text lines to the pantry doc on this device (REV-7).
+    await page.getByRole('button', { name: /^Add \d+ items to pantry$/ }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your pantry' })).toBeVisible();
 
-    // No request carried anything during the scan (the app makes only GETs for /ocr/ assets).
+    // No request carried anything during the scan or the save (only GETs for /ocr/ assets).
     expect(sent).toEqual([]);
-    // No new IndexedDB database (Tesseract's own cache is off) and no stored image blobs.
+    // No new IndexedDB database besides the pantry doc (Tesseract's own cache is off)…
     const after = await page.evaluate(async () =>
       (await indexedDB.databases()).map((d) => d.name).sort(),
     );
-    expect(after).toEqual(before);
+    expect(after.filter((n) => !before.includes(n))).toEqual(
+      after.filter((n) => !before.includes(n) && n!.startsWith('shelf-life:pantry:')),
+    );
+    // …and nothing stored anywhere on the device is an image: no Blobs, no PNG/JPEG bytes, and
+    // the whole pantry doc stays small (the photo alone would be hundreds of KB).
+    const stored = await page.evaluate(async () => {
+      let bytes = 0;
+      let blobs = 0;
+      let imageBytes = 0;
+      const isImage = (b: Uint8Array) => {
+        for (let i = 0; i + 3 < b.length; i++) {
+          if (b[i] === 0x89 && b[i + 1] === 0x50 && b[i + 2] === 0x4e && b[i + 3] === 0x47)
+            return true;
+          if (b[i] === 0xff && b[i + 1] === 0xd8 && b[i + 2] === 0xff) return true;
+        }
+        return false;
+      };
+      for (const info of await indexedDB.databases()) {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const req = indexedDB.open(info.name!);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        for (const name of Array.from(db.objectStoreNames)) {
+          const values = await new Promise<unknown[]>((resolve, reject) => {
+            const req = db.transaction(name).objectStore(name).getAll();
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          for (const v of values) {
+            if (v instanceof Blob) blobs++;
+            if (v instanceof Uint8Array) {
+              bytes += v.length;
+              if (isImage(v)) imageBytes++;
+            }
+          }
+        }
+        db.close();
+      }
+      return { bytes, blobs, imageBytes };
+    });
+    expect(stored.blobs).toBe(0);
+    expect(stored.imageBytes).toBe(0);
+    expect(stored.bytes).toBeLessThan(100_000);
     // Cache Storage only ever holds the OCR engine files, never user images.
     const cached = await page.evaluate(async () => {
       const out: string[] = [];
@@ -157,7 +207,7 @@ test.describe('Mobile camera (SCN-1)', () => {
     // The fake camera shows a moving test pattern, not a receipt. Depending on the frame, OCR finds
     // a couple of stray "lines" (→ review) or nothing (→ SCN-7). Either way the shutter captured a
     // frame and the whole pipeline ran.
-    const review = page.getByRole('heading', { level: 1, name: 'Review scan' });
+    const review = page.getByRole('heading', { level: 1, name: 'Review items' });
     const unreadable = page.getByRole('heading', { name: "We couldn't read this receipt" });
     await expect(review.or(unreadable)).toBeVisible({ timeout: 90_000 });
     if (await unreadable.isVisible()) {

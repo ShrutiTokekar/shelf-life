@@ -14,10 +14,9 @@ import {
   type Shelf as ShelfKey,
   type Sort,
 } from '@shelf-life/shared';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams } from 'react-router-dom';
-import type { AvatarTone } from '../../components/Avatar/Avatar';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../../components/Button/Button';
 import { categoryIcon, CategoryChips } from '../../components/CategoryChips/CategoryChips';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
@@ -36,7 +35,7 @@ import {
 } from '../../components/icons';
 import { IconButton } from '../../components/IconButton/IconButton';
 import { ItemSheet } from '../../components/ItemSheet/ItemSheet';
-import { JarCard, type JarPerson } from '../../components/JarCard/JarCard';
+import { JarCard } from '../../components/JarCard/JarCard';
 import { ListFilterChips } from '../../components/ListFilterChips/ListFilterChips';
 import { SearchField } from '../../components/SearchField/SearchField';
 import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
@@ -45,7 +44,9 @@ import { PageSkeleton } from '../../components/Skeleton/Skeleton';
 import { openEntryFor } from '../../lib/sync/listStore';
 import { useListsItems, usePantry } from '../../lib/sync/useDocs';
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/useMediaQuery';
+import { usePeople } from '../../lib/people';
 import { useMe } from '../../lib/session';
+import type { PantryHighlightState } from '../../stores/reviewDraft';
 import { DevSeedButton } from './DevSeedButton';
 import { usePantryActions } from './usePantryActions';
 
@@ -60,7 +61,8 @@ const LOCATION_ICON = {
   freezer: <SnowIcon size={18} />,
   cupboard: <BoxIcon size={18} />,
 };
-const MEMBER_TONES: AvatarTone[] = ['periwinkle', 'sage', 'peach', 'apricot'];
+
+const HIGHLIGHT_MS = 3000;
 
 type SheetState = { mode: 'add' } | { mode: 'edit'; itemId: string } | null;
 
@@ -79,26 +81,28 @@ export function PantryPage() {
     params.get('add') === '1' ? { mode: 'add' } : null,
   );
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  // REV-7: jars just added from a receipt are highlighted for 3 s.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [highlight] = useState<ReadonlySet<string>>(
+    () => new Set((location.state as PantryHighlightState | null)?.highlight ?? []),
+  );
+  const [highlightOn, setHighlightOn] = useState(highlight.size > 0);
+  useEffect(() => {
+    if (!highlightOn) return;
+    // Drop the state so a reload or Back doesn't highlight them again.
+    navigate({ search: location.search }, { replace: true, state: null });
+    const id = setTimeout(() => setHighlightOn(false), HIGHLIGHT_MS);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightOn]);
 
   const lists = useMemo(
     () => me.lists.filter((l) => l.pantryId === pantryId),
     [me.lists, pantryId],
   );
   const listById = useMemo(() => new Map(lists.map((l) => [l.id, l])), [lists]);
-  const people = useMemo(() => {
-    const map = new Map<string, JarPerson>();
-    const add = (id: string, name: string) => {
-      if (!map.has(id))
-        map.set(id, {
-          name,
-          initial: name.charAt(0).toUpperCase(),
-          tone: MEMBER_TONES[map.size % MEMBER_TONES.length]!,
-        });
-    };
-    add(me.user.id, me.user.displayName);
-    for (const l of me.lists) for (const m of l.members) add(m.userId, m.displayName);
-    return map;
-  }, [me]);
+  const people = usePeople(me);
 
   const outListIds = useMemo(
     () => [...new Set(items.filter((i) => shelfFor(i, today) === 'out').map((i) => i.listId))],
@@ -147,6 +151,7 @@ export function PantryPage() {
         onUsed={() => actions.usedIt(item)}
         onEdit={() => setSheet({ mode: 'edit', itemId: item.id })}
         onAddToList={() => void actions.addToList(item)}
+        highlighted={highlightOn && highlight.has(item.id)}
       />
     );
   }
@@ -294,7 +299,11 @@ export function PantryPage() {
                   title={meta.title}
                   helper={meta.helper}
                   count={group.items.length}
-                  limit={sort === 'expiry' && group.key === 'fresh' && !filtered ? 4 : undefined}
+                  limit={
+                    sort === 'expiry' && group.key === 'fresh' && !filtered && !highlightOn
+                      ? 4
+                      : undefined
+                  }
                 >
                   {group.items.map(renderJar)}
                 </Shelf>

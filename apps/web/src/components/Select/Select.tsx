@@ -12,30 +12,52 @@ export type SelectProps = {
   onChange: (value: string) => void;
   hint?: string;
   className?: string;
+  /** A sentence-style picker: small label and the value as a link-styled button (REV-6). */
+  inline?: boolean;
 };
 
 /** Radix Select with a visible label; shows value + chevron (SRS 7). */
-export function Select({ label, options, value, onChange, hint, className }: SelectProps) {
+export function Select({
+  label,
+  options,
+  value,
+  onChange,
+  hint,
+  className,
+  inline = false,
+}: SelectProps) {
   const labelId = useId();
   const hintId = useId();
   const current = options.find((o) => o.value === value);
   return (
-    <div className={cx('flex flex-col gap-1.5', className)}>
-      <span id={labelId} className="font-semibold text-ink">
+    <div
+      className={cx(
+        inline ? 'flex items-center justify-center gap-1' : 'flex flex-col gap-1.5',
+        className,
+      )}
+    >
+      <span
+        id={labelId}
+        className={inline ? 'text-sm font-medium text-secondary' : 'font-semibold text-ink'}
+      >
         {label}
       </span>
       <RadixSelect.Root value={value} onValueChange={onChange}>
         <RadixSelect.Trigger
           aria-labelledby={labelId}
           aria-describedby={hint ? hintId : undefined}
-          className="flex min-h-12 items-center justify-between gap-2 rounded-button bg-white px-4 text-left text-base text-ink bordered"
+          className={
+            inline
+              ? 'flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-left text-sm font-semibold text-navy underline underline-offset-4'
+              : 'flex min-h-12 items-center justify-between gap-2 rounded-button bg-white px-4 text-left text-base text-ink bordered'
+          }
         >
           <span className="flex items-center gap-2">
             {current?.icon}
             <RadixSelect.Value />
           </span>
           <RadixSelect.Icon>
-            <ChevronDownIcon size={20} className="text-slate" />
+            <ChevronDownIcon size={20} className={inline ? 'text-navy' : 'text-slate'} />
           </RadixSelect.Icon>
         </RadixSelect.Trigger>
         <RadixSelect.Portal>

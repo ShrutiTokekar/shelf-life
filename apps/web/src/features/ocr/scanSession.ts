@@ -99,7 +99,13 @@ async function preprocess(
  */
 export async function runScan(
   file: Blob & { name?: string },
-  opts: { signal: AbortSignal; onProgress: (p: ScanProgress) => void; today?: string },
+  opts: {
+    signal: AbortSignal;
+    onProgress: (p: ScanProgress) => void;
+    today?: string;
+    /** The raw OCR lines, for the labeled accuracy set (tests/receipts). Text only. */
+    onLines?: (lines: OcrLine[]) => void;
+  },
 ): Promise<ParsedReceipt> {
   const { signal, onProgress } = opts;
   const state: ScanProgress = {
@@ -144,6 +150,7 @@ export async function runScan(
     checkAborted();
     const lines: OcrLine[] = await ocr.read(cleaned.canvas);
     dispose();
+    opts.onLines?.(lines);
     checkAborted();
     const readable = lines.filter((l) => /[a-z]{2,}/i.test(l.text));
     if (readable.length < 2) throw new ScanError('unreadable', "We couldn't read this receipt");
