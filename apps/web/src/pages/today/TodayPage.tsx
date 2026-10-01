@@ -434,8 +434,10 @@ function MobileTopBar() {
   const { textSize, setTextSize } = useUiSettings();
   const next = TEXT_SIZES[(TEXT_SIZES.indexOf(textSize) + 1) % TEXT_SIZES.length]!;
   return (
-    <div className="flex items-center justify-between gap-3">
-      <Wordmark size={28} />
+    // flex-wrap: at the largest text size the buttons may drop below the logo rather than
+    // push past the screen edge (A11Y-6).
+    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-3">
+      <Wordmark size={28} fixed />
       <div className="flex items-center gap-2">
         <button
           type="button"
