@@ -463,7 +463,11 @@
     "storageError": "We couldn’t open your pantry on this device.",
     "est": "est.",
     "estSpoken": "estimated",
-    "privacy": "Only the text is kept. The photo is already gone."
+    "privacy": "Only the text is kept. The photo is already gone.",
+    "aiNote": "AI guess from “{{raw}}”. Tap to confirm.",
+    "aiChecking_one": "Checking {{count}} unclear line with AI…",
+    "aiChecking_other": "Checking {{count}} unclear lines with AI…",
+    "aiPrivacy": "AI guesses use only the receipt’s text, never your photo. Google’s free AI service may use that text to improve its products."
   },
   "receipts": {
     "title": "Receipt history",

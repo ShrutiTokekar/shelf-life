@@ -15,6 +15,9 @@ export const ERROR_CODES = {
   notFound: 'not_found',
   validation: 'validation_error',
   rateLimited: 'rate_limited',
+  // SRS 9: AI is off, failing or over its daily limit; the app uses its non-AI fallback.
+  aiUnavailable: 'ai_unavailable',
+  aiLimit: 'ai_limit',
   conflict: 'conflict',
   internal: 'internal_error',
 } as const;

@@ -119,6 +119,28 @@ test.describe('Review + receipt history (SRS 6.5, 6.12)', () => {
     await expect(page.getByRole('article', { name: 'Cilantro' })).toHaveCount(0);
   });
 
+  test('SRS 9.2 REV-4 a line the dictionary can’t read gets an AI guess to confirm', async ({
+    page,
+  }) => {
+    // E2E runs the API with the mock AI provider: no outside calls.
+    await signInAsNewUser(page);
+    await completeOnboarding(page);
+    await page.goto('/scan');
+    await page.getByTestId('file-input').setInputFiles({
+      name: 'receipt.png',
+      mimeType: 'image/png',
+      buffer: await receiptPng(
+        page,
+        'PATEL BROTHERS\nTOOR DAL 4LB      8.99\nQZX VLRP          2.49\nTOTAL            11.48',
+      ),
+    });
+    await expect(page.getByRole('heading', { level: 1, name: 'Review items' })).toBeVisible({
+      timeout: 90_000,
+    });
+    await expect(page.getByRole('button', { name: /^AI guess from “QZX VLRP”/ })).toBeVisible();
+    await expect(page.getByText(/never your photo/)).toBeVisible();
+  });
+
   // REV-7 offline is covered against the production build in e2e-pwa/offline-shell.spec.ts: the
   // dev server can't serve lazy route code offline, the service worker can.
 });

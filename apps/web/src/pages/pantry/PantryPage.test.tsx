@@ -146,6 +146,38 @@ describe('PantryPage', () => {
     expect(screen.getByText('Mangoes added to your pantry.')).toBeInTheDocument();
   });
 
+  it('SRS 8.3 manual adds use the dictionary, and AI for foods it doesn’t know', async () => {
+    const { addDays, todayIso } = await import('@shelf-life/shared');
+    const { mockApi } = await import('../../test/mockApi');
+    const { readItems } = await import('@shelf-life/docs');
+    const fetchSpy = mockApi({ 'POST /ai/shelf-life': { days: 40, basis: 'Paste, refrigerated' } });
+    renderApp('/pantry', seededMe);
+    await screen.findByRole('heading', { name: 'Your pantry is empty' });
+    const add = async (name: string) => {
+      await userEvent.click(screen.getAllByRole('button', { name: 'Add item' })[0]!);
+      const dialog = await screen.findByRole('dialog', { name: 'Add an item' });
+      await userEvent.type(within(dialog).getByLabelText('Name'), name);
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Add to pantry' }));
+      await screen.findByRole('article', { name });
+    };
+    await add('Spinach');
+    await add('Yuzu kosho');
+    const doc = getDoc(pantryDocName(seededMe.pantry!.id)).doc;
+    await waitFor(() =>
+      expect(readItems(doc).find((i) => i.name === 'Yuzu kosho')).toMatchObject({
+        expirySource: 'ai',
+        expiresOn: addDays(todayIso(), 40),
+      }),
+    );
+    expect(readItems(doc).find((i) => i.name === 'Spinach')).toMatchObject({
+      foodId: 'spinach',
+      expirySource: 'dictionary',
+    });
+    // Only the unknown food went to AI.
+    expect(fetchSpy.mock.calls.filter(([u]) => String(u).includes('/ai/'))).toHaveLength(1);
+    fetchSpy.mockRestore();
+  });
+
   it('PAN-8 Edit saves changes; Delete removes with Undo', async () => {
     await openPantryWithSample();
     await userEvent.click(screen.getByRole('button', { name: 'Edit Paneer' }));

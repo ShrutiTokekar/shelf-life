@@ -1,5 +1,8 @@
 import {
+  addDays,
   applyUsedIt,
+  estimateFoodExpiry,
+  foodByName,
   daysLeft,
   newId,
   type Activity,
@@ -12,10 +15,12 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as Y from 'yjs';
 import { useToast } from '../../components/Toast/Toast';
+import { aiShelfLife } from '../../lib/api';
 import { getDoc, listDocName } from '../../lib/sync/docs';
 import {
   addItems,
   addListItem,
+  readItem,
   recordActivity,
   removeActivity,
   removeItem,
@@ -136,12 +141,17 @@ export function usePantryActions(opts: {
         expirySource: estimated ? ('category_default' as const) : ('user' as const),
       };
       if (!existing) {
+        // SRS 8.3: a food the dictionary knows uses its shelf life; for anything else an AI
+        // estimate is asked for below (online), and the category default stays as the fallback.
+        const food = estimated ? foodByName(form.name) : undefined;
+        const known = food ? estimateFoodExpiry(food, form.location, today) : null;
         const item: PantryItem = {
           id: newId(),
           pantryId,
-          foodId: null,
+          foodId: food?.foodId ?? null,
           ...form,
           ...expiry,
+          ...(known ? { expiresOn: known.expiresOn, expirySource: known.source } : {}),
           purchasedOn: today,
           status: form.quantity === 0 ? 'out' : 'active',
           outAt: form.quantity === 0 ? today : null,
@@ -150,6 +160,17 @@ export function usePantryActions(opts: {
           updatedAt: new Date().toISOString(),
         };
         addItems(doc, [item]);
+        if (estimated && !food) {
+          void aiShelfLife(pantryId, item.name, item.location).then((estimate) => {
+            const current = estimate ? readItem(doc, item.id) : null;
+            // Only if nobody has changed the date since.
+            if (estimate && current?.expirySource === 'category_default')
+              updateItem(doc, item.id, {
+                expiresOn: addDays(today, estimate.days),
+                expirySource: 'ai',
+              });
+          });
+        }
         toast({
           message: t('pantry.toast.added', { name: item.name }),
           action: { label: undoLabel, onAction: () => removeItem(doc, item.id) },

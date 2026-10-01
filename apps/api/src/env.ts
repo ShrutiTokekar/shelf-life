@@ -22,6 +22,16 @@ const envSchema = z.object({
    * browser then connects through the Vite dev server at /sync on its own origin.
    */
   SYNC_URL: z.url().optional(),
+  /** SRS 9.1: Gemini API key (Google AI Studio, free tier). Never sent to the browser. */
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  GEMINI_MODEL: z.string().min(1).default('gemini-3.5-flash'),
+  /**
+   * gemini (needs the key), mock (fixtures from the app's dictionary) or off. Default: gemini
+   * when a key is set, otherwise mock in development and tests and off in production.
+   */
+  AI_PROVIDER: z.enum(['gemini', 'mock', 'off']).optional(),
+  /** SRS 9.4: AI calls per pantry per day. */
+  AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(30),
 });
 
 export type Env = z.infer<typeof envSchema>;

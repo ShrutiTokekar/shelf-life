@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addDays,
   ALL_RECEIPTS,
+  applyAiCleanup,
+  applyAiShelfLife,
+  linesForAi,
   commitReview,
   confirmItem,
   draftFromParsed,
@@ -378,4 +382,96 @@ describe('lineCaption', () => {
     ['CILANTRO', 'CILANTRO'],
     ['4.99', '4.99'],
   ])('%s → %s', (raw, caption) => expect(lineCaption(raw)).toBe(caption));
+});
+
+describe('SRS 9.2 AI cleanup on the review draft', () => {
+  // Two lines the dictionary can't read (confidence < 0.5) and one it can.
+  const blurry = () =>
+    draftFromParsed(
+      parseReceipt(
+        asOcr('PATEL BROTHERS\nTOOR DAL 4LB 8.99\nXQ BRKT 2.00\nZZPN WHL 3.00', 0.6),
+        TODAY,
+      ),
+      'home',
+    );
+
+  it('picks only untouched lines under 0.5 confidence, and only once', () => {
+    const d = blurry();
+    expect(linesForAi(d).map((i) => i.raw)).toEqual(['XQ BRKT 2.00', 'ZZPN WHL 3.00']);
+    expect(linesForAi({ ...d, aiChecked: true })).toEqual([]);
+    const touched = toggleItem(d, d.items[1]!.index);
+    expect(linesForAi(touched).map((i) => i.raw)).toEqual(['ZZPN WHL 3.00']);
+  });
+
+  it('applies AI names: dictionary foods get their shelf life, others the category default', () => {
+    const d = blurry();
+    const next = applyAiCleanup(d, [
+      {
+        raw: 'XQ BRKT 2.00',
+        name: 'Yuzu kosho',
+        category: 'other',
+        location: 'fridge',
+        confidence: 0.6,
+      },
+      {
+        raw: 'ZZPN WHL 3.00',
+        name: 'Whole milk',
+        category: 'dairy_eggs',
+        location: 'fridge',
+        confidence: 0.92,
+      },
+      {
+        raw: 'TOOR DAL 4LB 8.99',
+        name: null,
+        category: 'other',
+        location: 'cupboard',
+        confidence: 0.9,
+      },
+    ]);
+    expect(next.aiChecked).toBe(true);
+    const [dal, brisket, milk] = next.items;
+    expect(milk).toMatchObject({
+      name: 'Milk',
+      foodId: 'milk',
+      matchSource: 'ai',
+      unsure: true,
+      confidence: 0.92,
+      expirySource: 'dictionary',
+    });
+    expect(brisket).toMatchObject({
+      name: 'Yuzu kosho',
+      foodId: null,
+      category: 'other',
+      location: 'fridge',
+      expirySource: 'category_default',
+      matchSource: 'ai',
+    });
+    // "Not food" from AI leaves the line as the parser had it.
+    expect(dal).toEqual(d.items[0]);
+    const estimated = applyAiShelfLife(next, brisket!.index, 4);
+    expect(estimated.items[1]).toMatchObject({
+      expirySource: 'ai',
+      expiresOn: addDays(d.purchasedOn, 4),
+    });
+    // Only replaces a category default, never a dictionary or user date.
+    expect(applyAiShelfLife(next, milk!.index, 99).items[2]).toEqual(milk);
+  });
+
+  it('REV-4 an AI match still needs confirming, and the receipt records it as AI', () => {
+    const d = applyAiCleanup(blurry(), [
+      {
+        raw: 'ZZPN WHL 3.00',
+        name: 'Whole milk',
+        category: 'dairy_eggs',
+        location: 'fridge',
+        confidence: 0.92,
+      },
+    ]);
+    const milk = d.items.find((i) => i.raw.startsWith('ZZPN'))!;
+    expect(needsLook(milk)).toBe(true);
+    const line = commitReview(confirmItem(d, milk.index), ctx).receipt.lines.find((l) =>
+      l.rawText.startsWith('ZZPN'),
+    )!;
+    expect(line).toMatchObject({ matchSource: 'ai', confirmed: true });
+  });
 });

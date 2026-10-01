@@ -8,6 +8,10 @@ import { sameOriginOnly } from './middleware/csrf';
 import { apiError, onError } from './middleware/errors';
 import { rateLimitPerUser } from './middleware/rateLimit';
 import { requireSession } from './middleware/requireSession';
+import { providerFromEnv } from './ai';
+import { aiService } from './ai/service';
+import type { AiProvider } from './ai/provider';
+import { aiRoutes } from './routes/ai';
 import { inviteRoutes } from './routes/invites';
 import { listRoutes } from './routes/lists';
 import { meRoutes } from './routes/me';
@@ -20,9 +24,11 @@ export type AppDeps = {
   auth: Auth;
   /** Extra routes mounted under /api/v1 (used for the test-only login route). */
   extraRoutes?: Hono<AppEnv>;
+  /** Override the AI provider (tests). Default: from the environment; null turns AI off. */
+  ai?: AiProvider | null;
 };
 
-export function createApp({ env, db, auth, extraRoutes }: AppDeps) {
+export function createApp({ env, db, auth, extraRoutes, ai }: AppDeps) {
   const app = new Hono<AppEnv>();
 
   app.use('*', secureHeaders({ strictTransportSecurity: 'max-age=31536000; includeSubDomains' }));
@@ -45,6 +51,16 @@ export function createApp({ env, db, auth, extraRoutes }: AppDeps) {
   api.route('/me', meRoutes);
   api.route('/lists', listRoutes(env.APP_URL));
   api.route('/invites', inviteRoutes());
+  api.route(
+    '/ai',
+    aiRoutes(
+      aiService({
+        db,
+        provider: ai === undefined ? providerFromEnv(env) : ai,
+        dailyLimit: env.AI_DAILY_LIMIT,
+      }),
+    ),
+  );
   api.route('/sync-token', syncTokenRoutes(env.SYNC_JWT_SECRET, env.SYNC_URL));
   app.route('/api/v1', api);
 
