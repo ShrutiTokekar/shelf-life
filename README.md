@@ -168,7 +168,7 @@ Render's free instance sleeps after 15 minutes without traffic and takes about a
 
 ### 4. Point the web app at the server
 
-1. In `apps/web/vercel.json`, replace `API_HOST` with the Render host (no `https://`) and commit. The browser then reaches the API at `/api` on the web app's own address, which keeps the sign-in cookie same-site without buying a domain.
+1. `apps/web/vercel.json` sends `/api` to the Render host (`shelf-life-server.onrender.com`); if yours differs, change it there and commit. The browser then reaches the API at `/api` on the web app's own address, which keeps the sign-in cookie same-site without buying a domain.
 2. In Vercel → Settings → Environment Variables, add `SYNC_ORIGIN=wss://<Render host>`. It goes into the app's Content Security Policy, which otherwise allows only the app itself. Redeploy.
 
 ### 5. Google sign-in
