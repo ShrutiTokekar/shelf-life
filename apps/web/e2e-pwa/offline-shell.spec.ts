@@ -26,6 +26,26 @@ async function waitForPantryWrites(page: Page) {
   });
 }
 
+// SEC-1: the production build's Content Security Policy must not block anything the app does.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    document.addEventListener('securitypolicyviolation', (e) => {
+      (window as unknown as { cspViolations: string[] }).cspViolations ??= [];
+      (window as unknown as { cspViolations: string[] }).cspViolations.push(
+        `${e.violatedDirective} ${e.blockedURI}`,
+      );
+    });
+  });
+  page.on('console', (msg) => {
+    if (/Content Security Policy/i.test(msg.text())) cspErrors.push(msg.text());
+  });
+});
+const cspErrors: string[] = [];
+test.afterEach(() => {
+  expect(cspErrors).toEqual([]);
+  cspErrors.length = 0;
+});
+
 test('SRS 12.4 the installed app opens offline: shell from the service worker, account from cache', async ({
   page,
   context,

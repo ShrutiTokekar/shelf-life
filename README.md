@@ -133,6 +133,56 @@ pnpm test:e2e
 
 `pnpm test:e2e` needs Postgres running (`pnpm db:up`). It starts its own servers on ports 5174/8788/8791 (plus 5175/8789/8792 for the offline test) against a separate `shelflife_test` database. It won't touch your dev data, and you can leave `pnpm dev` running. Google isn't contacted: E2E signs in through a test-only route that exists only when the API runs with `NODE_ENV=test`.
 
+## Deploying (free tiers)
+
+Production follows SRS 14.1: the web app on **Vercel Hobby**; the API, the sync service and Postgres on **Northflank's free Developer Sandbox**. Both are free. Northflank may ask for a card to verify the account; if it does, set a spending cap of $0 in billing.
+
+### 1. Northflank: database, API and sync service
+
+1. Create a project, then add a **PostgreSQL addon**. Copy its connection string (the `postgres://…` URI).
+2. Add a **combined service** for the API, from this GitHub repo:
+   - Build: Dockerfile `apps/api/Dockerfile`, build context `/` (the repo root).
+   - Port: `8787`, public, HTTP. Health check path: `/health`.
+   - Environment (mark the secrets as secret):
+
+     ```bash
+     NODE_ENV=production
+     PORT=8787
+     DATABASE_URL=            # the addon's connection string
+     BETTER_AUTH_SECRET=      # openssl rand -base64 32
+     SYNC_JWT_SECRET=         # openssl rand -base64 32 (the same value goes on the sync service)
+     GOOGLE_CLIENT_ID=
+     GOOGLE_CLIENT_SECRET=
+     APP_URL=https://<your-vercel-domain>
+     SYNC_URL=wss://<the sync service's public host>
+     ```
+
+   It applies database migrations every time it starts.
+
+3. Add a second **combined service** for sync: Dockerfile `apps/sync/Dockerfile`, context `/`, port `8790` public HTTP, health check `/health`, with `NODE_ENV=production`, `SYNC_PORT=8790`, and the same `DATABASE_URL` and `SYNC_JWT_SECRET`.
+4. Note both public hosts Northflank gives you (they end in `.code.run`).
+
+### 2. Vercel: the web app
+
+1. Import this repo in Vercel. Set **Root Directory** to `apps/web`; `apps/web/vercel.json` sets the install, build and output.
+2. In `apps/web/vercel.json`, replace `API_HOST` with the API's public host (no `https://`) and commit. The browser then reaches the API at `/api` on the web app's own address, which keeps the sign-in cookie same-site without buying a domain.
+3. Add the environment variable `SYNC_ORIGIN=wss://<the sync service's public host>`. It goes into the app's Content Security Policy, which is otherwise self-only.
+4. Deploy, then put the final Vercel domain into the API's `APP_URL` and redeploy the API.
+
+### 3. Google sign-in
+
+In Google Cloud → Credentials → your OAuth client, add the authorized redirect URI `https://<your-vercel-domain>/api/v1/auth/callback/google`. While the OAuth app is in testing, add each person who will sign in under **Test users**.
+
+### 4. Check it
+
+```bash
+node scripts/deploy-check.mjs https://<your-vercel-domain> wss://<sync host>
+```
+
+It checks the page, its security headers and policy, the `/api` proxy and the sync service. Then try two devices by hand: sign in on two phones with two Google test users, share a list from one, join from the other, add and check items, and turn one phone's network off and on.
+
+The automated two-device test runs in CI against the same API and sync code on every PR. It can't run against production, because signing in there needs real Google accounts and the test-only login never exists in production.
+
 ## Commands
 
 | Command                                               | What it does                                                                               |
