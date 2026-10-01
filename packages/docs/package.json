@@ -1,0 +1,17 @@
+{
+  "name": "@shelf-life/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@shelf-life/shared": "workspace:*",
+    "yjs": "^13.6.33"
+  },
+  "sideEffects": false
+}
