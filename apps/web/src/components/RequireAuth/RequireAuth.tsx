@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
+import { pendingInvite } from '../../lib/pendingInvite';
 import { useSession } from '../../lib/session';
 import { ErrorState } from '../ErrorState/ErrorState';
 import { PageSkeleton } from '../Skeleton/Skeleton';
@@ -31,9 +32,13 @@ export function RequireAuth({ children, allowWithoutPantry = false }: RequireAut
           <ErrorState message={t('common.genericError')} onRetry={() => void session.refresh()} />
         </main>
       );
-    case 'ready':
+    case 'ready': {
+      // WEL-3 / SHR-3: someone who opened an invite link before signing in joins it first.
+      const invite = pendingInvite.get();
+      if (invite) return <Navigate to={`/join/${invite}`} replace />;
       if (!session.me.pantry && !allowWithoutPantry) return <Navigate to="/onboarding" replace />;
       if (session.me.pantry && allowWithoutPantry) return <Navigate to="/" replace />;
       return <>{children}</>;
+    }
   }
 }

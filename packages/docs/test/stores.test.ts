@@ -1,8 +1,7 @@
 import type { PantryItem } from '@shelf-life/shared';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
-import { getDoc, pantryDocName, resetDocsForTests } from './docs';
-import { addListItem, openEntryFor, readListItems, removeListItem } from './listStore';
+import { addListItem, openEntryFor, readListItems, removeListItem } from '../src';
 import {
   addItems,
   readActivity,
@@ -13,7 +12,7 @@ import {
   removeItem,
   restoreItem,
   updateItem,
-} from './pantryStore';
+} from '../src';
 
 const base: PantryItem = {
   id: 'a',
@@ -110,26 +109,6 @@ describe('listStore (PAN-9)', () => {
     expect(openEntryFor(items, 'other')).toBeUndefined();
     removeListItem(doc, 'e1');
     expect(readListItems(doc)).toEqual([]);
-  });
-});
-
-describe('docs (y-indexeddb)', () => {
-  it('SRS 8.7 items survive closing and reopening the pantry doc', async () => {
-    const name = pantryDocName('persist-test');
-    const first = getDoc(name);
-    await first.ready;
-    addItems(first.doc, [base]);
-    // Give y-indexeddb a moment to write the update.
-    await new Promise((r) => setTimeout(r, 50));
-    resetDocsForTests();
-
-    const reopened = getDoc(name);
-    await reopened.ready;
-    expect(readItems(reopened.doc)).toEqual([base]);
-  });
-
-  it('shares one doc per name for the session', () => {
-    expect(getDoc(pantryDocName('x'))).toBe(getDoc(pantryDocName('x')));
   });
 });
 

@@ -10,6 +10,7 @@ export const newUserMe: MeResponse = {
   },
   pantry: null,
   lists: [],
+  pantries: [],
   settings: { textSize: 'default', highContrast: false, reduceMotion: false, language: 'en' },
 };
 
@@ -19,6 +20,17 @@ const HOME = '0192f0c0-0000-7000-8000-000000000002';
 export const returningUserMe: MeResponse = {
   ...newUserMe,
   pantry: { id: PANTRY, ownerId: 'u1', homeListId: HOME, createdAt: '2026-09-27T00:00:00.000Z' },
+  pantries: [
+    {
+      id: PANTRY,
+      ownerId: 'u1',
+      homeListId: HOME,
+      createdAt: '2026-09-27T00:00:00.000Z',
+      name: 'Home',
+      own: true,
+      canEdit: true,
+    },
+  ],
   lists: [
     {
       id: HOME,

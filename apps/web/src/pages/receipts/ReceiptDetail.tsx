@@ -19,7 +19,7 @@ import { useToast } from '../../components/Toast/Toast';
 import { cx } from '../../lib/cx';
 import { formatMoney, formatShortDate, formatTime } from '../../lib/format';
 import type { Person } from '../../lib/people';
-import { deleteReceipt, putReceipt } from '../../lib/sync/receiptStore';
+import { deleteReceipt, putReceipt } from '@shelf-life/docs';
 import { useReviewDraft } from '../../stores/reviewDraft';
 
 export type ReceiptDetailProps = {
@@ -30,6 +30,8 @@ export type ReceiptDetailProps = {
   scannerName: string;
   /** Mobile shows the detail as its own page (h1); desktop as the side panel (h2). */
   asPage: boolean;
+  /** SHR-5: a "Can view" member of a shared home sees receipts but can't change them. */
+  readOnly?: boolean;
   className?: string;
 };
 
@@ -41,6 +43,7 @@ export function ReceiptDetail({
   scanner,
   scannerName,
   asPage,
+  readOnly = false,
   className,
 }: ReceiptDetailProps) {
   const { t } = useTranslation();
@@ -139,7 +142,7 @@ export function ReceiptDetail({
         {t('receipts.detail.photoNote')}
       </p>
 
-      <div className="flex flex-wrap gap-3">
+      <div className={cx('flex flex-wrap gap-3', readOnly && 'hidden')}>
         <Button asChild className="max-lg:flex-1">
           <Link to={`/scan/review?receipt=${receipt.id}`}>
             <EditIcon size={20} />

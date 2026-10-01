@@ -8,8 +8,10 @@ import { sameOriginOnly } from './middleware/csrf';
 import { apiError, onError } from './middleware/errors';
 import { rateLimitPerUser } from './middleware/rateLimit';
 import { requireSession } from './middleware/requireSession';
+import { inviteRoutes } from './routes/invites';
 import { listRoutes } from './routes/lists';
 import { meRoutes } from './routes/me';
+import { syncTokenRoutes } from './routes/syncToken';
 import type { AppEnv } from './types';
 
 export type AppDeps = {
@@ -41,7 +43,9 @@ export function createApp({ env, db, auth, extraRoutes }: AppDeps) {
   const api = new Hono<AppEnv>();
   api.use('*', requireSession, rateLimitPerUser());
   api.route('/me', meRoutes);
-  api.route('/lists', listRoutes);
+  api.route('/lists', listRoutes(env.APP_URL));
+  api.route('/invites', inviteRoutes());
+  api.route('/sync-token', syncTokenRoutes(env.SYNC_JWT_SECRET, env.SYNC_URL));
   app.route('/api/v1', api);
 
   app.notFound((c) => apiError(c, 404, ERROR_CODES.notFound, 'Not found.'));

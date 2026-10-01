@@ -1,10 +1,9 @@
-import type { ListItem, PantryItem, Receipt } from '@shelf-life/shared';
+import type { ListItem, ListMeta, PantryItem, Receipt } from '@shelf-life/shared';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type * as Y from 'yjs';
 import { forgetDoc, getDoc, listDocName, pantryDocName } from './docs';
-import { readListItems } from './listStore';
-import { readItems } from './pantryStore';
-import { readReceipts } from './receiptStore';
+import { subscribeSync, syncState, type SyncState } from './provider';
+import { readItems, readListItems, readListMeta, readReceipts } from '@shelf-life/docs';
 
 export type DocStatus = 'loading' | 'ready' | 'error';
 
@@ -79,6 +78,17 @@ export function usePantry(pantryId: string | null) {
   return { doc, items, status, retry };
 }
 
+const NO_LIST_ITEMS: ListItem[] = [];
+const NO_META: ListMeta = { doneShoppingAt: null, doneShoppingBy: null };
+
+/** Live items and meta of one grocery list (SRS 6.6), from this device, synced when online. */
+export function useList(listId: string | null) {
+  const { doc, status, retry } = useDocHandle(listId ? listDocName(listId) : null);
+  const items = useDocSnapshot(doc, readListItems, NO_LIST_ITEMS);
+  const meta = useDocSnapshot(doc, readListMeta, NO_META);
+  return { doc, items, meta, status, retry };
+}
+
 const NO_RECEIPTS: Receipt[] = [];
 
 /** Live receipts (and pantry items, for "Edit items") from the pantry doc on this device. */
@@ -121,4 +131,14 @@ export function useListsItems(listIds: readonly string[]): Readonly<Record<strin
   }, [key]);
 
   return byList;
+}
+
+/** Live sync state for one doc ("list:<id>"), for the Live indicator (LST-1) and offline banner. */
+export function useSyncState(docName: string | null): SyncState {
+  const subscribe = useCallback(
+    (onChange: () => void) => (docName ? subscribeSync(docName, onChange) : () => undefined),
+    [docName],
+  );
+  const get = useCallback(() => (docName ? syncState(docName) : 'off'), [docName]);
+  return useSyncExternalStore(subscribe, get, get);
 }

@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const WEB_PORT = 5175;
+const SYNC_PORT = 8792;
 const API_PORT = 8789;
 const WEB = `http://localhost:${WEB_PORT}`;
 
@@ -26,9 +27,24 @@ export default defineConfig({
           process.env.E2E_DATABASE_URL ??
           'postgres://postgres:postgres@localhost:5432/shelflife_test',
         BETTER_AUTH_SECRET: 'e2e-secret-e2e-secret-e2e-secret-e2e',
+        SYNC_JWT_SECRET: 'e2e-sync-secret-e2e-sync-secret-e2e-s',
         GOOGLE_CLIENT_ID: 'e2e-google-client-id',
         GOOGLE_CLIENT_SECRET: 'e2e-google-client-secret',
         APP_URL: WEB,
+      },
+    },
+    {
+      // SRS 11.2 sync service, for live lists and the two-device test.
+      command: 'pnpm --filter @shelf-life/sync start',
+      url: `http://localhost:${SYNC_PORT}/health`,
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: {
+        SYNC_PORT: String(SYNC_PORT),
+        DATABASE_URL:
+          process.env.E2E_DATABASE_URL ??
+          'postgres://postgres:postgres@localhost:5432/shelflife_test',
+        SYNC_JWT_SECRET: 'e2e-sync-secret-e2e-sync-secret-e2e-s',
       },
     },
     {
@@ -40,6 +56,7 @@ export default defineConfig({
         PLAIN_HTTP: '1',
         WEB_PORT: String(WEB_PORT),
         API_PROXY_TARGET: `http://localhost:${API_PORT}`,
+        SYNC_PROXY_TARGET: `ws://localhost:${SYNC_PORT}`,
       },
     },
   ],

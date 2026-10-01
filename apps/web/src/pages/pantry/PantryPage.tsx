@@ -38,12 +38,14 @@ import { ItemSheet } from '../../components/ItemSheet/ItemSheet';
 import { JarCard } from '../../components/JarCard/JarCard';
 import { ListFilterChips } from '../../components/ListFilterChips/ListFilterChips';
 import { SearchField } from '../../components/SearchField/SearchField';
+import { Select } from '../../components/Select/Select';
 import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Shelf, type ShelfTone } from '../../components/Shelf/Shelf';
 import { PageSkeleton } from '../../components/Skeleton/Skeleton';
-import { openEntryFor } from '../../lib/sync/listStore';
+import { openEntryFor } from '@shelf-life/docs';
 import { useListsItems, usePantry } from '../../lib/sync/useDocs';
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/useMediaQuery';
+import { useCurrentPantry } from '../../lib/pantries';
 import { usePeople } from '../../lib/people';
 import { useMe } from '../../lib/session';
 import type { PantryHighlightState } from '../../stores/reviewDraft';
@@ -70,7 +72,10 @@ type SheetState = { mode: 'add' } | { mode: 'edit'; itemId: string } | null;
 export function PantryPage() {
   const { t } = useTranslation();
   const me = useMe();
-  const pantryId = me.pantry!.id;
+  const current = useCurrentPantry();
+  const pantryId = current.pantry.id;
+  // SHR-5: "Can view" members of a shared home see the pantry but can't change it.
+  const readOnly = !current.pantry.canEdit;
   const { doc, items, status, retry } = usePantry(pantryId);
   const today = todayIso();
   const [filters, setFilters] = useState<PantryFilters>(NO_FILTERS);
@@ -97,10 +102,7 @@ export function PantryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightOn]);
 
-  const lists = useMemo(
-    () => me.lists.filter((l) => l.pantryId === pantryId),
-    [me.lists, pantryId],
-  );
+  const lists = current.lists;
   const listById = useMemo(() => new Map(lists.map((l) => [l.id, l])), [lists]);
   const people = usePeople(me);
 
@@ -151,6 +153,7 @@ export function PantryPage() {
         onUsed={() => actions.usedIt(item)}
         onEdit={() => setSheet({ mode: 'edit', itemId: item.id })}
         onAddToList={() => void actions.addToList(item)}
+        readOnly={readOnly}
         highlighted={highlightOn && highlight.has(item.id)}
       />
     );
@@ -203,8 +206,30 @@ export function PantryPage() {
             <p className="mt-0.5 text-sm font-medium text-secondary lg:mt-1.5 lg:text-lg">
               {t('pantry.summary', { count: onShelf.length })}
             </p>
+            {current.pantries.length > 1 ? (
+              // SHR-6: someone on another person's home list can open that pantry too.
+              <Select
+                inline
+                className="mt-1 justify-start"
+                label={t('pantry.whichPantry')}
+                value={pantryId}
+                onChange={current.setPantry}
+                options={current.pantries.map((p) => ({
+                  value: p.id,
+                  label: p.own
+                    ? t('pantry.yourPantry')
+                    : t('pantry.sharedPantry', { name: p.name }),
+                }))}
+              />
+            ) : null}
+            {readOnly ? (
+              <p className="mt-1 text-sm text-ink">
+                {t('pantry.viewOnly', { name: current.pantry.name })}
+              </p>
+            ) : null}
           </div>
           <IconButton
+            hidden={readOnly}
             className="size-12 rounded-[0.875rem] border-2 border-navy text-navy lg:hidden"
             icon={<PlusIcon size={22} />}
             label={t('pantry.addItem')}
@@ -224,7 +249,7 @@ export function PantryPage() {
           <Button
             variant="secondary"
             size="sm"
-            className="max-lg:hidden"
+            className={readOnly ? 'hidden' : 'max-lg:hidden'}
             icon={<PlusIcon size={20} />}
             onClick={() => setSheet({ mode: 'add' })}
           >
@@ -260,20 +285,24 @@ export function PantryPage() {
             title={t('pantry.emptyTitle')}
             body={t('pantry.emptyBody')}
             action={
-              <div className="flex flex-col items-center gap-3">
-                <div className="flex flex-wrap justify-center gap-3">
-                  <Button icon={<PlusIcon size={20} />} onClick={() => setSheet({ mode: 'add' })}>
-                    {t('pantry.addItem')}
-                  </Button>
-                  <Button asChild variant="secondary">
-                    <Link to="/scan">
-                      <ScanIcon size={22} />
-                      {t('pantry.scanReceipt')}
-                    </Link>
-                  </Button>
+              readOnly ? undefined : (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <Button icon={<PlusIcon size={20} />} onClick={() => setSheet({ mode: 'add' })}>
+                      {t('pantry.addItem')}
+                    </Button>
+                    <Button asChild variant="secondary">
+                      <Link to="/scan">
+                        <ScanIcon size={22} />
+                        {t('pantry.scanReceipt')}
+                      </Link>
+                    </Button>
+                  </div>
+                  {import.meta.env.DEV && doc && current.pantry.own ? (
+                    <DevSeedButton doc={doc} me={me} />
+                  ) : null}
                 </div>
-                {import.meta.env.DEV && doc ? <DevSeedButton doc={doc} me={me} /> : null}
-              </div>
+              )
             }
           />
         ) : visible.length === 0 ? (
@@ -317,7 +346,7 @@ export function PantryPage() {
         mode={sheet?.mode ?? 'add'}
         item={editing}
         lists={lists}
-        defaultListId={filters.listId ?? me.pantry!.homeListId}
+        defaultListId={filters.listId ?? current.pantry.homeListId}
         today={today}
         onClose={() => {
           setSheet(null);

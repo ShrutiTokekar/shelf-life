@@ -28,7 +28,7 @@ import {
 import { useCamera } from '../../features/ocr/useCamera';
 import { cx } from '../../lib/cx';
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/useMediaQuery';
-import { useMe } from '../../lib/session';
+import { useCurrentPantry } from '../../lib/pantries';
 import { useReviewDraft } from '../../stores/reviewDraft';
 
 type Phase = 'capture' | 'reading' | 'unreadable' | 'failed';
@@ -41,8 +41,7 @@ export function ScanPage() {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const camera = useCamera();
   const { start: startCamera, stop: stopCamera } = camera;
-  const me = useMe();
-  const homeListId = me.pantry!.homeListId;
+  const homeListId = useCurrentPantry().writable.homeListId;
   const setDraft = useReviewDraft((s) => s.set);
   const [phase, setPhase] = useState<Phase>('capture');
   const [progress, setProgress] = useState<ScanProgress | null>(null);

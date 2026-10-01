@@ -5,6 +5,8 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const API_TARGET = process.env.API_PROXY_TARGET ?? 'http://localhost:8787';
+// The sync service (SRS 11.2). Proxied so the page (https) can reach it as wss on its own origin.
+const SYNC_TARGET = process.env.SYNC_PROXY_TARGET ?? 'ws://localhost:8790';
 // E2E runs on its own port so it never reuses (or fights with) a running `pnpm dev`.
 const WEB_PORT = Number(process.env.WEB_PORT ?? 5173);
 
@@ -52,7 +54,7 @@ export default defineConfig({
           },
         ],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/sync\//],
       },
     }),
   ],
@@ -60,11 +62,17 @@ export default defineConfig({
     port: WEB_PORT,
     strictPort: true,
     // Same-origin API in dev keeps the SameSite=Lax session cookie working.
-    proxy: { '/api': { target: API_TARGET, changeOrigin: false } },
+    proxy: {
+      '/api': { target: API_TARGET, changeOrigin: false },
+      '/sync': { target: SYNC_TARGET, ws: true, rewrite: (path) => path.replace(/^\/sync/, '') },
+    },
   },
   preview: {
     port: WEB_PORT,
     strictPort: true,
-    proxy: { '/api': { target: API_TARGET, changeOrigin: false } },
+    proxy: {
+      '/api': { target: API_TARGET, changeOrigin: false },
+      '/sync': { target: SYNC_TARGET, ws: true, rewrite: (path) => path.replace(/^\/sync/, '') },
+    },
   },
 });

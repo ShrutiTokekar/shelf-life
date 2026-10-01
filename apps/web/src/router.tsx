@@ -19,6 +19,15 @@ const ScanPage = lazy(() => import('./pages/scan/ScanPage').then((m) => ({ defau
 const ReviewPage = lazy(() =>
   import('./pages/scan/ReviewPage').then((m) => ({ default: m.ReviewPage })),
 );
+const ListPage = lazy(() =>
+  import('./pages/lists/ListPage').then((m) => ({ default: m.ListPage })),
+);
+const NewListPage = lazy(() =>
+  import('./pages/lists/NewListPage').then((m) => ({ default: m.NewListPage })),
+);
+const ShoppingModePage = lazy(() =>
+  import('./pages/lists/ShoppingModePage').then((m) => ({ default: m.ShoppingModePage })),
+);
 const ReceiptsPage = lazy(() =>
   import('./pages/receipts/ReceiptsPage').then((m) => ({ default: m.ReceiptsPage })),
 );
@@ -47,6 +56,17 @@ export const routes: RouteObject[] = [
       <RequireAuth>
         <Suspense fallback={<PageSkeleton />}>
           <ScanPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // LST-9 shopping mode is full screen: no app nav.
+    path: '/lists/:listId/shop',
+    element: (
+      <RequireAuth>
+        <Suspense fallback={<PageSkeleton />}>
+          <ShoppingModePage />
         </Suspense>
       </RequireAuth>
     ),
@@ -85,12 +105,28 @@ export const routes: RouteObject[] = [
         ),
         handle: { skipLink: { targetId: 'shelves', textKey: 'skip.pantry' } } satisfies RouteHandle,
       },
-      placeholder('lists', 'pages.lists'),
-      placeholder('lists/new', 'pages.newList'),
-      placeholder('lists/:listId', 'pages.list'),
-      placeholder('lists/:listId/share', 'pages.shareList'),
-      placeholder('lists/:listId/add', 'pages.addItem'),
-      placeholder('lists/:listId/shop', 'pages.shop'),
+      // SRS 5.2: the list page also serves the switcher (/lists), share dialog and add sheet.
+      ...['lists', 'lists/:listId', 'lists/:listId/share', 'lists/:listId/add'].map(
+        (path): RouteObject => ({
+          path,
+          element: (
+            <Suspense fallback={<PageSkeleton />}>
+              <ListPage />
+            </Suspense>
+          ),
+          handle: {
+            skipLink: { targetId: 'list-items', textKey: 'skip.list' },
+          } satisfies RouteHandle,
+        }),
+      ),
+      {
+        path: 'lists/new',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <NewListPage />
+          </Suspense>
+        ),
+      },
       placeholder('recipes', 'pages.recipes'),
       placeholder('recipes/analyze', 'pages.analyze'),
       placeholder('recipes/saved', 'pages.savedRecipes'),

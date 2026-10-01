@@ -42,6 +42,15 @@ export async function getMe(db: Db, user: SessionUser): Promise<MeResponse> {
         .orderBy(schema.listMember.joinedAt, schema.user.name)
     : [];
 
+  // SHR-6: every pantry whose home list this user is on (their own, and any shared home).
+  const pantryRows = await db
+    .select({ pantry: schema.pantry, name: schema.list.name, role: schema.listMember.role })
+    .from(schema.listMember)
+    .innerJoin(schema.list, eq(schema.list.id, schema.listMember.listId))
+    .innerJoin(schema.pantry, eq(schema.pantry.homeListId, schema.list.id))
+    .where(eq(schema.listMember.userId, user.id))
+    .orderBy(schema.pantry.createdAt);
+
   const [settingsRow] = await db
     .select()
     .from(schema.userSettings)
@@ -89,6 +98,18 @@ export async function getMe(db: Db, user: SessionUser): Promise<MeResponse> {
           };
         }),
     })),
+    pantries: pantryRows
+      .map(({ pantry, name, role }) => ({
+        id: pantry.id,
+        ownerId: pantry.ownerId,
+        homeListId: pantry.homeListId!,
+        createdAt: pantry.createdAt.toISOString(),
+        name,
+        own: pantry.ownerId === user.id,
+        canEdit: role !== 'view',
+      }))
+      // Your own pantry first.
+      .sort((a, b) => Number(b.own) - Number(a.own)),
     settings: settingsRow
       ? {
           textSize: settingsRow.textSize,

@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   type AnyPgColumn,
   boolean,
+  customType,
   date,
   index,
   pgEnum,
@@ -157,5 +158,41 @@ export const userSettings = pgTable('user_settings', {
   highContrast: boolean('high_contrast').notNull().default(false),
   reduceMotion: boolean('reduce_motion').notNull().default(false),
   language: language('language').notNull().default('en'),
+  updatedAt: updatedAt(),
+});
+
+/** SHR-3: an invite link. The token is the secret in `/join/:token`; one link can be used by many. */
+export const listInvite = pgTable(
+  'list_invite',
+  {
+    token: text('token').primaryKey(),
+    listId: uuid('list_id')
+      .notNull()
+      .references(() => list.id, { onDelete: 'cascade' }),
+    role: listRole('role').notNull(),
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    /** Who it was sent to (email or phone), shown to the owner as "Invite pending". */
+    sentTo: text('sent_to'),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+  },
+  (t) => [index('list_invite_list_id_idx').on(t.listId)],
+);
+
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
+  dataType: () => 'bytea',
+});
+
+/**
+ * SRS 8.7: the sync service's saved copy of each Yjs doc ("list:<id>" or "pantry:<id>"), written
+ * every 30 s and when the last person leaves. `hasCart` marks lists with items waiting to move
+ * into the pantry (LST-7), so the service reloads them after a restart.
+ */
+export const yjsDoc = pgTable('yjs_docs', {
+  name: text('name').primaryKey(),
+  state: bytea('state').notNull(),
+  hasCart: boolean('has_cart').notNull().default(false),
   updatedAt: updatedAt(),
 });

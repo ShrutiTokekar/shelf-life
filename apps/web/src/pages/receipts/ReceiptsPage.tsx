@@ -23,6 +23,7 @@ import { SegmentedControl } from '../../components/SegmentedControl/SegmentedCon
 import { Select } from '../../components/Select/Select';
 import { PageSkeleton } from '../../components/Skeleton/Skeleton';
 import { formatMonth, formatShortDate, formatTime } from '../../lib/format';
+import { useCurrentPantry } from '../../lib/pantries';
 import { usePeople } from '../../lib/people';
 import { useMe } from '../../lib/session';
 import { useReceipts } from '../../lib/sync/useDocs';
@@ -43,7 +44,8 @@ export function ReceiptsPage() {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const people = usePeople(me);
   const today = todayIso();
-  const { doc, receipts, items, status, retry } = useReceipts(me.pantry!.id);
+  const current = useCurrentPantry();
+  const { doc, receipts, items, status, retry } = useReceipts(current.pantry.id);
   const [query, setQuery] = useState<ReceiptQuery>({ query: '', filter: 'all', scannedBy: null });
   const [limit, setLimit] = useState(RECEIPT_PAGE);
 
@@ -77,6 +79,7 @@ export function ReceiptsPage() {
       receipt={r}
       pantry={items}
       doc={doc}
+      readOnly={!current.pantry.canEdit}
       scanner={people.get(r.scannedBy) ?? null}
       scannerName={scannerName(r.scannedBy)}
       asPage={asPage}

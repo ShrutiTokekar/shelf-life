@@ -79,6 +79,8 @@ test('SRS 12.4 the pantry opens offline from this device', async ({ page, contex
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+  // Let the page finish opening (and syncing) before the network drops, as a person would.
+  await expect(page.getByRole('article', { name: 'Spinach' })).toBeVisible();
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByRole('article', { name: 'Spinach' })).toBeVisible();
@@ -167,4 +169,40 @@ test('rule 3 decision 1: after the first scan, scanning works offline (engine ca
   await expect(page.getByRole('article', { name: 'Paneer' })).toBeVisible();
   await page.goto('/profile/receipts');
   await expect(page.getByRole('link', { name: 'Patel Brothers' })).toBeVisible();
+});
+
+test('rule 3 LST-10 the grocery list works offline and syncs when back online', async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  const email = `pwa-list-${crypto.randomUUID()}@example.com`;
+  await page.request.post('/api/v1/test/login', {
+    data: { email, name: 'Ananya Mehta' },
+    headers: { origin: baseURL! },
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Create home list' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+  await page.getByRole('link', { name: /List/ }).first().click();
+  await expect(page.getByText(/Live/).first()).toBeVisible();
+
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByText(/Offline · changes will sync/)).toBeVisible();
+  await page.getByRole('textbox', { name: 'Add to the list' }).fill('eggs');
+  await page.getByRole('textbox', { name: 'Add to the list' }).press('Enter');
+  await expect(page.getByRole('checkbox', { name: 'Eggs' })).toBeVisible();
+
+  await context.setOffline(false);
+  await expect(page.getByText(/Live/).first()).toBeVisible({ timeout: 15_000 });
+  // A second device (a fresh page in the same account) gets the item from the server.
+  const other = await context.browser()!.newContext({ storageState: await context.storageState() });
+  const second = await other.newPage();
+  await second.goto(new URL(page.url()).pathname);
+  await expect(second.getByRole('checkbox', { name: 'Eggs' })).toBeVisible({ timeout: 15_000 });
+  await other.close();
 });

@@ -3,6 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 // Separate ports from `pnpm dev` (5173 / 8787) so a running dev server is never reused.
 const WEB_PORT = 5174;
 const WEB = `https://localhost:${WEB_PORT}`;
+const SYNC_PORT = 8791;
 const API_PORT = 8788;
 
 /**
@@ -51,9 +52,24 @@ export default defineConfig({
           process.env.E2E_DATABASE_URL ??
           'postgres://postgres:postgres@localhost:5432/shelflife_test',
         BETTER_AUTH_SECRET: 'e2e-secret-e2e-secret-e2e-secret-e2e',
+        SYNC_JWT_SECRET: 'e2e-sync-secret-e2e-sync-secret-e2e-s',
         GOOGLE_CLIENT_ID: 'e2e-google-client-id',
         GOOGLE_CLIENT_SECRET: 'e2e-google-client-secret',
         APP_URL: WEB,
+      },
+    },
+    {
+      // SRS 11.2 sync service, for live lists and the two-device test.
+      command: 'pnpm --filter @shelf-life/sync start',
+      url: `http://localhost:${SYNC_PORT}/health`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+      env: {
+        SYNC_PORT: String(SYNC_PORT),
+        DATABASE_URL:
+          process.env.E2E_DATABASE_URL ??
+          'postgres://postgres:postgres@localhost:5432/shelflife_test',
+        SYNC_JWT_SECRET: 'e2e-sync-secret-e2e-sync-secret-e2e-s',
       },
     },
     {
@@ -62,7 +78,11 @@ export default defineConfig({
       ignoreHTTPSErrors: true,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
-      env: { API_PROXY_TARGET: `http://localhost:${API_PORT}`, WEB_PORT: String(WEB_PORT) },
+      env: {
+        API_PROXY_TARGET: `http://localhost:${API_PORT}`,
+        SYNC_PROXY_TARGET: `ws://localhost:${SYNC_PORT}`,
+        WEB_PORT: String(WEB_PORT),
+      },
     },
   ],
 });

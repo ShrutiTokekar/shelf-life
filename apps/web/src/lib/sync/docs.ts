@@ -1,9 +1,10 @@
 import { IndexeddbPersistence } from 'y-indexeddb';
 import * as Y from 'yjs';
+import { startSync, stopAllSync, stopSync } from './provider';
 
 /**
  * Local-first documents (SRS 8.7): one Y.Doc per pantry and per list, saved on this device with
- * y-indexeddb. Milestone 5 attaches y-websocket to the same docs for sync; nothing here changes.
+ * y-indexeddb, then connected to the sync service (provider.ts) once the saved copy has loaded.
  */
 export type DocHandle = {
   name: string;
@@ -19,6 +20,8 @@ const handles = new Map<string, DocHandle>();
 
 export const pantryDocName = (pantryId: string) => `shelf-life:pantry:${pantryId}`;
 export const listDocName = (listId: string) => `shelf-life:list:${listId}`;
+/** "shelf-life:list:<id>" → "list:<id>", the name the API and sync service use. */
+export const syncName = (localName: string) => localName.replace(/^shelf-life:/, '');
 
 function open(name: string): DocHandle {
   const doc = new Y.Doc();
@@ -55,20 +58,32 @@ function open(name: string): DocHandle {
 export function getDoc(name: string): DocHandle {
   let handle = handles.get(name);
   if (!handle) {
-    handle = open(name);
-    handles.set(name, handle);
+    const opened = open(name);
+    handle = opened;
+    handles.set(name, opened);
+    void opened.ready.then(
+      () => startSync(syncName(name), opened.doc),
+      () => undefined,
+    );
   }
   return handle;
 }
 
 /** Drop a failed handle so "Try again" re-opens storage. */
 export function forgetDoc(name: string) {
+  stopSync(syncName(name));
   handles.get(name)?.dispose();
   handles.delete(name);
 }
 
 /** Test helper: close everything. */
 export function resetDocsForTests() {
+  stopAllSync();
   for (const h of handles.values()) h.dispose();
   handles.clear();
+}
+
+/** Sign-out: disconnect and close every doc (their local copies stay in IndexedDB). */
+export function closeAllDocs() {
+  resetDocsForTests();
 }

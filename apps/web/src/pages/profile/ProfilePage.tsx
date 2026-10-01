@@ -6,6 +6,7 @@ import { Button } from '../../components/Button/Button';
 import { ErrorState } from '../../components/ErrorState/ErrorState';
 import { ChevronRightIcon, CloudOffIcon, LockIcon, ReceiptIcon } from '../../components/icons';
 import { signOut } from '../../lib/api';
+import { closeAllDocs } from '../../lib/sync/docs';
 import { useMe, useSession } from '../../lib/session';
 import { useOnlineStatus } from '../../lib/useOnlineStatus';
 
@@ -33,6 +34,7 @@ export function ProfilePage() {
       return;
     }
     // Drop the cached /me so nothing about this account stays readable on the device.
+    closeAllDocs();
     session.clear();
     navigate('/welcome', { replace: true });
   }

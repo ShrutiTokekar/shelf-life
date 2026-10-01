@@ -1,9 +1,21 @@
 import {
+  acceptInviteResponseSchema,
   apiErrorSchema,
-  type CreateListInput,
-  type ListWithRole,
+  inviteSchema,
+  invitePreviewSchema,
+  listDetailSchema,
   meResponseSchema,
+  syncTokenResponseSchema,
+  type CreateInviteInput,
+  type CreateListInput,
+  type Invite,
+  type InvitePreview,
+  type InviteRole,
+  type ListDetail,
+  type ListWithRole,
   type MeResponse,
+  type SyncTokenResponse,
+  type UpdateListInput,
 } from '@shelf-life/shared';
 
 const BASE = '/api/v1';
@@ -72,4 +84,62 @@ export async function startGoogleSignIn(): Promise<void> {
 
 export function signOut(): Promise<void> {
   return request<void>('/auth/sign-out', { method: 'POST', body: '{}' });
+}
+
+// ---- Lists and sharing (SRS 11.1, 6.13) ----
+
+export async function fetchList(listId: string): Promise<ListDetail> {
+  return listDetailSchema.parse(await request<unknown>(`/lists/${listId}`));
+}
+
+export function updateList(listId: string, input: UpdateListInput): Promise<void> {
+  return request<void>(`/lists/${listId}`, { method: 'PATCH', body: JSON.stringify(input) });
+}
+
+export function deleteList(listId: string): Promise<void> {
+  return request<void>(`/lists/${listId}`, { method: 'DELETE' });
+}
+
+export async function createInvite(listId: string, input: CreateInviteInput): Promise<Invite> {
+  return inviteSchema.parse(
+    await request<unknown>(`/lists/${listId}/invites`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  );
+}
+
+export function revokeInvite(listId: string, token: string): Promise<void> {
+  return request<void>(`/lists/${listId}/invites/${token}`, { method: 'DELETE' });
+}
+
+export function stopSharing(listId: string): Promise<void> {
+  return request<void>(`/lists/${listId}/stop-sharing`, { method: 'POST', body: '{}' });
+}
+
+export function changeRole(listId: string, userId: string, role: InviteRole): Promise<void> {
+  return request<void>(`/lists/${listId}/members/${userId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  });
+}
+
+export function removeMember(listId: string, userId: string): Promise<void> {
+  return request<void>(`/lists/${listId}/members/${userId}`, { method: 'DELETE' });
+}
+
+export async function previewInvite(token: string): Promise<InvitePreview> {
+  return invitePreviewSchema.parse(await request<unknown>(`/invites/${token}`));
+}
+
+export async function acceptInvite(token: string): Promise<{ listId: string }> {
+  return acceptInviteResponseSchema.parse(
+    await request<unknown>(`/invites/${token}/accept`, { method: 'POST', body: '{}' }),
+  );
+}
+
+export async function fetchSyncToken(doc: string): Promise<SyncTokenResponse> {
+  return syncTokenResponseSchema.parse(
+    await request<unknown>(`/sync-token?doc=${encodeURIComponent(doc)}`),
+  );
 }
