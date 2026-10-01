@@ -19,6 +19,7 @@
     "@radix-ui/react-select": "^2.3.7",
     "@radix-ui/react-slot": "^1.3.3",
     "@shelf-life/docs": "workspace:*",
+    "@shelf-life/ranking": "workspace:*",
     "@shelf-life/shared": "workspace:*",
     "heic2any": "^0.0.4",
     "i18next": "^26.4.2",

@@ -8,7 +8,7 @@ import { renderApp } from '../../test/renderApp';
 describe('AppShell', () => {
   it('A11Y-5 has landmarks and exactly one h1', async () => {
     const { container } = renderApp('/', returningUserMe);
-    await screen.findByRole('heading', { level: 1, name: 'Today' });
+    await screen.findByRole('heading', { level: 1, name: /today/i });
     expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
@@ -17,7 +17,7 @@ describe('AppShell', () => {
 
   it('SRS 5.1 the skip link is the first focusable element and uses the page text', async () => {
     renderApp('/', returningUserMe);
-    await screen.findByRole('heading', { level: 1, name: 'Today' });
+    await screen.findByRole('heading', { level: 1, name: /today/i });
     await userEvent.tab();
     expect(document.activeElement).toHaveTextContent("Skip to today's priorities");
   });
@@ -31,7 +31,7 @@ describe('AppShell', () => {
 
   it('List nav points at the home list', async () => {
     renderApp('/', returningUserMe);
-    await screen.findByRole('heading', { level: 1, name: 'Today' });
+    await screen.findByRole('heading', { level: 1, name: /today/i });
     const homeList = returningUserMe.pantry!.homeListId;
     expect(screen.getByRole('link', { name: 'Grocery list' })).toHaveAttribute(
       'href',

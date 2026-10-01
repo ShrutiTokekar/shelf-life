@@ -397,3 +397,10 @@ export const TagIcon = (p: IconProps) => (
     <path d="M7.5 7.5h.01" />
   </Icon>
 );
+
+export const CalendarIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+    <path d="M4 10h16M8 3v4M16 3v4" />
+  </Icon>
+);

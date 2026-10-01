@@ -44,7 +44,8 @@
   "common": {
     "loading": "Loading…",
     "retry": "Try again",
-    "genericError": "Something went wrong. Check your connection and try again."
+    "genericError": "Something went wrong. Check your connection and try again.",
+    "and": "and"
   },
   "welcome": {
     "description": "Scan your receipts, track what’s expiring, and share one grocery list with everyone at home.",
@@ -75,9 +76,116 @@
   },
   "today": {
     "title": "Today",
+    "heading_one": "{{count}} thing needs you today",
+    "heading_other": "{{count}} things need you today",
+    "allDone": "All done for today",
+    "nothingUrgent": "Nothing urgent today",
+    "nothingUrgentBody": "Nothing expires today and nothing ran out. Scan your next receipt to keep it that way.",
     "emptyTitle": "Your shelves are empty",
     "emptyBody": "Scan a grocery receipt and we’ll tell you what to use first.",
-    "emptyAction": "Scan your first receipt"
+    "emptyAction": "Scan your first receipt",
+    "scanAction": "Scan receipt",
+    "allDoneBody": "Nice work. Here’s what’s coming up.",
+    "progress": "{{done}} of {{total}} done",
+    "priorities": "Today’s priorities",
+    "tags": {
+      "today": "Expires today",
+      "overdue": "Past its date",
+      "ranOut": "Ran out",
+      "inDays_one": "In {{count}} day",
+      "inDays_other": "In {{count}} days",
+      "review": "Needs review"
+    },
+    "expires": {
+      "title": "Use your {{name}} today",
+      "reason": "It expires today.",
+      "overdueTitle": "Check your {{name}}",
+      "overdueReason_one": "It passed its date {{count}} day ago. Check it before you use it.",
+      "overdueReason_other": "It passed its date {{count}} days ago. Check it before you use it."
+    },
+    "ranOut": {
+      "title": "Buy {{name}}",
+      "reasonYou": "You used the last of it today. Nobody’s getting it yet.",
+      "reasonOther": "{{name}} used the last of it today. Nobody’s getting it yet.",
+      "reasonList": "It’s on {{list}}, but nobody’s getting it yet."
+    },
+    "plan": {
+      "title": "Plan for {{names}}",
+      "reasonOne": "It expires {{day}}.",
+      "reasonTwo": "Both expire by {{day}}.",
+      "reasonMany": "They expire by {{day}}.",
+      "more_one": "{{names}} and {{count}} more",
+      "more_other": "{{names}} and {{count}} more"
+    },
+    "review": {
+      "title": "Check your {{store}} receipt",
+      "reason_one": "{{count}} line still needs a look.",
+      "reason_other": "{{count}} lines still need a look."
+    },
+    "actions": {
+      "usedIt": "Used it",
+      "usedItLabel": "Used it: {{name}}",
+      "snooze": "Snooze a day",
+      "addClaim": "Add & claim",
+      "claim": "I’ll get it",
+      "notNeeded": "Not needed",
+      "remind": "Remind me {{day}}",
+      "review": "Review"
+    },
+    "toast": {
+      "snoozed": "Snoozed until tomorrow",
+      "reminded": "We’ll bring this back {{day}}",
+      "notNeeded": "Marked as not needed",
+      "claimed": "You’re getting {{name}}",
+      "undo": "Undo"
+    },
+    "timeline": {
+      "title": "Your shelf life",
+      "helper": "Everything in your kitchen, lined up by when it expires",
+      "viewPantry": "View full pantry",
+      "columns": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "in2": "2 days",
+        "in3": "3 days",
+        "week": "This week",
+        "later": "Later"
+      },
+      "short": {
+        "today": "today",
+        "days_one": "{{count}} day",
+        "days_other": "{{count}} days",
+        "months_one": "{{count}} mo",
+        "months_other": "{{count}} mo",
+        "years_one": "{{count}} yr",
+        "years_other": "{{count}} yr"
+      },
+      "more": "+ {{count}} more"
+    },
+    "legend": {
+      "today": "Expires today",
+      "soon": "Use soon",
+      "fresh": "Fresh",
+      "note": "Status is always shown with an icon and words, not color alone."
+    },
+    "list": {
+      "title": "Grocery list · {{count}} to buy",
+      "open": "Open list",
+      "unclaimed": "Unclaimed",
+      "empty": "Nothing to buy."
+    },
+    "activity": {
+      "title": "Since yesterday",
+      "empty": "Nothing yet. Activity across your lists shows up here.",
+      "used": "{{actor}} used {{subject}}",
+      "ran_out": "{{actor}} used the last {{subject}}",
+      "bought": "{{actor}} bought {{subject}}",
+      "scanned": "{{actor}} scanned a {{subject}} receipt",
+      "cooked": "{{actor}} cooked {{subject}}",
+      "you": "You"
+    },
+    "textSize": "Text size: {{size}}. Change",
+    "storageError": "We couldn’t open your pantry on this device."
   },
   "placeholder": {
     "body": "This page is on its way. For now, head back to Today.",

@@ -41,7 +41,7 @@ describe('OnboardingPage (home list setup)', () => {
       color: 'olive',
       isPrivate: false,
     });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /today/i })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
   });
 
@@ -61,7 +61,7 @@ describe('OnboardingPage (home list setup)', () => {
     mockCreate(409, { error: { code: 'conflict', message: 'exists' } });
     renderApp('/onboarding', [newUserMe, returningUserMe]);
     await userEvent.click(await screen.findByRole('button', { name: 'Create home list' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /today/i })).toBeInTheDocument();
   });
 
   it('shows a plain-language error when creating fails', async () => {

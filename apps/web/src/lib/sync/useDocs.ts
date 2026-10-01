@@ -7,8 +7,8 @@ import { readItems, readListItems, readListMeta, readReceipts } from '@shelf-lif
 
 export type DocStatus = 'loading' | 'ready' | 'error';
 
-/** Subscribe to a Y.Doc and re-read `read(doc)` whenever it changes. */
-function useDocSnapshot<T>(doc: Y.Doc | null, read: (doc: Y.Doc) => T, empty: T): T {
+/** Subscribe to a Y.Doc and re-read `read(doc)` whenever it changes. `read` must be stable. */
+export function useDocSnapshot<T>(doc: Y.Doc | null, read: (doc: Y.Doc) => T, empty: T): T {
   const cache = useRef<{ doc: Y.Doc | null; value: T; dirty: boolean }>({
     doc: null,
     value: empty,

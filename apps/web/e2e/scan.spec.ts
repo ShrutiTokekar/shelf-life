@@ -158,6 +158,11 @@ test.describe('Scan receipt (SRS 6.4)', () => {
 
   test('SCN-4 Cancel stops the scan and returns to the scanner', async ({ page }) => {
     await openScanner(page);
+    // Hold the OCR engine download so Cancel is pressed mid-scan even on a fast machine.
+    await page.route('**/ocr/**', async (route) => {
+      await new Promise((r) => setTimeout(r, 3000));
+      await route.continue().catch(() => undefined);
+    });
     await upload(page, await receiptPng(page, PATEL));
     await page.getByRole('button', { name: 'Cancel' }).click();
     await expect(page.getByText('Scan cancelled.')).toBeVisible();

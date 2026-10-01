@@ -1,3 +1,3 @@
-// Priority ranking (SRS 8.4) and recipe ranking (SRS 8.5) land here in Milestone 6.
+// Priority ranking (SRS 8.4) and, from Milestone 6c, recipe ranking (SRS 8.5).
 // Keep this package framework-free: pure functions only.
-export {};
+export * from './priorities';

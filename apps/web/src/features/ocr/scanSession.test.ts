@@ -86,6 +86,17 @@ describe('runScan', () => {
     void scan.catch(() => undefined);
   });
 
+  it('SCN-4 Cancel works while the engine is still downloading', async () => {
+    const { createRecognizer } = await import('./recognize');
+    // The first scan: the engine download hasn't finished (and never does here).
+    vi.mocked(createRecognizer).mockImplementationOnce(() => new Promise(() => undefined));
+    const controller = new AbortController();
+    const scan = runScan(jpeg(), { signal: controller.signal, onProgress: () => undefined });
+    await new Promise((r) => setTimeout(r, 0));
+    controller.abort();
+    await expect(scan).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
   it('rejects bad files before doing any work', async () => {
     await expect(
       runScan(new File(['x'], 'a.txt', { type: 'text/plain' }), {
