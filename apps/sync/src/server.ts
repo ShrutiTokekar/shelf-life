@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type Server } from 'node:http';
+import type { Duplex } from 'node:stream';
 import { verifySyncToken, type DocAccess } from '@shelf-life/api/sync';
 import {
   applyCartMoveToPantry,
@@ -52,6 +53,12 @@ export type SyncServerOptions = {
   /** SRS 11.2: 50 updates per second per connection. */
   maxMessagesPerSecond?: number;
   log?: (msg: string) => void;
+  /**
+   * Serve on an existing HTTP server (the API's, in production on one port) instead of starting
+   * our own. Upgrades are accepted under `pathPrefix` + "/doc/:name".
+   */
+  server?: Server;
+  pathPrefix?: string;
 };
 
 const send = (ws: WebSocket, message: Uint8Array) => {
@@ -210,7 +217,7 @@ export function createSyncServer(opts: SyncServerOptions) {
 
   async function onConnection(ws: WebSocket, req: IncomingMessage) {
     const url = new URL(req.url ?? '/', 'http://localhost');
-    const match = /^\/doc\/([^/]+)$/.exec(url.pathname);
+    const match = new RegExp(`^${prefix}/doc/([^/]+)$`).exec(url.pathname);
     const name = match ? decodeURIComponent(match[1]!) : '';
     const token = url.searchParams.get('token') ?? '';
 
@@ -279,15 +286,26 @@ export function createSyncServer(opts: SyncServerOptions) {
     for (const data of early) handle(data);
   }
 
-  const server: Server = createServer((req, res) => {
-    if (req.url === '/health') {
-      res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, rooms: rooms.size }));
+  const prefix = opts.pathPrefix ?? '';
+  const server: Server =
+    opts.server ??
+    createServer((req, res) => {
+      if (req.url === '/health') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, rooms: rooms.size }));
+        return;
+      }
+      res.writeHead(404).end();
+    });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 5 * 1024 * 1024 });
+  server.on('upgrade', (req: IncomingMessage, socket: Duplex, head: Buffer) => {
+    const path = new URL(req.url ?? '/', 'http://localhost').pathname;
+    if (!path.startsWith(`${prefix}/doc/`)) {
+      socket.destroy();
       return;
     }
-    res.writeHead(404).end();
+    wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
   });
-  const wss = new WebSocketServer({ server, maxPayload: 5 * 1024 * 1024 });
   wss.on('connection', (ws, req) => {
     onConnection(ws, req).catch((err) => {
       log(`connection failed: ${String(err)}`);
@@ -328,7 +346,8 @@ export function createSyncServer(opts: SyncServerOptions) {
       for (const client of wss.clients) client.terminate();
       await Promise.all([...rooms.values()].map(save));
       await new Promise<void>((resolve) => wss.close(() => resolve()));
-      await new Promise<void>((resolve) => server.close(() => resolve()));
+      // An outside server (the API's) is closed by its owner.
+      if (!opts.server) await new Promise<void>((resolve) => server.close(() => resolve()));
     },
   };
 }

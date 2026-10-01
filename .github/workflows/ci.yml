@@ -30,6 +30,15 @@ jobs:
       - run: pnpm audit --prod --audit-level high
       - run: pnpm build
 
+  # SRS 14.1: the API + sync service ship as this image (Render). Build it on every PR.
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t shelf-life-server .
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20

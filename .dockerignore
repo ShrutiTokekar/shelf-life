@@ -1,0 +1,14 @@
+# Keep images small and free of anything private or local.
+**/node_modules
+**/dist
+**/coverage
+**/test-results
+**/playwright-report
+.git
+.env
+.env.*
+docs
+CLAUDE.md
+foodkeeper-extract.json
+tests/receipts/photos
+apps/web/public/ocr

@@ -1,0 +1,33 @@
+# Render Blueprint (SRS 14.1): the API and sync service as one free web service. The database
+# is on Neon (Render's free Postgres expires after 30 days). In Render: New → Blueprint → this repo.
+services:
+  - type: web
+    name: shelf-life-server
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: main
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Neon connection string (ends with ?sslmode=require).
+      - key: DATABASE_URL
+        sync: false
+      # Random secrets Render generates once and keeps.
+      - key: BETTER_AUTH_SECRET
+        generateValue: true
+      - key: SYNC_JWT_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # https://<your Vercel domain>
+      - key: APP_URL
+        sync: false
+      # wss://<this service's onrender.com host>/sync
+      - key: SYNC_URL
+        sync: false

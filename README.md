@@ -133,6 +133,58 @@ pnpm test:e2e
 
 `pnpm test:e2e` needs Postgres running (`pnpm db:up`). It starts its own servers on ports 5174/8788/8791 (plus 5175/8789/8792 for the offline test) against a separate `shelflife_test` database. It won't touch your dev data, and you can leave `pnpm dev` running. Google isn't contacted: E2E signs in through a test-only route that exists only when the API runs with `NODE_ENV=test`.
 
+## Deploying (free tiers)
+
+Production (SRS 14.1): the web app on **Vercel Hobby**, the API and sync service as **one free Render web service** (Docker), and Postgres on **Neon's free plan**. None of them needs a card.
+
+Render's free instance sleeps after 15 minutes without traffic and takes about a minute to wake. The app still opens instantly and works offline, because lists and the pantry live on the device; syncing resumes once the server is awake.
+
+### 1. Neon: the database
+
+1. Sign up at neon.tech and create a project (Postgres 16 or newer, a region near you).
+2. Copy the **connection string**. It looks like `postgres://…neon.tech/neondb?sslmode=require`.
+
+### 2. Vercel: the web app
+
+1. Import this repo in Vercel and set **Root Directory** to `apps/web`. `apps/web/vercel.json` sets the install, build and output.
+2. Under Settings → General, set the Node.js version to 24.x if offered.
+3. Deploy, and note your domain, e.g. `shelf-life-abc.vercel.app`. Sign-in won't work until step 5.
+
+### 3. Render: the API and sync service
+
+1. Sign up at render.com with GitHub, then **New → Blueprint** and pick this repo. It reads `render.yaml` and creates one free web service, `shelf-life-server`, built from the root `Dockerfile`.
+2. Fill in the values it asks for:
+
+   | Variable                                   | Value                                            |
+   | ------------------------------------------ | ------------------------------------------------ |
+   | `DATABASE_URL`                             | the Neon connection string                       |
+   | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | the same values as your local `.env`             |
+   | `APP_URL`                                  | `https://<your Vercel domain>`                   |
+   | `SYNC_URL`                                 | `wss://<this service's .onrender.com host>/sync` |
+
+   Render generates `BETTER_AUTH_SECRET` and `SYNC_JWT_SECRET` itself. The service applies database migrations every time it starts.
+
+3. When the deploy is live, note its host, e.g. `shelf-life-server.onrender.com`. If you didn't know it in step 2, set `SYNC_URL` now; Render redeploys.
+
+### 4. Point the web app at the server
+
+1. In `apps/web/vercel.json`, replace `API_HOST` with the Render host (no `https://`) and commit. The browser then reaches the API at `/api` on the web app's own address, which keeps the sign-in cookie same-site without buying a domain.
+2. In Vercel → Settings → Environment Variables, add `SYNC_ORIGIN=wss://<Render host>`. It goes into the app's Content Security Policy, which otherwise allows only the app itself. Redeploy.
+
+### 5. Google sign-in
+
+In Google Cloud → APIs & Services → Credentials → your OAuth client, add the authorized redirect URI `https://<your Vercel domain>/api/v1/auth/callback/google`. While the OAuth app is in testing, add each person who will sign in under **OAuth consent screen → Test users**.
+
+### 6. Check it
+
+```bash
+node scripts/deploy-check.mjs https://<your Vercel domain> wss://<Render host>/sync
+```
+
+It checks the page, its security headers and policy, the `/api` proxy and the server. Then try two devices by hand: sign in on two phones with two Google test users, share a list from one, join from the other, add and check items, and turn one phone's network off and back on.
+
+The automated two-device test runs in CI against the same API and sync code on every PR. It can't run against production, because signing in there needs real Google accounts and the test-only login never exists in production.
+
 ## Commands
 
 | Command                                               | What it does                                                                               |
