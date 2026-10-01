@@ -330,7 +330,8 @@ function ShareBody({
       {canInvite ? (
         <div className="flex flex-wrap items-center gap-3 rounded-card bg-shelf p-4">
           <LinkIcon size={20} className="shrink-0 text-navy" />
-          <div className="min-w-0 flex-1">
+          {/* At least 14rem for the link text; on phones the role and Copy wrap to the next line. */}
+          <div className="min-w-0 flex-1 basis-56">
             <p className="font-semibold text-ink">
               {t('share.linkTitle', { role: roleLabel(linkRole) })}
             </p>

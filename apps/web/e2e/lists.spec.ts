@@ -138,6 +138,9 @@ test.describe('Lists + sharing, two devices (SRS 15.1 Milestone 5)', () => {
     await expectNoSeriousA11yViolations(page);
     await dialog.getByRole('button', { name: 'Copy link' }).click();
     await expect(dialog.getByText(/\/join\//)).toBeVisible();
+    // The link keeps a readable width even on a 390 px phone (it was squeezed to nothing once).
+    const box = await dialog.getByText(/\/join\//).boundingBox();
+    expect(box!.width).toBeGreaterThan(150);
     await dialog.getByRole('button', { name: 'Stop sharing' }).click();
     await page.getByRole('alertdialog').getByRole('button', { name: 'Stop sharing' }).click();
     await expect(page.getByText('Only you are on this list now.')).toBeVisible();
