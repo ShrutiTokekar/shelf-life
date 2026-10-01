@@ -1,5 +1,5 @@
 // Post-deploy smoke check (SRS 14.2): node scripts/deploy-check.mjs <web-url> <sync-url>
-// e.g. node scripts/deploy-check.mjs https://shelf-life.vercel.app wss://sync--abc.code.run
+// e.g. node scripts/deploy-check.mjs https://shelf-life.vercel.app wss://shelf-life-server.onrender.com/sync
 // Checks the web app, its /api proxy to the API, the security headers, and the sync service.
 const [web, sync] = process.argv.slice(2);
 if (!web || !sync) {
@@ -45,7 +45,7 @@ await check('/api reaches the API through the web origin (cookies stay same-site
   expect(body?.error?.code === 'unauthorized', 'not the API error envelope');
 });
 
-await check('sync service is up', async () => {
+await check('API + sync service is up (a free instance may take a minute to wake)', async () => {
   const health = new URL('/health', sync.replace(/^ws/, 'http'));
   const res = await fetch(health);
   expect(res.ok, `HTTP ${res.status}`);

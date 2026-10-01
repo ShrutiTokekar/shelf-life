@@ -259,3 +259,58 @@ describe('LST-7 cart → pantry', () => {
     },
   );
 });
+
+describe('one-port mode (production on Render)', () => {
+  it('serves sync at /sync/doc on another HTTP server and leaves other upgrades alone', async () => {
+    const { createServer } = await import('node:http');
+    const http = createServer((_req, res) => res.writeHead(200).end('api'));
+    await new Promise<void>((r) => http.listen(0, r));
+    const port = (http.address() as AddressInfo).port;
+    const sync = createSyncServer({
+      store: memoryStore(ACCESS).store,
+      secret: SECRET,
+      server: http,
+      pathPrefix: '/sync',
+    });
+    try {
+      const { token } = await signSyncToken(SECRET, {
+        userId: 'owner',
+        doc: `list:${LIST}`,
+        access: 'write',
+      });
+      const a = new Y.Doc();
+      const b = new Y.Doc();
+      const opts = (t: string) => ({
+        params: { token: t },
+        WebSocketPolyfill: WebSocket as unknown as typeof globalThis.WebSocket,
+        disableBc: true,
+      });
+      const pa = new WebsocketProvider(
+        `ws://localhost:${port}/sync/doc`,
+        `list:${LIST}`,
+        a,
+        opts(token),
+      );
+      const pb = new WebsocketProvider(
+        `ws://localhost:${port}/sync/doc`,
+        `list:${LIST}`,
+        b,
+        opts(token),
+      );
+      providers.push(pa, pb);
+      await until(() => pa.synced && pb.synced);
+      addListItem(a, newListItem({ name: 'Ghee', quantity: null, unit: '' }, ctx('owner')));
+      await until(() => readListItems(b).length === 1);
+
+      // The API's own routes still answer, and unknown upgrade paths are refused.
+      expect(await (await fetch(`http://localhost:${port}/health`)).text()).toBe('api');
+      const stray = new WebSocket(`ws://localhost:${port}/elsewhere`);
+      await new Promise<void>((resolve) => stray.on('error', () => resolve()));
+    } finally {
+      for (const p of providers) p.destroy();
+      providers = [];
+      await sync.close();
+      await new Promise<void>((r) => http.close(() => r()));
+    }
+  });
+});

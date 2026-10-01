@@ -1,5 +1,5 @@
-# Shelf Life sync service (SRS 14.1: Northflank). Build from the repo root:
-#   docker build -f apps/sync/Dockerfile .
+# Shelf Life API + sync service in one container (SRS 14.1; Render's free plan allows one web
+# service). Build from the repo root: docker build -t shelf-life-server .
 FROM node:24-slim
 WORKDIR /app
 RUN corepack enable
@@ -23,5 +23,5 @@ COPY apps/sync apps/sync
 
 ENV NODE_ENV=production
 USER node
-EXPOSE 8790
-CMD ["sh", "-c", "cd apps/sync && exec node_modules/.bin/tsx src/index.ts"]
+# Render sets PORT. Apply Drizzle migrations (SRS 14.2), then serve the API and /sync on it.
+CMD ["sh", "-c", "cd apps/api && node_modules/.bin/tsx src/db/migrate.ts && cd ../sync && exec node_modules/.bin/tsx src/combined.ts"]

@@ -135,51 +135,53 @@ pnpm test:e2e
 
 ## Deploying (free tiers)
 
-Production follows SRS 14.1: the web app on **Vercel Hobby**; the API, the sync service and Postgres on **Northflank's free Developer Sandbox**. Both are free. Northflank may ask for a card to verify the account; if it does, set a spending cap of $0 in billing.
+Production (SRS 14.1): the web app on **Vercel Hobby**, the API and sync service as **one free Render web service** (Docker), and Postgres on **Neon's free plan**. None of them needs a card.
 
-### 1. Northflank: database, API and sync service
+Render's free instance sleeps after 15 minutes without traffic and takes about a minute to wake. The app still opens instantly and works offline, because lists and the pantry live on the device; syncing resumes once the server is awake.
 
-1. Create a project, then add a **PostgreSQL addon**. Copy its connection string (the `postgres://…` URI).
-2. Add a **combined service** for the API, from this GitHub repo:
-   - Build: Dockerfile `apps/api/Dockerfile`, build context `/` (the repo root).
-   - Port: `8787`, public, HTTP. Health check path: `/health`.
-   - Environment (mark the secrets as secret):
+### 1. Neon: the database
 
-     ```bash
-     NODE_ENV=production
-     PORT=8787
-     DATABASE_URL=            # the addon's connection string
-     BETTER_AUTH_SECRET=      # openssl rand -base64 32
-     SYNC_JWT_SECRET=         # openssl rand -base64 32 (the same value goes on the sync service)
-     GOOGLE_CLIENT_ID=
-     GOOGLE_CLIENT_SECRET=
-     APP_URL=https://<your-vercel-domain>
-     SYNC_URL=wss://<the sync service's public host>
-     ```
-
-   It applies database migrations every time it starts.
-
-3. Add a second **combined service** for sync: Dockerfile `apps/sync/Dockerfile`, context `/`, port `8790` public HTTP, health check `/health`, with `NODE_ENV=production`, `SYNC_PORT=8790`, and the same `DATABASE_URL` and `SYNC_JWT_SECRET`.
-4. Note both public hosts Northflank gives you (they end in `.code.run`).
+1. Sign up at neon.tech and create a project (Postgres 16 or newer, a region near you).
+2. Copy the **connection string**. It looks like `postgres://…neon.tech/neondb?sslmode=require`.
 
 ### 2. Vercel: the web app
 
-1. Import this repo in Vercel. Set **Root Directory** to `apps/web`; `apps/web/vercel.json` sets the install, build and output.
-2. In `apps/web/vercel.json`, replace `API_HOST` with the API's public host (no `https://`) and commit. The browser then reaches the API at `/api` on the web app's own address, which keeps the sign-in cookie same-site without buying a domain.
-3. Add the environment variable `SYNC_ORIGIN=wss://<the sync service's public host>`. It goes into the app's Content Security Policy, which is otherwise self-only.
-4. Deploy, then put the final Vercel domain into the API's `APP_URL` and redeploy the API.
+1. Import this repo in Vercel and set **Root Directory** to `apps/web`. `apps/web/vercel.json` sets the install, build and output.
+2. Under Settings → General, set the Node.js version to 24.x if offered.
+3. Deploy, and note your domain, e.g. `shelf-life-abc.vercel.app`. Sign-in won't work until step 5.
 
-### 3. Google sign-in
+### 3. Render: the API and sync service
 
-In Google Cloud → Credentials → your OAuth client, add the authorized redirect URI `https://<your-vercel-domain>/api/v1/auth/callback/google`. While the OAuth app is in testing, add each person who will sign in under **Test users**.
+1. Sign up at render.com with GitHub, then **New → Blueprint** and pick this repo. It reads `render.yaml` and creates one free web service, `shelf-life-server`, built from the root `Dockerfile`.
+2. Fill in the values it asks for:
 
-### 4. Check it
+   | Variable                                   | Value                                            |
+   | ------------------------------------------ | ------------------------------------------------ |
+   | `DATABASE_URL`                             | the Neon connection string                       |
+   | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | the same values as your local `.env`             |
+   | `APP_URL`                                  | `https://<your Vercel domain>`                   |
+   | `SYNC_URL`                                 | `wss://<this service's .onrender.com host>/sync` |
+
+   Render generates `BETTER_AUTH_SECRET` and `SYNC_JWT_SECRET` itself. The service applies database migrations every time it starts.
+
+3. When the deploy is live, note its host, e.g. `shelf-life-server.onrender.com`. If you didn't know it in step 2, set `SYNC_URL` now; Render redeploys.
+
+### 4. Point the web app at the server
+
+1. In `apps/web/vercel.json`, replace `API_HOST` with the Render host (no `https://`) and commit. The browser then reaches the API at `/api` on the web app's own address, which keeps the sign-in cookie same-site without buying a domain.
+2. In Vercel → Settings → Environment Variables, add `SYNC_ORIGIN=wss://<Render host>`. It goes into the app's Content Security Policy, which otherwise allows only the app itself. Redeploy.
+
+### 5. Google sign-in
+
+In Google Cloud → APIs & Services → Credentials → your OAuth client, add the authorized redirect URI `https://<your Vercel domain>/api/v1/auth/callback/google`. While the OAuth app is in testing, add each person who will sign in under **OAuth consent screen → Test users**.
+
+### 6. Check it
 
 ```bash
-node scripts/deploy-check.mjs https://<your-vercel-domain> wss://<sync host>
+node scripts/deploy-check.mjs https://<your Vercel domain> wss://<Render host>/sync
 ```
 
-It checks the page, its security headers and policy, the `/api` proxy and the sync service. Then try two devices by hand: sign in on two phones with two Google test users, share a list from one, join from the other, add and check items, and turn one phone's network off and on.
+It checks the page, its security headers and policy, the `/api` proxy and the server. Then try two devices by hand: sign in on two phones with two Google test users, share a list from one, join from the other, add and check items, and turn one phone's network off and back on.
 
 The automated two-device test runs in CI against the same API and sync code on every PR. It can't run against production, because signing in there needs real Google accounts and the test-only login never exists in production.
 

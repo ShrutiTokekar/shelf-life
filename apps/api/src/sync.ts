@@ -5,3 +5,5 @@
 export { createDb, schema, type Db } from './db/client';
 export { docAccess, type DocAccess } from './services/access';
 export { verifySyncToken, signSyncToken, type SyncClaims } from './services/syncToken';
+export { loadEnv, type Env } from './env';
+export { startApi } from './server';
