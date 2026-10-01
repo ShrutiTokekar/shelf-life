@@ -15,7 +15,7 @@ test.describe('Onboard (SRS 5.3 flow 1)', () => {
     await page.getByRole('radio', { name: 'Olive' }).click();
     await page.getByRole('button', { name: 'Create home list' }).click();
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
     await expect(page.getByText('Your shelves are empty')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Scan your first receipt' })).toBeVisible();
 
@@ -34,7 +34,7 @@ test.describe('Onboard (SRS 5.3 flow 1)', () => {
     await signInAsNewUser(page);
     await completeOnboarding(page);
     await page.reload();
-    await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
     await page.goto('/onboarding');
     await expect(page).toHaveURL(/\/$/);
   });

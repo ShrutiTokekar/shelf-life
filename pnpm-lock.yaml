@@ -139,6 +139,9 @@ importers:
       '@shelf-life/docs':
         specifier: workspace:*
         version: link:../../packages/docs
+      '@shelf-life/ranking':
+        specifier: workspace:*
+        version: link:../../packages/ranking
       '@shelf-life/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -246,7 +249,11 @@ importers:
         specifier: ^13.6.33
         version: 13.6.33
 
-  packages/ranking: {}
+  packages/ranking:
+    dependencies:
+      '@shelf-life/shared':
+        specifier: workspace:*
+        version: link:../shared
 
   packages/shared:
     dependencies:

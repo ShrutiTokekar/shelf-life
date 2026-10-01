@@ -39,7 +39,13 @@ export function usePantryActions(opts: {
 
   /** Undo restores the item and removes any activity entries the action wrote. */
   const undoable = useCallback(
-    (message: string, before: PantryItem | null, activityIds: string[] = []) => {
+    (
+      message: string,
+      before: PantryItem | null,
+      activityIds: string[] = [],
+      /** Something else the action changed (e.g. Today's progress), undone with it. */
+      alsoUndo?: () => void,
+    ) => {
       toast({
         message,
         action:
@@ -50,6 +56,7 @@ export function usePantryActions(opts: {
                   doc.transact(() => {
                     restoreItem(doc, before);
                     removeActivity(doc, activityIds);
+                    alsoUndo?.();
                   }),
               }
             : undefined,
@@ -75,7 +82,7 @@ export function usePantryActions(opts: {
   );
 
   const usedIt = useCallback(
-    (item: PantryItem) => {
+    (item: PantryItem, alsoUndo?: () => void) => {
       if (!doc) return;
       const result = applyUsedIt(item, today);
       const entries = [
@@ -93,6 +100,7 @@ export function usePantryActions(opts: {
           : t('pantry.toast.usedOne', { name: item.name, left: result.patch.quantity }),
         before,
         entries.map((e) => e.id),
+        alsoUndo,
       );
     },
     [doc, today, t, undoable, activity],
@@ -170,7 +178,8 @@ export function usePantryActions(opts: {
 
   /** PAN-9: add a ran-out item to its own list (or home, if you can only view that list). */
   const addToList = useCallback(
-    async (item: PantryItem) => {
+    /** `claim`: Today's "Add & claim" puts the user's name on it straight away (LST-5). */
+    async (item: PantryItem, opts: { claim?: boolean; alsoUndo?: () => void } = {}) => {
       const own = lists.find((l) => l.id === item.listId && l.role !== 'view');
       const target = own ?? lists.find((l) => l.isHome) ?? lists[0];
       if (!target) return;
@@ -195,7 +204,7 @@ export function usePantryActions(opts: {
         recipeId: null,
         pantryItemId: item.id,
         addedBy: userId,
-        claimedBy: null,
+        claimedBy: opts.claim ? userId : null,
         checked: false,
         checkedBy: null,
         checkedAt: null,
@@ -203,7 +212,13 @@ export function usePantryActions(opts: {
       });
       toast({
         message: t('pantry.toast.addedToList', { name: item.name, list: target.name }),
-        action: { label: undoLabel, onAction: () => removeListItem(handle.doc, entryId) },
+        action: {
+          label: undoLabel,
+          onAction: () => {
+            removeListItem(handle.doc, entryId);
+            opts.alsoUndo?.();
+          },
+        },
       });
     },
     [lists, userId, t, toast, undoLabel],

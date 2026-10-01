@@ -20,7 +20,7 @@ export async function completeOnboarding(page: Page, name = 'Home') {
   await expect(page).toHaveURL(/\/onboarding$/);
   await page.getByRole('textbox', { name: 'List name' }).fill(name);
   await page.getByRole('button', { name: 'Create home list' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
 }
 
 /** SRS 13: zero serious or critical axe violations. */

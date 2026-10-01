@@ -9,5 +9,8 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "dependencies": {
+    "@shelf-life/shared": "workspace:*"
+  }
 }

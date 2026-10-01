@@ -146,7 +146,18 @@ export async function runScan(
     dispose = cleaned.dispose;
     emit({ percent: 15, steps: { ...state.steps, clean: 'done', read: 'active' } });
 
-    const ocr = await recognizerReady;
+    // SCN-4: Cancel works even while the engine is still downloading (first scan, slow network).
+    const ocr = await Promise.race([
+      recognizerReady,
+      new Promise<never>((_, reject) => {
+        if (signal.aborted) reject(new DOMException('Cancelled', 'AbortError'));
+        signal.addEventListener(
+          'abort',
+          () => reject(new DOMException('Cancelled', 'AbortError')),
+          { once: true },
+        );
+      }),
+    ]);
     checkAborted();
     const lines: OcrLine[] = await ocr.read(cleaned.canvas);
     dispose();
@@ -167,6 +178,7 @@ export async function runScan(
   } finally {
     dispose();
     signal.removeEventListener('abort', stop);
-    await recognizerReady.then((r) => r.terminate()).catch(() => undefined);
+    // Stop the engine once it exists; never make a cancelled scan wait for its download.
+    void recognizerReady.then((r) => r.terminate()).catch(() => undefined);
   }
 }

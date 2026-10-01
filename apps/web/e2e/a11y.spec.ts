@@ -30,7 +30,7 @@ for (const size of ['default', 'largest'] as const) {
       await expectNoHorizontalScroll(page);
 
       await page.getByRole('button', { name: 'Create home list' }).click();
-      await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
       await expect(page.locator('html')).toHaveAttribute('data-text-size', size);
       await expectNoSeriousA11yViolations(page);
       await expectNoHorizontalScroll(page);
@@ -48,7 +48,7 @@ test('SRS 6 offline state: the page stays usable and shows the offline banner', 
   await expect(
     page.getByRole('status').filter({ hasText: 'Offline, changes will sync' }),
   ).toBeVisible();
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
   await context.setOffline(false);
   await expect(page.getByText('Offline, changes will sync')).toBeHidden();
 });

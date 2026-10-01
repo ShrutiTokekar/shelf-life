@@ -61,7 +61,7 @@ describe('ProfilePage', () => {
 
   it('is reachable from the mobile Today top bar', async () => {
     renderApp('/', returningUserMe);
-    await screen.findByRole('heading', { level: 1, name: 'Today' });
+    await screen.findByRole('heading', { level: 1, name: /today/i });
     const links = screen.getAllByRole('link', { name: 'Account, Ananya Mehta' });
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/profile', '/profile']);
   });

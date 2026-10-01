@@ -143,3 +143,17 @@ describe('activity (SRS 8.7)', () => {
     expect(() => recordActivity(doc, [{ id: '' } as never])).toThrow();
   });
 });
+
+describe('today map (SRS 8.4 progress, per person)', () => {
+  it('stores each person’s state and starts fresh on a new day', async () => {
+    const { readTodayState, writeTodayState, todayMap } = await import('../src');
+    const doc = new Y.Doc();
+    expect(readTodayState(doc, 'u1', '2026-09-25')).toEqual({ date: '2026-09-25', done: [], snoozed: {} });
+    writeTodayState(doc, 'u1', { date: '2026-09-25', done: ['expires:a'], snoozed: { 'expires:b': '2026-09-26' } });
+    expect(readTodayState(doc, 'u1', '2026-09-25').done).toEqual(['expires:a']);
+    expect(readTodayState(doc, 'u2', '2026-09-25').done).toEqual([]);
+    expect(readTodayState(doc, 'u1', '2026-09-26').done).toEqual([]);
+    todayMap(doc).set('u3', { bad: true } as never);
+    expect(readTodayState(doc, 'u3', '2026-09-25').done).toEqual([]);
+  });
+});

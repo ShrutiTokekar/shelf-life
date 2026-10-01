@@ -60,7 +60,7 @@ test('SRS 12.4 the installed app opens offline: shell from the service worker, a
 
   await page.goto('/');
   await page.getByRole('button', { name: 'Create home list' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
 
   // Wait for the service worker to install and take control of the page.
   await page.evaluate(() => navigator.serviceWorker.ready);
@@ -69,7 +69,7 @@ test('SRS 12.4 the installed app opens offline: shell from the service worker, a
 
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
   await expect(page.getByText('Offline, changes will sync')).toBeVisible();
 
   // Client-side navigation keeps working offline.
@@ -153,7 +153,7 @@ test('rule 3 decision 1: after the first scan, scanning works offline (engine ca
   expect(login.ok()).toBe(true);
   await page.goto('/');
   await page.getByRole('button', { name: 'Create home list' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
@@ -203,7 +203,7 @@ test('rule 3 LST-10 the grocery list works offline and syncs when back online', 
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'Create home list' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);

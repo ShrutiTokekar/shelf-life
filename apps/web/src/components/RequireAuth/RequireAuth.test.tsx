@@ -26,13 +26,13 @@ describe('RequireAuth', () => {
 
   it('WEL-2 returning users land on Today', async () => {
     const { router } = renderApp('/', returningUserMe);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /today/i })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
   });
 
   it('returning users can’t reopen home list setup', async () => {
     const { router } = renderApp('/onboarding', returningUserMe);
-    await screen.findByRole('heading', { level: 1, name: 'Today' });
+    await screen.findByRole('heading', { level: 1, name: /today/i });
     expect(router.state.location.pathname).toBe('/');
   });
 
@@ -40,14 +40,14 @@ describe('RequireAuth', () => {
     renderApp('/', ['server', returningUserMe]);
     expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong');
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /today/i })).toBeInTheDocument();
   });
 
   it('SRS 12.4 opens offline from the cached /me', async () => {
     const first = renderApp('/', returningUserMe);
-    await screen.findByRole('heading', { level: 1, name: 'Today' });
+    await screen.findByRole('heading', { level: 1, name: /today/i });
     first.unmount();
     renderApp('/', 'network');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /today/i })).toBeInTheDocument();
   });
 });
