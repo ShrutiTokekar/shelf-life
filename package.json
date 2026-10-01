@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter @shelf-life/web --filter @shelf-life/api dev",
+    "dev": "pnpm --parallel --filter @shelf-life/web --filter @shelf-life/api --filter @shelf-life/sync dev",
     "build": "pnpm -r build",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -37,8 +37,9 @@ import { SummaryPill } from '../../components/SummaryPill/SummaryPill';
 import { useToast } from '../../components/Toast/Toast';
 import { cx } from '../../lib/cx';
 import { formatShortDate } from '../../lib/format';
+import { useCurrentPantry } from '../../lib/pantries';
 import { useMe } from '../../lib/session';
-import { applyReview } from '../../lib/sync/receiptStore';
+import { applyReview } from '@shelf-life/docs';
 import { useReceipts } from '../../lib/sync/useDocs';
 import { useReviewDraft, type PantryHighlightState } from '../../stores/reviewDraft';
 
@@ -50,7 +51,8 @@ import { useReviewDraft, type PantryHighlightState } from '../../stores/reviewDr
 export function ReviewPage() {
   const { t } = useTranslation();
   const me = useMe();
-  const pantryId = me.pantry!.id;
+  // Scans land in a pantry this user can edit (SHR-6).
+  const pantryId = useCurrentPantry().writable.id;
   const [params] = useSearchParams();
   const receiptId = params.get('receipt');
   const { doc, receipts, items: pantry, status, retry } = useReceipts(pantryId);
@@ -176,10 +178,9 @@ function ReviewForm({ draft, backTo, ready, onSave }: ReviewFormProps) {
 
   const isEdit = draft.receiptId !== null;
   const counts = reviewCounts(draft);
-  const lists = useMemo(
-    () => me.lists.filter((l) => l.pantryId === me.pantry!.id),
-    [me.lists, me.pantry],
-  );
+  const { writable, writableLists } = useCurrentPantry();
+  // REV-6: labels are lists of this pantry that the user may add to.
+  const lists = useMemo(() => writableLists.filter((l) => l.role !== 'view'), [writableLists]);
   const editingItem = draft.items.find((i) => i.index === editing) ?? null;
 
   function save() {
@@ -205,7 +206,7 @@ function ReviewForm({ draft, backTo, ready, onSave }: ReviewFormProps) {
   const date = formatShortDate(draft.purchasedOn, today);
   const asPantryItem = (item: ReviewItem): PantryItem => ({
     id: `review-${item.index}`,
-    pantryId: me.pantry!.id,
+    pantryId: writable.id,
     listId: draft.listId,
     foodId: item.foodId,
     name: item.name.slice(0, 60),

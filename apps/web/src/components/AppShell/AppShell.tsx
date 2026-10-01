@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useMatches } from 'react-router-dom';
 import { useMe } from '../../lib/session';
+import { useList } from '../../lib/sync/useDocs';
+import { usePlace } from '../../stores/place';
 import { useUiSettings } from '../../stores/uiSettings';
 import { navKeyForPath } from '../nav';
 import { NavBottom } from '../NavBottom/NavBottom';
@@ -27,7 +29,14 @@ export function AppShell() {
   const skip = handle?.skipLink ?? { targetId: 'main', textKey: 'skip.main' };
 
   const active = navKeyForPath(pathname);
-  const listHref = me.pantry ? `/lists/${me.pantry.homeListId}` : '/lists';
+  // The List tab reopens the last list (or the home list), with its to-buy count (SRS 5.1).
+  const lastList = usePlace((s) => s.listId);
+  const listId =
+    lastList && me.lists.some((l) => l.id === lastList)
+      ? lastList
+      : (me.pantry?.homeListId ?? null);
+  const listHref = listId ? `/lists/${listId}` : '/lists';
+  const listCount = useList(listId).items.filter((i) => !i.checked).length;
 
   return (
     <div className="min-h-dvh pb-32 lg:pb-12">
@@ -36,6 +45,7 @@ export function AppShell() {
         className="max-lg:hidden"
         active={active}
         listHref={listHref}
+        listCount={listCount}
         userName={me.user.displayName}
         userInitial={me.user.avatarInitial}
         textSize={settings.textSize}
@@ -47,7 +57,7 @@ export function AppShell() {
       <main id="main" tabIndex={-1} className="outline-none">
         <Outlet />
       </main>
-      <NavBottom className="lg:hidden" active={active} listHref={listHref} />
+      <NavBottom className="lg:hidden" active={active} listHref={listHref} listCount={listCount} />
     </div>
   );
 }

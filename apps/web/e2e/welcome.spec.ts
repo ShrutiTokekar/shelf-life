@@ -30,18 +30,19 @@ test.describe('Welcome and sign in', () => {
     expect(url.searchParams.get('redirect_uri')).toBe(`${ORIGIN}/api/v1/auth/callback/google`);
   });
 
-  test('WEL-3 an invite link opened before sign-in is remembered through sign-in', async ({
-    page,
-  }) => {
+  test('WEL-3 an invite link opened before sign-in is opened after sign-in', async ({ page }) => {
     await page.goto('/join/invite-token-123');
     await expect(page).toHaveURL(/\/welcome$/);
     await expect(page.getByText('Sign in to join the list you were invited to.')).toBeVisible();
 
     await signInAsNewUser(page);
     await page.goto('/');
+    // The saved invite comes first (a made-up token here, so it's reported and forgotten; a real
+    // join is covered in lists.spec.ts), then home list setup.
+    await expect(page).toHaveURL(/\/join\/invite-token-123$/);
+    await expect(page.getByText(/expired or was turned off/)).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('shelf-life:pending-invite'))).toBeNull();
+    await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding$/);
-    expect(await page.evaluate(() => localStorage.getItem('shelf-life:pending-invite'))).toBe(
-      'invite-token-123',
-    );
   });
 });

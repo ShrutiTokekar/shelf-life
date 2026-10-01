@@ -13,15 +13,16 @@ import { useTranslation } from 'react-i18next';
 import type * as Y from 'yjs';
 import { useToast } from '../../components/Toast/Toast';
 import { getDoc, listDocName } from '../../lib/sync/docs';
-import { addListItem, removeListItem } from '../../lib/sync/listStore';
 import {
   addItems,
+  addListItem,
   recordActivity,
   removeActivity,
   removeItem,
+  removeListItem,
   restoreItem,
   updateItem,
-} from '../../lib/sync/pantryStore';
+} from '@shelf-life/docs';
 
 /** Every pantry write goes through here so each one gets its toast and Undo (PAN-8). */
 export function usePantryActions(opts: {

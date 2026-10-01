@@ -15,6 +15,13 @@ const envSchema = z.object({
    * /api to this process, so it's the same as APP_URL (keeps cookies same-site).
    */
   API_URL: z.url().optional(),
+  /** Signs the 5-minute sync tokens (SRS 11.1); the sync service verifies with the same value. */
+  SYNC_JWT_SECRET: z.string().min(32, 'SYNC_JWT_SECRET must be at least 32 characters'),
+  /**
+   * Public WebSocket origin of the sync service, e.g. wss://sync.example.com. Unset locally: the
+   * browser then connects through the Vite dev server at /sync on its own origin.
+   */
+  SYNC_URL: z.url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -52,6 +52,8 @@ export type JarCardProps = {
   onAddToList: () => void;
   /** Just added from a receipt: outlined and tagged "New" for a moment (REV-7). */
   highlighted?: boolean;
+  /** SHR-5: a "Can view" member of a shared home sees jars without actions. */
+  readOnly?: boolean;
 };
 
 /**
@@ -69,6 +71,7 @@ export function JarCard({
   onEdit,
   onAddToList,
   highlighted = false,
+  readOnly = false,
 }: JarCardProps) {
   const { t } = useTranslation();
   const nameId = useId();
@@ -128,7 +131,7 @@ export function JarCard({
           className="w-full"
         />
 
-        {out ? (
+        {readOnly ? null : out ? (
           onList ? (
             <p className="flex min-h-11 items-center gap-1.5 text-[0.8125rem] font-semibold text-olive-dark">
               <CartIcon size={16} />

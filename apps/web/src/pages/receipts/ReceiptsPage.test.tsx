@@ -1,9 +1,10 @@
+import { addDays, todayIso } from '@shelf-life/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { getDoc, pantryDocName } from '../../lib/sync/docs';
-import { readItems } from '../../lib/sync/pantryStore';
-import { applyReview, readReceipts } from '../../lib/sync/receiptStore';
+import { applyReview, readItems, readReceipts } from '@shelf-life/docs';
+import { formatMonth } from '../../lib/format';
 import { useReviewDraft } from '../../stores/reviewDraft';
 import { seriousViolations } from '../../test/axe';
 import { returningUserMe, seededMe } from '../../test/fixtures';
@@ -16,15 +17,22 @@ afterEach(() => {
   useReviewDraft.getState().clear();
 });
 
+// Dates relative to today, so "This month" and the month headings hold on any day.
+const TODAY = todayIso();
+const EARLIER = addDays(TODAY, -60);
+
 async function seed() {
   const handle = getDoc(pantryDocName(PANTRY));
   await handle.ready;
-  const clean = savedReceipt({ purchasedOn: '2026-09-24' });
+  const clean = savedReceipt({ purchasedOn: TODAY });
   const costco = savedReceipt(
-    { storeName: 'Costco', purchasedOn: '2026-08-20', scannedBy: 'u2', total: 96.12 },
+    { storeName: 'Costco', purchasedOn: EARLIER, scannedBy: 'u2', total: 96.12 },
     scanDraft(),
   );
-  const review = savedReceipt({ storeName: 'Trader Joe’s' }, scanDraft(undefined, 0.55));
+  const review = savedReceipt(
+    { storeName: 'Trader Joe’s', purchasedOn: TODAY },
+    scanDraft(undefined, 0.55),
+  );
   for (const c of [clean, costco, review]) applyReview(handle.doc, c);
   return { doc: handle.doc, clean, costco, review };
 }
@@ -44,7 +52,11 @@ describe('ReceiptsPage mobile (SRS 6.12, Figma 13–14)', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('3 receipts · photos never leave your device')).toBeInTheDocument();
     const sections = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-    expect(sections).toEqual(['Needs your review · 1', 'September', 'August']);
+    expect(sections).toEqual([
+      'Needs your review · 1',
+      formatMonth(TODAY.slice(0, 7), TODAY),
+      formatMonth(EARLIER.slice(0, 7), TODAY),
+    ]);
     const review = screen.getAllByTestId('receipt-row')[0]!;
     expect(within(review).getByRole('link', { name: 'Trader Joe’s' })).toBeInTheDocument();
     expect(within(review).getByRole('link', { name: /Review \d+ lines?/ })).toHaveAttribute(

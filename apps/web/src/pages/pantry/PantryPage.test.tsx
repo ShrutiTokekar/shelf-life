@@ -2,7 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { getDoc, pantryDocName } from '../../lib/sync/docs';
-import { readActivity } from '../../lib/sync/pantryStore';
+import { readActivity } from '@shelf-life/docs';
 import { seriousViolations } from '../../test/axe';
 import { returningUserMe, seededMe } from '../../test/fixtures';
 import { renderApp } from '../../test/renderApp';

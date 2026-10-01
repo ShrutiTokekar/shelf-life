@@ -1,6 +1,6 @@
 import { receiptSchema, type Activity, type Receipt, type ReviewCommit } from '@shelf-life/shared';
 import type * as Y from 'yjs';
-import { addItems, itemsMap, recordActivity, removeItem, updateItem } from './pantryStore';
+import { addItems, itemsMap, recordActivity, removeItem, updateItem } from './pantry';
 
 /**
  * The pantry doc's `receipts` map: receipt id → plain object with its text lines (SRS 8.7, 10).

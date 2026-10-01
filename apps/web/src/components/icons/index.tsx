@@ -330,3 +330,70 @@ export const ReceiptIcon = (p: IconProps) => (
     <path d="M9 8h6M9 12h6M9 16h3" />
   </Icon>
 );
+
+/** "I'll get it" (SRS 4.4 hand). */
+export const HandIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11" />
+    <path d="M11 10V4.5a1.5 1.5 0 0 1 3 0V11" />
+    <path d="M14 10.5V6a1.5 1.5 0 0 1 3 0v6" />
+    <path d="M17 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-2.7L4.3 15a1.6 1.6 0 0 1 2.6-1.9L8 14.5" />
+  </Icon>
+);
+
+export const UserPlusIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+    <path d="M3 20a7 7 0 0 1 12.5-4.3" />
+    <path d="M19 14v6M16 17h6" />
+  </Icon>
+);
+
+export const LinkIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+    <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+  </Icon>
+);
+
+export const CopyIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M9 9h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1Z" />
+    <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+  </Icon>
+);
+
+export const MailIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+    <path d="m3 7 9 6 9-6" />
+  </Icon>
+);
+
+export const MinusIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 12h14" />
+  </Icon>
+);
+
+export const NoteIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+    <path d="M9 12h6M9 16h4" />
+  </Icon>
+);
+
+export const UsersIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+    <path d="M2 21a7 7 0 0 1 14 0" />
+    <path d="M16 3.5a4 4 0 0 1 0 7M18 14a7 7 0 0 1 4 7" />
+  </Icon>
+);
+
+export const TagIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9Z" />
+    <path d="M7.5 7.5h.01" />
+  </Icon>
+);

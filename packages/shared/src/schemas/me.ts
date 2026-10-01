@@ -10,6 +10,13 @@ export const meResponseSchema = z.object({
   user: userSchema,
   pantry: pantrySchema.nullable(),
   lists: z.array(listWithRoleSchema),
+  /**
+   * Pantries this user can open: their own, plus the pantry of any home list they joined
+   * (SHR-6). The Pantry page shows a switcher when there's more than one.
+   */
+  pantries: z.array(
+    pantrySchema.extend({ name: z.string(), own: z.boolean(), canEdit: z.boolean() }),
+  ),
   settings: userSettingsSchema,
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;

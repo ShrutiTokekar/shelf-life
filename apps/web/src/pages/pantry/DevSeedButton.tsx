@@ -5,8 +5,7 @@ import type * as Y from 'yjs';
 import { Button } from '../../components/Button/Button';
 import { useToast } from '../../components/Toast/Toast';
 import { getDoc, listDocName } from '../../lib/sync/docs';
-import { addListItem } from '../../lib/sync/listStore';
-import { addItems } from '../../lib/sync/pantryStore';
+import { addItems, addListItem } from '@shelf-life/docs';
 
 /**
  * Development only (never rendered in production builds): fills this device's pantry with the

@@ -46,9 +46,13 @@ GOOGLE_CLIENT_SECRET=
 # Web app origin and API port (leave as is)
 APP_URL=https://localhost:5173
 PORT=8787
+
+# Another random string of 32+ characters (`openssl rand -base64 32`), shared by the API and the
+# sync service to sign 5-minute sync tokens
+SYNC_JWT_SECRET=
 ```
 
-`.env` is git-ignored. Never commit it or paste its values anywhere public. These are the only variables Milestone 1 needs. Later milestones add AI, Web Push and sync variables (SRS 14.4), and this README will list them when they're needed.
+`.env` is git-ignored. Never commit it or paste its values anywhere public. Later milestones add AI and Web Push variables (SRS 14.4); this README will list them when they're needed.
 
 ### 4. Create a Google OAuth client (free)
 
@@ -80,6 +84,9 @@ pnpm dev
 
 - Web app: **https://localhost:5173**
 - API: `http://localhost:8787`. The web dev server proxies `/api` to it, so the browser only ever talks to `localhost:5173`, and the session cookie stays same-site.
+- Sync service: `ws://localhost:8790`, proxied at `wss://localhost:5173/sync`. It relays list and pantry changes between devices and saves them to Postgres.
+
+To try sharing, open a second browser profile (or a private window), sign in with another Google test user, and open an invite link from **Share list**.
 
 The dev server uses a self-signed HTTPS certificate, which the camera needs. The first time you open the app, your browser warns you: choose **Advanced → Proceed to localhost**.
 
@@ -115,7 +122,7 @@ After a scan, the review screen saves the items and the receipt's text lines to 
 | Google says `redirect_uri_mismatch`               | The redirect URI in Google Cloud must be exactly `https://localhost:5173/api/v1/auth/callback/google` |
 | Google says `access_denied` or "app not verified" | Add your account under **Test users** on the OAuth consent screen                                     |
 | `ECONNREFUSED 5432`                               | Docker Desktop isn't running, or run `pnpm db:up`                                                     |
-| Port 5173 or 8787 already in use                  | Stop the other `pnpm dev`, or whatever else is using that port                                        |
+| Port 5173, 8787 or 8790 already in use            | Stop the other `pnpm dev`, or whatever else is using that port                                        |
 
 ### Running the tests locally
 
@@ -124,13 +131,13 @@ pnpm lint && pnpm typecheck && pnpm test
 pnpm test:e2e
 ```
 
-`pnpm test:e2e` needs Postgres running (`pnpm db:up`). It starts its own servers on ports 5174/8788 (plus 5175/8789 for the offline test) against a separate `shelflife_test` database. It won't touch your dev data, and you can leave `pnpm dev` running. Google isn't contacted: E2E signs in through a test-only route that exists only when the API runs with `NODE_ENV=test`.
+`pnpm test:e2e` needs Postgres running (`pnpm db:up`). It starts its own servers on ports 5174/8788/8791 (plus 5175/8789/8792 for the offline test) against a separate `shelflife_test` database. It won't touch your dev data, and you can leave `pnpm dev` running. Google isn't contacted: E2E signs in through a test-only route that exists only when the API runs with `NODE_ENV=test`.
 
 ## Commands
 
 | Command                                               | What it does                                                                               |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `pnpm dev`                                            | Web + API locally (web over HTTPS)                                                         |
+| `pnpm dev`                                            | Web + API + sync service locally (web over HTTPS)                                          |
 | `pnpm test`                                           | Unit and component tests (Vitest)                                                          |
 | `pnpm test:coverage`                                  | Tests with coverage (90% lines gate on `packages/*`)                                       |
 | `pnpm test:e2e`                                       | Playwright E2E on mobile and desktop viewports plus the offline check (needs `pnpm db:up`) |
@@ -147,10 +154,10 @@ pnpm test:e2e
 ```
 apps/web/          React PWA
 apps/api/          Hono API (Better Auth, Drizzle)
+apps/sync/         y-websocket sync service (live lists, cart → pantry)
 packages/shared/   types, Zod schemas, constants
+packages/docs/     Yjs doc read/write helpers (web + sync)
 packages/ranking/  ranking (pure functions, Milestone 6)
 tests/receipts/    labeled receipt set and accuracy score (text only)
 assets/            logo and fonts
 ```
-
-`apps/sync` (y-websocket) arrives with list sharing in Milestone 5.

@@ -1,5 +1,6 @@
 import {
   activitySchema,
+  type CartMove,
   pantryItemSchema,
   type Activity,
   type PantryItem,
@@ -102,5 +103,16 @@ export function restoreItem(doc: Y.Doc, snapshot: PantryItem) {
       itemsMap(doc).set(snapshot.id, fields);
     }
     writeFields(fields, snapshot);
+  });
+}
+
+/** LST-7: the pantry side of a cart move, in one transaction (new items, refills, activity). */
+export function applyCartMoveToPantry(doc: Y.Doc, move: CartMove) {
+  doc.transact(() => {
+    addItems(doc, move.add);
+    for (const { id, patch } of move.update) {
+      if (itemsMap(doc).has(id)) updateItem(doc, id, patch);
+    }
+    recordActivity(doc, move.activity);
   });
 }

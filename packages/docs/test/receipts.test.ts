@@ -7,15 +7,7 @@ import {
 } from '@shelf-life/shared';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
-import { readActivity, readItems } from './pantryStore';
-import {
-  applyReview,
-  deleteReceipt,
-  putReceipt,
-  readReceipt,
-  readReceipts,
-  receiptsMap,
-} from './receiptStore';
+import { applyReview, deleteReceipt, putReceipt, readActivity, readItems, readReceipt, readReceipts, receiptsMap } from '../src';
 
 const TEXT = `PATEL BROTHERS
 09/27/26 14:32
