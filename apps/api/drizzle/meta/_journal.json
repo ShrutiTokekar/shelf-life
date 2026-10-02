@@ -15,6 +15,20 @@
       "when": 1790781572847,
       "tag": "0001_lists_sharing",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790892777373,
+      "tag": "0002_ai",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790899860028,
+      "tag": "0003_ai_global",
+      "breakpoints": true
     }
   ]
 }

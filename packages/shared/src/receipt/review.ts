@@ -1,4 +1,9 @@
-import { foodByName } from '../food/dictionary';
+import type { CleanedLine } from '../ai/schemas';
+import { addDays } from '../dates';
+import { estimateFoodExpiry, foodByName } from '../food/dictionary';
+import { estimateExpiry } from '../pantry/expiry';
+import { matchFood } from '../scan/match';
+import { matchKey } from '../scan/normalize';
 import { newId } from '../ids';
 import type { Category, ExpirySource, ItemForm, Location, PantryItem } from '../pantry/types';
 import {
@@ -59,9 +64,13 @@ export type ReviewDraft = {
   skipped: ReviewSkipped[];
   /** Edit mode: when the receipt was first saved. */
   createdAt: string | null;
+  /** AI cleanup already ran for this draft (SRS 9.2), so it isn't asked twice. */
+  aiChecked?: boolean;
 };
 
 const MATCHED = 0.8;
+/** SRS 8.2 step 5: under this, a line goes to AI cleanup when online. */
+export const AI_CLEANUP_BELOW = 0.5;
 
 function reviewItem(p: ParsedItem): ReviewItem {
   return {
@@ -414,4 +423,69 @@ export function lineCaption(raw: string): string {
     .replace(/\s*-?\$?\s?\d{1,4}[.,]\d{2}\s*-?\s*(?:[A-Z]{1,2}|\*)?\s*$/i, '')
     .trim();
   return stripped || raw.trim();
+}
+
+/** SRS 8.2 step 5: unsure lines the user hasn't touched, worth asking AI about (max 20). */
+export function linesForAi(draft: ReviewDraft): ReviewItem[] {
+  if (draft.aiChecked) return [];
+  return draft.items
+    .filter(
+      (i) =>
+        i.confidence < AI_CLEANUP_BELOW && i.matchSource === 'parser' && !i.edited && !i.confirmed,
+    )
+    .slice(0, 20);
+}
+
+/**
+ * REV-4: apply AI's reading of unsure lines. A name the dictionary knows takes that food's
+ * category, place and shelf life; otherwise AI's category and place with the category default
+ * (an AI shelf-life estimate may follow). Lines AI says aren't food are left as they were. The
+ * item stays highlighted ("AI guess … Tap to confirm.") until the user confirms it.
+ */
+export function applyAiCleanup(draft: ReviewDraft, results: readonly CleanedLine[]): ReviewDraft {
+  const byRaw = new Map(results.map((r) => [r.raw, r]));
+  return {
+    ...draft,
+    aiChecked: true,
+    items: draft.items.map((item) => {
+      const r = byRaw.get(item.raw);
+      if (!r || !r.name || item.edited || item.confirmed) return item;
+      // Trust a dictionary food only on an exact name or a confident match.
+      const exact = foodByName(r.name);
+      const fuzzy = exact ? null : matchFood(matchKey(r.name.toLowerCase()));
+      const food = exact ?? (fuzzy && fuzzy.score >= 0.8 ? fuzzy.food : undefined);
+      const category = food?.category ?? r.category;
+      const location = food?.defaultLocation ?? r.location;
+      const expiry = food
+        ? estimateFoodExpiry(food, location, draft.purchasedOn)
+        : {
+            expiresOn: estimateExpiry(category, location, draft.purchasedOn),
+            source: 'category_default' as const,
+          };
+      return {
+        ...item,
+        name: food?.name ?? r.name,
+        foodId: food?.foodId ?? null,
+        category,
+        location,
+        expiresOn: expiry.expiresOn,
+        expirySource: expiry.source,
+        confidence: r.confidence,
+        matchSource: 'ai' as const,
+        unsure: true,
+      };
+    }),
+  };
+}
+
+/** SRS 8.3: an AI shelf-life estimate for an item the dictionary doesn't know. */
+export function applyAiShelfLife(draft: ReviewDraft, index: number, days: number): ReviewDraft {
+  return {
+    ...draft,
+    items: draft.items.map((i) =>
+      i.index === index && i.expirySource === 'category_default'
+        ? { ...i, expiresOn: addDays(draft.purchasedOn, days), expirySource: 'ai' as const }
+        : i,
+    ),
+  };
 }

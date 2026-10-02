@@ -1,5 +1,10 @@
 import {
   acceptInviteResponseSchema,
+  cleanupLinesResultSchema,
+  shelfLivesResultSchema,
+  type CleanedLine,
+  type ShelfLifeItem,
+  type ShelfLifeResult,
   apiErrorSchema,
   inviteSchema,
   invitePreviewSchema,
@@ -142,4 +147,41 @@ export async function fetchSyncToken(doc: string): Promise<SyncTokenResponse> {
   return syncTokenResponseSchema.parse(
     await request<unknown>(`/sync-token?doc=${encodeURIComponent(doc)}`),
   );
+}
+
+// ---- AI (SRS 9). Every caller has a non-AI fallback, so failures return null (rule 2). ----
+
+export async function aiCleanupLines(
+  pantryId: string,
+  lines: string[],
+  store: string | null,
+): Promise<CleanedLine[] | null> {
+  if (!navigator.onLine) return null;
+  try {
+    const body = await request<unknown>('/ai/cleanup-lines', {
+      method: 'POST',
+      body: JSON.stringify({ pantryId, lines, store }),
+    });
+    return cleanupLinesResultSchema.parse(body).lines;
+  } catch {
+    return null;
+  }
+}
+
+/** Shelf-life estimates for several items in one AI call; answers in the same order. */
+export async function aiShelfLives(
+  pantryId: string,
+  items: ShelfLifeItem[],
+): Promise<ShelfLifeResult[] | null> {
+  if (!navigator.onLine || items.length === 0) return null;
+  try {
+    return shelfLivesResultSchema.parse(
+      await request<unknown>('/ai/shelf-life', {
+        method: 'POST',
+        body: JSON.stringify({ pantryId, items }),
+      }),
+    ).items;
+  } catch {
+    return null;
+  }
 }

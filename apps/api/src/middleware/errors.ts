@@ -3,6 +3,8 @@ import { HTTPException } from 'hono/http-exception';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { ZodError } from 'zod';
 import { type ApiError, ERROR_CODES } from '@shelf-life/shared';
+import { AiLimitError } from '../ai/service';
+import { AiUnavailableError } from '../ai/provider';
 import { ConflictError, ForbiddenError, NotFoundError } from '../services/onboarding';
 
 export function errorBody(code: string, message: string): ApiError {
@@ -22,6 +24,9 @@ export function onError(err: Error, c: Context) {
   if (err instanceof ConflictError) return apiError(c, 409, ERROR_CODES.conflict, err.message);
   if (err instanceof NotFoundError) return apiError(c, 404, ERROR_CODES.notFound, err.message);
   if (err instanceof ForbiddenError) return apiError(c, 403, ERROR_CODES.forbidden, err.message);
+  if (err instanceof AiUnavailableError)
+    return apiError(c, 503, ERROR_CODES.aiUnavailable, err.message);
+  if (err instanceof AiLimitError) return apiError(c, 429, ERROR_CODES.aiLimit, err.message);
   if (err instanceof HTTPException) {
     const code = err.status === 403 ? ERROR_CODES.forbidden : ERROR_CODES.validation;
     return apiError(

@@ -31,3 +31,7 @@ services:
       # wss://<this service's onrender.com host>/sync
       - key: SYNC_URL
         sync: false
+      # Optional: Gemini API key (Google AI Studio, free). Without it AI is off and the app uses
+      # its non-AI fallbacks.
+      - key: GEMINI_API_KEY
+        sync: false

@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import { StrictMode } from 'react';
 import type { MeResponse } from '@shelf-life/shared';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi } from 'vitest';
@@ -10,7 +11,12 @@ import { routes } from '../router';
 type MeResult = MeResponse | 'signedOut' | 'network' | 'server';
 
 /** Render the real route table with a stubbed GET /me. */
-export function renderApp(route: string, meResults: MeResult | MeResult[]) {
+export function renderApp(
+  route: string,
+  meResults: MeResult | MeResult[],
+  /** Render like main.tsx in development, where React mounts components twice. */
+  opts: { strict?: boolean } = {},
+) {
   const queue = Array.isArray(meResults) ? [...meResults] : [meResults];
   const load = vi.fn(async () => {
     const next = queue.length > 1 ? queue.shift()! : queue[0]!;
@@ -20,12 +26,13 @@ export function renderApp(route: string, meResults: MeResult | MeResult[]) {
     return next;
   });
   const router = createMemoryRouter(routes, { initialEntries: [route] });
-  const utils = render(
+  const tree = (
     <SessionProvider load={load}>
       <ToastProvider>
         <RouterProvider router={router} />
       </ToastProvider>
-    </SessionProvider>,
+    </SessionProvider>
   );
+  const utils = render(opts.strict ? <StrictMode>{tree}</StrictMode> : tree);
   return { ...utils, router, load };
 }

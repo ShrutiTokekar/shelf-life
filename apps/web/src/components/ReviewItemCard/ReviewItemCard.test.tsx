@@ -64,4 +64,12 @@ describe('ReviewItemCard (REV-3, REV-4)', () => {
     );
     expect(screen.getByRole('button', { name: 'Edit Toor dal' })).toHaveFocus();
   });
+
+  it('REV-4 an AI match says so with a spark until confirmed', () => {
+    const { container } = renderCard(0.55, { matchSource: 'ai' });
+    expect(
+      screen.getByRole('button', { name: 'AI guess from “TOOR DAL 4LB”. Tap to confirm.' }),
+    ).toBeInTheDocument();
+    expect(container.querySelectorAll('svg').length).toBeGreaterThan(1);
+  });
 });

@@ -9,7 +9,7 @@ import {
 import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cx } from '../../lib/cx';
-import { CheckIcon, EditIcon, WarnIcon } from '../icons';
+import { CheckIcon, EditIcon, SparkIcon, WarnIcon } from '../icons';
 import { IconButton } from '../IconButton/IconButton';
 
 export type ReviewItemCardProps = {
@@ -101,8 +101,16 @@ export function ReviewItemCard({
           onClick={onConfirm}
           className="-mx-1 flex min-h-11 items-center gap-2 rounded-xl px-1 text-left text-sm font-medium text-apricot-dark"
         >
-          <WarnIcon size={16} className="shrink-0" />
-          <span>{t('review.unsureNote', { raw: lineCaption(item.raw) })}</span>
+          {item.matchSource === 'ai' ? (
+            <SparkIcon size={16} className="shrink-0" />
+          ) : (
+            <WarnIcon size={16} className="shrink-0" />
+          )}
+          <span>
+            {item.matchSource === 'ai'
+              ? t('review.aiNote', { raw: lineCaption(item.raw) })
+              : t('review.unsureNote', { raw: lineCaption(item.raw) })}
+          </span>
           <CheckIcon size={16} className="ml-auto shrink-0" />
         </button>
       ) : null}

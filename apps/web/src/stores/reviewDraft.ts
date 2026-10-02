@@ -7,6 +7,9 @@ import { create } from 'zustand';
  */
 type ReviewDraftState = {
   draft: ReviewDraft | null;
+  /** Lines being checked by AI right now (SRS 9.2), for the status line. */
+  aiPending: number;
+  setAiPending: (n: number) => void;
   set: (draft: ReviewDraft) => void;
   update: (fn: (draft: ReviewDraft) => ReviewDraft) => void;
   clear: () => void;
@@ -14,6 +17,8 @@ type ReviewDraftState = {
 
 export const useReviewDraft = create<ReviewDraftState>()((set) => ({
   draft: null,
+  aiPending: 0,
+  setAiPending: (aiPending) => set({ aiPending }),
   set: (draft) => set({ draft }),
   update: (fn) => set((s) => (s.draft ? { draft: fn(s.draft) } : s)),
   clear: () => set({ draft: null }),

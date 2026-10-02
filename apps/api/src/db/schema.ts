@@ -3,6 +3,8 @@ import {
   type AnyPgColumn,
   boolean,
   customType,
+  integer,
+  jsonb,
   date,
   index,
   pgEnum,
@@ -195,4 +197,33 @@ export const yjsDoc = pgTable('yjs_docs', {
   state: bytea('state').notNull(),
   hasCart: boolean('has_cart').notNull().default(false),
   updatedAt: updatedAt(),
+});
+
+/** SRS 9.4: AI calls per pantry per day (30). Cache hits don't count. */
+export const aiUsage = pgTable(
+  'ai_usage',
+  {
+    pantryId: uuid('pantry_id')
+      .notNull()
+      .references(() => pantry.id, { onDelete: 'cascade' }),
+    day: date('day').notNull(),
+    count: integer('count').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.pantryId, t.day] })],
+);
+
+/** App-wide AI calls per day, kept under Google's free quota for the whole project. */
+export const aiUsageGlobal = pgTable('ai_usage_global', {
+  day: date('day').primaryKey(),
+  count: integer('count').notNull().default(0),
+});
+
+/**
+ * SRS 9.4: AI answers cached by their input, shared by everyone. Keys hold only receipt text or
+ * an item name and storage place, never anything personal.
+ */
+export const aiCache = pgTable('ai_cache', {
+  key: text('key').primaryKey(),
+  value: jsonb('value').notNull(),
+  createdAt: createdAt(),
 });

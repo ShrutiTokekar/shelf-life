@@ -1,7 +1,10 @@
 import {
   commitReview,
   confirmItem,
+  applyAiCleanup,
+  applyAiShelfLife,
   draftFromReceipt,
+  linesForAi,
   lineCaption,
   editItem,
   newId,
@@ -13,7 +16,7 @@ import {
   type ReviewDraft,
   type ReviewItem,
 } from '@shelf-life/shared';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../../components/Button/Button';
@@ -25,6 +28,7 @@ import {
   LockIcon,
   PlusIcon,
   ScanIcon,
+  SparkIcon,
   WarnIcon,
 } from '../../components/icons';
 import { ItemSheet } from '../../components/ItemSheet/ItemSheet';
@@ -41,6 +45,7 @@ import { useCurrentPantry } from '../../lib/pantries';
 import { useMe } from '../../lib/session';
 import { applyReview } from '@shelf-life/docs';
 import { useReceipts } from '../../lib/sync/useDocs';
+import { aiCleanupLines, aiShelfLives } from '../../lib/api';
 import { useReviewDraft, type PantryHighlightState } from '../../stores/reviewDraft';
 
 /**
@@ -167,6 +172,8 @@ function ReviewForm({ draft, backTo, ready, onSave }: ReviewFormProps) {
   const navigate = useNavigate();
   const toast = useToast();
   const update = useReviewDraft((s) => s.update);
+  const aiPending = useReviewDraft((s) => s.aiPending);
+  const setAiPending = useReviewDraft((s) => s.setAiPending);
   const clear = useReviewDraft((s) => s.clear);
   const today = todayIso();
   const storeId = useId();
@@ -176,9 +183,66 @@ function ReviewForm({ draft, backTo, ready, onSave }: ReviewFormProps) {
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const isEdit = draft.receiptId !== null;
-  const counts = reviewCounts(draft);
   const { writable, writableLists } = useCurrentPantry();
+  const isEdit = draft.receiptId !== null;
+
+  // SRS 8.2 step 5 / 9.2: online, lines under 0.5 confidence go to AI cleanup once per scan.
+  // Offline or if AI fails, they keep the plain "not sure" note (rule 2).
+  // Answers are dropped only if the user leaves the screen, not when the draft changes.
+  const mounted = useRef(true);
+  useEffect(() => {
+    // Set on every mount: React's development double-mount runs this cleanup once in between.
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (isEdit) return;
+    // Read the store, not this render's copy: a second mount must see "already checking".
+    const current = useReviewDraft.getState().draft;
+    const targets = current ? linesForAi(current) : [];
+    if (targets.length === 0) return;
+    update((d) => ({ ...d, aiChecked: true }));
+    setAiPending(targets.length);
+    const alive = () => mounted.current;
+    void (async () => {
+      const results = await aiCleanupLines(
+        writable.id,
+        targets.map((i) => i.raw),
+        draft.storeName || null,
+      );
+      if (alive() && results) {
+        update((d) => applyAiCleanup(d, results));
+        // Items the dictionary still doesn't know get AI shelf-life estimates: one call for all.
+        const unknown = (useReviewDraft.getState().draft?.items ?? [])
+          .filter(
+            (i) =>
+              i.matchSource === 'ai' &&
+              !i.foodId &&
+              i.expirySource === 'category_default' &&
+              targets.some((tg) => tg.index === i.index),
+          )
+          .slice(0, 10);
+        const estimates = await aiShelfLives(
+          writable.id,
+          unknown.map((i) => ({ name: i.name, location: i.location })),
+        );
+        if (alive() && estimates)
+          update((d) =>
+            unknown.reduce(
+              (acc, item, n) => applyAiShelfLife(acc, item.index, estimates[n]!.days),
+              d,
+            ),
+          );
+      }
+      setAiPending(0);
+    })();
+    // Runs when a new draft arrives; the aiChecked flag stops repeats.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.aiChecked, isEdit]);
+  const usedAi = draft.items.some((i) => i.matchSource === 'ai');
+  const counts = reviewCounts(draft);
   // REV-6: labels are lists of this pantry that the user may add to.
   const lists = useMemo(() => writableLists.filter((l) => l.role !== 'view'), [writableLists]);
   const editingItem = draft.items.find((i) => i.index === editing) ?? null;
@@ -254,6 +318,13 @@ function ReviewForm({ draft, backTo, ready, onSave }: ReviewFormProps) {
             {t('review.summary', { date, lines: draft.lineCount, items: draft.items.length })}
           </p>
         </div>
+
+        {aiPending > 0 ? (
+          <p role="status" className="flex items-center gap-2 font-medium text-ink">
+            <SparkIcon size={18} />
+            {t('review.aiChecking', { count: aiPending })}
+          </p>
+        ) : null}
 
         <div className="flex flex-wrap gap-2" role="status">
           <SummaryPill tone="matched">
@@ -345,6 +416,13 @@ function ReviewForm({ draft, backTo, ready, onSave }: ReviewFormProps) {
           <LockIcon size={16} />
           {t('review.privacy')}
         </p>
+        {usedAi ? (
+          // SRS 9.1: say what AI saw, and that Google's free tier may use it.
+          <p className="flex items-start gap-2 text-sm text-secondary">
+            <SparkIcon size={16} className="mt-0.5 shrink-0" />
+            {t('review.aiPrivacy')}
+          </p>
+        ) : null}
       </main>
 
       <footer className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-line bg-cream/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">

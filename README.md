@@ -50,9 +50,24 @@ PORT=8787
 # Another random string of 32+ characters (`openssl rand -base64 32`), shared by the API and the
 # sync service to sign 5-minute sync tokens
 SYNC_JWT_SECRET=
+
+# Optional: a free Gemini API key from Google AI Studio (aistudio.google.com → Get API key).
+# Without it, local development uses a built-in mock AI and the app works fully either way.
+GEMINI_API_KEY=
 ```
 
-`.env` is git-ignored. Never commit it or paste its values anywhere public. Later milestones add AI and Web Push variables (SRS 14.4); this README will list them when they're needed.
+`.env` is git-ignored. Never commit it or paste its values anywhere public. Optional AI settings:
+
+| Variable                | Default                                                          | What it does                                                                         |
+| ----------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `GEMINI_MODEL`          | `gemini-3.5-flash`                                               | Model for recipes                                                                    |
+| `GEMINI_LIGHT_MODEL`    | `gemini-3.5-flash-lite`                                          | Model for small jobs (receipt cleanup, shelf life), so they use their own free quota |
+| `AI_PROVIDER`           | `gemini` with a key, else `mock` locally and `off` in production | `gemini`, `mock` or `off`                                                            |
+| `AI_DAILY_LIMIT`        | 30                                                               | AI calls per pantry (household) per day                                              |
+| `AI_GLOBAL_DAILY_LIMIT` | 500                                                              | AI calls per day for the whole app                                                   |
+| `AI_PER_MINUTE_LIMIT`   | 10                                                               | AI calls per minute for the whole app                                                |
+
+Google's free quota is shared by every user of your key. Check it in Google AI Studio → **Rate limit**, and set `AI_GLOBAL_DAILY_LIMIT` and `AI_PER_MINUTE_LIMIT` just under it, so the app falls back politely instead of Google refusing requests. Answers are cached and shared, so repeated receipt lines and items cost nothing. Web Push variables arrive in Milestone 8.
 
 ### 4. Create a Google OAuth client (free)
 
@@ -162,7 +177,7 @@ Render's free instance sleeps after 15 minutes without traffic and takes about a
    | `APP_URL`                                  | `https://<your Vercel domain>`                   |
    | `SYNC_URL`                                 | `wss://<this service's .onrender.com host>/sync` |
 
-   Render generates `BETTER_AUTH_SECRET` and `SYNC_JWT_SECRET` itself. The service applies database migrations every time it starts.
+   Optionally add `GEMINI_API_KEY` (free, from Google AI Studio) to turn on AI; without it the app uses its non-AI fallbacks. Render generates `BETTER_AUTH_SECRET` and `SYNC_JWT_SECRET` itself. The service applies database migrations every time it starts.
 
 3. When the deploy is live, note its host, e.g. `shelf-life-server.onrender.com`. If you didn't know it in step 2, set `SYNC_URL` now; Render redeploys.
 

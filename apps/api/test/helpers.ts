@@ -4,6 +4,7 @@ import { migrate } from 'drizzle-orm/pglite/migrator';
 import { betterAuth } from 'better-auth';
 import { testUtils } from 'better-auth/plugins';
 import { fileURLToPath } from 'node:url';
+import type { AiProvider } from '../src/ai/provider';
 import { createApp } from '../src/app';
 import { authOptions, createAuth } from '../src/auth';
 import { type Db, schema } from '../src/db/client';
@@ -13,7 +14,7 @@ import { createTestRoutes } from '../src/testRoutes';
 export const APP_ORIGIN = 'https://localhost:5173';
 
 /** A fresh in-memory Postgres (PGlite) with migrations applied, plus the app wired to it. */
-export async function setup() {
+export async function setup(opts: { ai?: AiProvider | null } = {}) {
   const client = new PGlite();
   const pg = drizzle(client, { schema });
   await migrate(pg, { migrationsFolder: fileURLToPath(new URL('../drizzle', import.meta.url)) });
@@ -23,7 +24,7 @@ export async function setup() {
   const auth = createAuth(env, db);
   // Same database, plus test helpers for creating signed-in users without Google.
   const testAuth = betterAuth({ ...authOptions(env, db), plugins: [testUtils()] });
-  const app = createApp({ env, db, auth, extraRoutes: createTestRoutes(env, db) });
+  const app = createApp({ env, db, auth, extraRoutes: createTestRoutes(env, db), ai: opts.ai });
 
   async function signIn(email = 'ananya@example.com', name = 'Ananya Mehta') {
     const ctx = await testAuth.$context;
