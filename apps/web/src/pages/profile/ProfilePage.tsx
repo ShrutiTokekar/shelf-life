@@ -9,6 +9,8 @@ import { signOut } from '../../lib/api';
 import { closeAllDocs } from '../../lib/sync/docs';
 import { useMe, useSession } from '../../lib/session';
 import { useOnlineStatus } from '../../lib/useOnlineStatus';
+import { RecipePrefsCard } from '../../features/recipes/RecipePrefsCard';
+import { useRecipeStore } from '../../stores/recipes';
 
 /**
  * Profile (SRS 6.11). Milestone 1 ships the hero (PRO-1, without stats) and Sign out (PRO-6);
@@ -35,6 +37,7 @@ export function ProfilePage() {
     }
     // Drop the cached /me so nothing about this account stays readable on the device.
     closeAllDocs();
+    useRecipeStore.getState().clear();
     session.clear();
     navigate('/welcome', { replace: true });
   }
@@ -57,6 +60,8 @@ export function ProfilePage() {
           <p className="text-secondary [overflow-wrap:anywhere]">{me.user.email}</p>
         </div>
       </section>
+
+      <RecipePrefsCard />
 
       <p className="text-secondary">{t('profile.comingSoon')}</p>
 

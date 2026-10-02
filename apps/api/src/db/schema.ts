@@ -15,7 +15,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { LIST_COLORS, LIST_ROLES, TEXT_SIZES } from '@shelf-life/shared';
+import { DIETS, LIST_COLORS, LIST_ROLES, TEXT_SIZES, type Recipe } from '@shelf-life/shared';
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>
@@ -151,7 +151,9 @@ export const listMember = pgTable(
   ],
 );
 
-/** Display settings in Milestone 1; AI and notification fields are added in Milestones 6 and 8. */
+export const diet = pgEnum('diet', DIETS);
+
+/** Display settings (Milestone 1) and recipe preferences (Milestone 6); notifications in 8. */
 export const userSettings = pgTable('user_settings', {
   userId: text('user_id')
     .primaryKey()
@@ -160,6 +162,17 @@ export const userSettings = pgTable('user_settings', {
   highContrast: boolean('high_contrast').notNull().default(false),
   reduceMotion: boolean('reduce_motion').notNull().default(false),
   language: language('language').notNull().default('en'),
+  diet: diet('diet').notNull().default('any'),
+  /** Preferred cuisines; empty = any. */
+  cuisines: text('cuisines')
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
+  maxMinutes: integer('max_minutes'),
+  avoid: text('avoid')
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
   updatedAt: updatedAt(),
 });
 
@@ -227,3 +240,39 @@ export const aiCache = pgTable('ai_cache', {
   value: jsonb('value').notNull(),
   createdAt: createdAt(),
 });
+
+/**
+ * SRS 10 Recipe, for AI recipes only (local ones ship with the app). Kept so saved recipes and
+ * `GET /recipes/:id` keep working after the 6-hour suggestion cache expires. No personal data.
+ */
+export const recipe = pgTable('recipe', {
+  id: text('id').primaryKey(),
+  payload: jsonb('payload').$type<Recipe>().notNull(),
+  createdAt: createdAt(),
+});
+
+/**
+ * SRS 9.4 RecipeCache: AI suggestions for 6 hours, keyed by a hash of the expiring items and
+ * preferences. Shared by everyone (the key holds no personal data), so the same fridge of
+ * spinach and paneer costs one call. `pantryId` records which pantry spent the call.
+ */
+export const recipeCache = pgTable('recipe_cache', {
+  key: text('key').primaryKey(),
+  pantryId: uuid('pantry_id').references(() => pantry.id, { onDelete: 'set null' }),
+  recipeIds: jsonb('recipe_ids').$type<string[]>().notNull(),
+  createdAt: createdAt(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+});
+
+/** SRS 10 SavedRecipe (SAV-2). `recipeId` is a local recipe id or an AI `recipe.id`. */
+export const savedRecipe = pgTable(
+  'saved_recipe',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    recipeId: text('recipe_id').notNull(),
+    savedAt: timestamp('saved_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.recipeId] })],
+);

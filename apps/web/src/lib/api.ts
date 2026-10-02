@@ -1,5 +1,14 @@
 import {
   acceptInviteResponseSchema,
+  recipeSchema,
+  recipesResponseSchema,
+  savedRecipeSchema,
+  type Recipe,
+  type RecipesInput,
+  type RecipesResponse,
+  type SavedRecipe,
+  type SettingsPatch,
+  type UserSettings,
   cleanupLinesResultSchema,
   shelfLivesResultSchema,
   type CleanedLine,
@@ -184,4 +193,39 @@ export async function aiShelfLives(
   } catch {
     return null;
   }
+}
+
+/** SRS 9.2 recipe suggestions; null = use the local recipe set (rule 2). */
+export async function aiRecipes(input: RecipesInput): Promise<RecipesResponse | null> {
+  if (!navigator.onLine) return null;
+  try {
+    return recipesResponseSchema.parse(
+      await request<unknown>('/ai/recipes', { method: 'POST', body: JSON.stringify(input) }),
+    );
+  } catch {
+    return null;
+  }
+}
+
+// ---- Recipes, saved recipes and settings (SRS 11.1) ----
+
+export async function fetchRecipe(id: string): Promise<Recipe> {
+  return recipeSchema.parse(await request<unknown>(`/recipes/${encodeURIComponent(id)}`));
+}
+
+export async function fetchSavedRecipes(): Promise<SavedRecipe[]> {
+  const body = await request<{ saved: unknown[] }>('/me/saved-recipes');
+  return body.saved.map((s) => savedRecipeSchema.parse(s));
+}
+
+export function putSavedRecipe(id: string): Promise<void> {
+  return request<void>(`/me/saved-recipes/${encodeURIComponent(id)}`, { method: 'PUT' });
+}
+
+export function deleteSavedRecipe(id: string): Promise<void> {
+  return request<void>(`/me/saved-recipes/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+export function patchSettings(patch: SettingsPatch): Promise<UserSettings> {
+  return request<UserSettings>('/me/settings', { method: 'PATCH', body: JSON.stringify(patch) });
 }

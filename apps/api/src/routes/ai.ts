@@ -1,5 +1,9 @@
 import { Hono } from 'hono';
-import { cleanupLinesInputSchema, shelfLifeInputSchema } from '@shelf-life/shared';
+import {
+  cleanupLinesInputSchema,
+  recipesInputSchema,
+  shelfLifeInputSchema,
+} from '@shelf-life/shared';
 import type { AiService } from '../ai/service';
 import type { AppEnv } from '../types';
 
@@ -13,5 +17,9 @@ export function aiRoutes(ai: AiService) {
     .post('/shelf-life', async (c) => {
       const input = shelfLifeInputSchema.parse(await c.req.json().catch(() => ({})));
       return c.json({ items: await ai.estimateShelfLives(c.var.user.id, input) });
+    })
+    .post('/recipes', async (c) => {
+      const input = recipesInputSchema.parse(await c.req.json().catch(() => ({})));
+      return c.json(await ai.suggestRecipes(c.var.user.id, input));
     });
 }

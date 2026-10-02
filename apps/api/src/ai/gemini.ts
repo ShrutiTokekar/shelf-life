@@ -1,6 +1,8 @@
 import {
+  aiRecipesResultSchema,
   CATEGORIES,
   cleanupLinesResultSchema,
+  RECIPE_DIETS,
   LOCATIONS,
   shelfLivesResultSchema,
 } from '@shelf-life/shared';
@@ -100,6 +102,29 @@ export function geminiProvider(opts: {
       if (result.items.length !== items.length)
         throw new AiUnavailableError('The AI model returned the wrong number of items.');
       return result;
+    },
+    async suggestRecipes({ expiring, available, preferences }) {
+      // SRS 9.3: JSON only; diet and avoid list are hard constraints; any cuisine; prefer
+      // recipes that use the most expiring items; never mark an item "have" that isn't listed.
+      const system = [
+        'You suggest home-cooking recipes that use up food before it goes bad.',
+        'Respond with JSON only, exactly: {"recipes":[{"title":string,"cuisine":string,"minutes":integer,"servings":integer,"diet":string,"ingredients":[{"name":string,"amount":number|null,"unit":string|null,"have":boolean}],"steps":[{"title":string,"text":string,"timerSeconds":integer|null}],"usesExpiring":[string]}]}',
+        'Give up to 8 different recipes from any cuisine, preferring ones that use the most expiring items, soonest first, and need the fewest extra ingredients.',
+        `diet is one of: ${RECIPE_DIETS.join(', ')} ("vegetarian" means no meat, fish or eggs; "eggs" means vegetarian plus eggs).`,
+        'Hard rules: never break the diet; never use an avoided ingredient, even as an option; never exceed the time limit.',
+        'have is true only for ingredients in the expiring or available lists; salt, oil and water are assumed and may be have: true.',
+        'Ingredient names are short generic grocery names ("Spinach", "Paneer"), with exact amounts in metric or cups. Steps give exact measurements, and timerSeconds where waiting matters.',
+        'usesExpiring lists the expiring items the recipe uses, exactly as written in the input.',
+      ].join('\n');
+      const user = [
+        `Expiring (days left): ${expiring.map((e) => `${e.name} (${e.daysLeft})`).join(', ') || 'none'}`,
+        `Also available: ${available.join(', ') || 'none'}`,
+        `Diet: ${preferences.diet === 'any' ? 'no restriction' : preferences.diet}`,
+        `Cuisines: ${preferences.cuisines.length ? `prefer ${preferences.cuisines.join(', ')}` : 'any'}`,
+        `Time limit: ${preferences.maxMinutes ? `${preferences.maxMinutes} minutes` : 'none'}`,
+        `Avoid: ${preferences.avoid.join(', ') || 'nothing'}`,
+      ].join('\n');
+      return ask(aiRecipesResultSchema, system, user, 0.4, opts.model);
     },
   };
 }

@@ -1,5 +1,19 @@
-import { addItems, applyReview, readItem, readListItems, readTodayState } from '@shelf-life/docs';
-import { addDays, todayIso, type PantryItem } from '@shelf-life/shared';
+import {
+  addItems,
+  addListItem,
+  applyReview,
+  readItem,
+  readItems,
+  readListItems,
+  readTodayState,
+} from '@shelf-life/docs';
+import {
+  addDays,
+  DEFAULT_RECIPE_PREFS,
+  newListItem,
+  todayIso,
+  type PantryItem,
+} from '@shelf-life/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -167,5 +181,52 @@ describe('TodayPage desktop (web 11)', () => {
     expect(screen.getByRole('region', { name: /Grocery list · 0 to buy/ })).toHaveTextContent(
       'Nothing to buy.',
     );
+  });
+
+  it('6c the expiring card offers the top recipe that uses it; "Used it" stays as an option', async () => {
+    await seed([
+      pantryItem({ id: 'spin', foodId: 'spinach', name: 'Spinach', expiresOn: TODAY }),
+      pantryItem({ id: 'pan', foodId: 'paneer', name: 'Paneer', expiresOn: addDays(TODAY, 1) }),
+    ]);
+    renderApp('/', returningUserMe);
+    const make = await screen.findByRole('link', { name: /^Make .+, uses your Spinach$/ });
+    expect(make.getAttribute('href')).toMatch(/^\/recipes\//);
+    expect(screen.getByRole('button', { name: 'Used it: Spinach' })).toBeInTheDocument();
+  });
+
+  it('SRS 8.4 score 70: an unclaimed list item for tonight’s top recipe becomes a priority', async () => {
+    await seed([
+      pantryItem({ id: 'spin', foodId: 'spinach', name: 'Spinach', expiresOn: TODAY }),
+      pantryItem({ id: 'pan', foodId: 'paneer', name: 'Paneer', expiresOn: TODAY }),
+    ]);
+    // Find tonight's top recipe the same way the page does, then put one of its needs on the list.
+    const { rankRecipes } = await import('@shelf-life/ranking');
+    const { LOCAL_RECIPES } = await import('@shelf-life/shared/recipes');
+    const handle = getDoc(pantryDocName(PANTRY));
+    await handle.ready;
+    const top = rankRecipes({
+      recipes: LOCAL_RECIPES,
+      pantry: [...readItems(handle.doc)],
+      listItems: [],
+      today: TODAY,
+      prefs: DEFAULT_RECIPE_PREFS,
+    })[0]!;
+    const need = top.missing[0]!.ingredient.name;
+    const list = getDoc(listDocName(HOME));
+    await list.ready;
+    addListItem(list.doc, {
+      ...newListItem(
+        { name: need, quantity: null, unit: '' },
+        { listId: HOME, userId: 'u2', now: '' },
+      ),
+      reason: 'recipe',
+      recipeId: top.recipe.id,
+    });
+    renderApp('/', returningUserMe);
+    const card = await screen.findByRole('article', {
+      name: new RegExp(`Get ${need.toLowerCase()} for tonight`),
+    });
+    await userEvent.click(within(card).getByRole('button', { name: 'I’ll get it' }));
+    await waitFor(() => expect(readListItems(list.doc)[0]!.claimedBy).toBe('u1'));
   });
 });

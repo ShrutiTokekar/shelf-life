@@ -36,7 +36,8 @@
     "scan": "Skip to the scanner",
     "review": "Skip to items",
     "receipts": "Skip to receipts",
-    "list": "Skip to items to buy"
+    "list": "Skip to items to buy",
+    "recipes": "Skip to ranked recipes"
   },
   "offline": {
     "banner": "Offline, changes will sync"
@@ -45,7 +46,8 @@
     "loading": "Loading…",
     "retry": "Try again",
     "genericError": "Something went wrong. Check your connection and try again.",
-    "and": "and"
+    "and": "and",
+    "done": "done"
   },
   "welcome": {
     "description": "Scan your receipts, track what’s expiring, and share one grocery list with everyone at home.",
@@ -101,7 +103,9 @@
       "reason": "It expires today.",
       "overdueTitle": "Check your {{name}}",
       "overdueReason_one": "It passed its date {{count}} day ago. Check it before you use it.",
-      "overdueReason_other": "It passed its date {{count}} days ago. Check it before you use it."
+      "overdueReason_other": "It passed its date {{count}} days ago. Check it before you use it.",
+      "make": "Make {{title}}",
+      "makeLabel": "Make {{title}}, uses your {{name}}"
     },
     "ranOut": {
       "title": "Buy {{name}}",
@@ -185,7 +189,13 @@
       "you": "You"
     },
     "textSize": "Text size: {{size}}. Change",
-    "storageError": "We couldn’t open your pantry on this device."
+    "storageError": "We couldn’t open your pantry on this device.",
+    "recipe": {
+      "title": "Get {{name}} for tonight’s {{recipe}}",
+      "reason": "It’s on the list and nobody’s buying it yet.",
+      "tag": "For tonight",
+      "claim": "I’ll get it"
+    }
   },
   "placeholder": {
     "body": "This page is on its way. For now, head back to Today.",
@@ -234,7 +244,30 @@
     "signOutOffline": "You’re offline. Signing out needs a connection.",
     "comingSoon": "Lists and people, AI preferences, display and notification settings arrive in a later update.",
     "receiptHistory": "Receipt history",
-    "receiptHistoryBody": "Every scanned receipt, as text"
+    "receiptHistoryBody": "Every scanned receipt, as text",
+    "ai": {
+      "title": "What the AI should know",
+      "diet": "Diet",
+      "diets": {
+        "any": "No restriction",
+        "eggs": "Vegetarian + eggs",
+        "vegetarian": "Vegetarian (no eggs)",
+        "vegan": "Vegan"
+      },
+      "time": "Cooking time",
+      "times": {
+        "any": "Any",
+        "15": "Up to 15 min",
+        "30": "Up to 30 min",
+        "45": "Up to 45 min",
+        "60": "Up to 1 hour"
+      },
+      "cuisines": "Favorite cuisines",
+      "cuisinesHint": "Any cuisine is fine when none are picked; picked ones come first.",
+      "avoid": "Ingredients to avoid",
+      "avoidHint": "Separate with commas, e.g. peanuts, mushrooms. Recipes with these are never suggested.",
+      "saved": "Saved"
+    }
   },
   "pantry": {
     "title": "Your pantry",
@@ -716,5 +749,181 @@
     "awake": "The screen stays on while you shop.",
     "done": "Done shopping",
     "allDone": "All done! Tap Done shopping to move everything into the pantry."
+  },
+  "recipes": {
+    "title": "Cook with what’s left",
+    "subtitle": "Any cuisine, ranked by how much food each recipe saves from the bin",
+    "tabs": {
+      "label": "Recipes",
+      "tonight": "For tonight",
+      "saved": "Saved · {{count}}",
+      "savedLong": "Saved recipes · {{count}}"
+    },
+    "pill": {
+      "checked_one": "AI checked {{count}} item · {{when}}",
+      "checked_other": "AI checked {{count}} items · {{when}}",
+      "checking": "AI is checking your pantry…",
+      "local": "Ranked from your pantry · no AI",
+      "offline": "Offline · ranked on this device",
+      "justNow": "just now",
+      "minutesAgo_one": "{{count}} min ago",
+      "minutesAgo_other": "{{count}} min ago",
+      "hoursAgo_one": "{{count}} hour ago",
+      "hoursAgo_other": "{{count}} hours ago"
+    },
+    "recheck": "Re-check",
+    "rescue": "Rescue first",
+    "rescueNone": "Nothing’s about to go off. Here’s what fits your pantry.",
+    "prefs": {
+      "label": "Preferences",
+      "vegetarian": "Vegetarian",
+      "under30": "Under 30 min",
+      "anyCuisine": "Any cuisine",
+      "cuisines": "{{names}} first"
+    },
+    "best": "Best match",
+    "why": "Why #1: {{reason}}.",
+    "whyJoin": "{{a}}, and {{b}}",
+    "whyParts": {
+      "saves_one": "it saves {{names}}, which {{when}}",
+      "saves_other": "it saves {{count}} things that expire soonest, including the {{first}} that {{when}}",
+      "whenToday": "goes bad today",
+      "whenTomorrow": "goes bad tomorrow",
+      "whenDays": "goes bad in {{count}} days",
+      "everything": "you have everything it needs",
+      "fastest": "it’s the fastest to make",
+      "cuisine": "it’s a cuisine you like",
+      "fewMissing_one": "it needs just one more thing",
+      "fewMissing_other": "it needs just {{count}} more things",
+      "fallback": "it’s a good fit for what you have"
+    },
+    "meta": "{{minutes}} min · {{cuisine}}",
+    "minutes": "{{count}} min",
+    "saves": "Saves",
+    "savesCount": "Saves {{count}}",
+    "cookThis": "Cook this",
+    "cookThisLabel": "Cook {{title}}",
+    "missing": "Missing: {{names}}",
+    "addToList": "Add to list",
+    "addToListLabel": "Add {{name}} to the list",
+    "haveOf": "You have {{have}} of {{total}} ingredients",
+    "note": {
+      "everything": "You have everything",
+      "claimed": "{{name}}: {{person}} is buying it",
+      "onList": "{{name}} is on the list",
+      "ranOut": "Needs {{name}}, which ran out",
+      "missing": "Missing: {{name}}"
+    },
+    "alsoGood": "Also good",
+    "footer": "Suggested by AI from your pantry. Offline, you’ll see your saved recipes instead.",
+    "footerLocal": "Ranked on your device from your pantry and our recipe collection.",
+    "aiBadge": "AI suggestion",
+    "save": "Save {{title}}",
+    "toast": {
+      "saved": "Saved {{title}}",
+      "unsaved": "Removed {{title}} from saved",
+      "undo": "Undo",
+      "added": "Added {{name}} to {{list}}",
+      "listUnavailable": "Couldn’t open {{list}} on this device. Try again online."
+    },
+    "emptyTitle": "No recipes fit yet",
+    "emptyBody": "Add what’s in your kitchen, or loosen your preferences, and we’ll find something to cook.",
+    "emptyPrefsBody": "Nothing matches your preferences. Try turning one off.",
+    "emptyAction": "Scan a receipt",
+    "error": "We couldn’t open your pantry on this device.",
+    "cuisines": {
+      "south_asian": "South Asian",
+      "mexican": "Mexican",
+      "italian": "Italian",
+      "middle_eastern": "Middle Eastern",
+      "east_asian": "East Asian",
+      "everyday": "Everyday"
+    },
+    "diets": {
+      "vegan": "Vegan",
+      "vegetarian": "Vegetarian",
+      "eggs": "Vegetarian + eggs",
+      "meat": "Contains meat"
+    },
+    "analyze": {
+      "back": "What can I cook?",
+      "title": "Checking what’s left",
+      "body_one": "AI is looking at {{count}} item in {{pantry}} to find meals that use food before it goes bad.",
+      "body_other": "AI is looking at all {{count}} items in {{pantry}} to find meals that use food before it goes bad.",
+      "bodyLocal_one": "Looking at {{count}} item in {{pantry}} to find meals that use food before it goes bad.",
+      "bodyLocal_other": "Looking at all {{count}} items in {{pantry}} to find meals that use food before it goes bad.",
+      "status": "Analyzing your pantry…",
+      "statusDone": "Ranked and ready",
+      "step": "{{n}} of 4",
+      "steps": {
+        "sort": "Sorted items by expiry date",
+        "prefs": "Checked your preferences",
+        "match": "Matched ingredients across cuisines",
+        "rank": "Ranking recipes by what they use up"
+      },
+      "expiring": "Expiring soon · used first",
+      "kitchen": "Also in your kitchen",
+      "more": "+ {{count}} more",
+      "outOf": "Out of {{names}}. Recipes that need them will offer to add them to your list.",
+      "how": "How it picks",
+      "howItems": [
+        "Uses what expires first",
+        "Needs the fewest extra items",
+        "Matches your preferences"
+      ],
+      "see_one": "See {{count}} recipe",
+      "see_other": "See {{count}} recipes",
+      "fallback": "AI isn’t available right now, so these are ranked on your device from our recipe collection.",
+      "offline": "You’re offline, so these are ranked on your device from our recipe collection."
+    },
+    "saved": {
+      "search": "Search saved recipes",
+      "clear": "Clear search",
+      "filters": "Filter saved recipes",
+      "all": "All {{count}}",
+      "readyNow": "Ready now {{count}}",
+      "under20": "Under 20 min",
+      "ready": "Ready with what you have · {{count}}",
+      "almost": "Missing 1–2 things · {{count}}",
+      "more": "Needs more shopping · {{count}}",
+      "everything": "You have everything",
+      "expires": "{{name}} expires today",
+      "expiresSoon": "{{name}} expires {{when}}",
+      "need": "Need {{names}}",
+      "emptyTitle": "No saved recipes yet",
+      "emptyBody": "Tap the heart on any recipe to keep it here. Saved recipes open offline too.",
+      "emptyAction": "See tonight’s recipes",
+      "noMatch": "No saved recipes match."
+    },
+    "detail": {
+      "back": "Back to recipes",
+      "serves_one": "Serves {{count}}",
+      "serves_other": "Serves {{count}}",
+      "savesCount_one": "Saves {{count}} thing before it goes bad",
+      "savesCount_other": "Saves {{count}} things before they go bad",
+      "ingredients": "Ingredients",
+      "steps": "Steps",
+      "have": "You have it",
+      "missing": "Missing",
+      "basic": "Kitchen basic",
+      "optional": "Optional",
+      "onList": "On the list",
+      "addToList": "+ List",
+      "timer": "Timer: {{time}}",
+      "step": "Step {{n}}",
+      "cookAlong": "Cook-along with timers and AI help is coming soon.",
+      "notFound": "We couldn’t find that recipe.",
+      "offline": "This recipe isn’t saved on this device. Save recipes to open them offline.",
+      "aiNote": "Suggested by AI. Double-check allergens and cooking temperatures.",
+      "assumed": "Spice or condiment · assumed on hand"
+    },
+    "chip": {
+      "today": "today",
+      "todaySpoken": "expires today",
+      "days": "{{count}} days",
+      "daysShort": "{{count}}d",
+      "daysSpoken_one": "{{count}} day left",
+      "daysSpoken_other": "{{count}} days left"
+    }
   }
 }

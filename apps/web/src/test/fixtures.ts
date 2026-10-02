@@ -1,3 +1,4 @@
+import { DEFAULT_RECIPE_PREFS } from '@shelf-life/shared';
 import type { MeResponse } from '@shelf-life/shared';
 
 export const newUserMe: MeResponse = {
@@ -11,7 +12,13 @@ export const newUserMe: MeResponse = {
   pantry: null,
   lists: [],
   pantries: [],
-  settings: { textSize: 'default', highContrast: false, reduceMotion: false, language: 'en' },
+  settings: {
+    textSize: 'default',
+    highContrast: false,
+    reduceMotion: false,
+    language: 'en',
+    ...DEFAULT_RECIPE_PREFS,
+  },
 };
 
 const PANTRY = '0192f0c0-0000-7000-8000-000000000001';

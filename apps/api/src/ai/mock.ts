@@ -43,6 +43,32 @@ export function mockProvider(): AiProvider {
         }),
       };
     },
+    async suggestRecipes({ expiring, available }) {
+      // One simple, clearly-mock recipe per expiring item (at most 3).
+      return {
+        recipes: expiring.slice(0, 3).map(({ name }) => ({
+          title: `Quick ${name.toLowerCase()} stir-fry`,
+          cuisine: 'everyday',
+          minutes: 15,
+          servings: 2,
+          diet: 'vegan' as const,
+          ingredients: [
+            { name, amount: null, unit: null, have: true },
+            { name: 'Garlic', amount: 2, unit: 'cloves', have: available.includes('Garlic') },
+            { name: 'Soy sauce', amount: 1, unit: 'tbsp', have: available.includes('Soy sauce') },
+          ],
+          steps: [
+            { title: 'Prep', text: `Chop the ${name.toLowerCase()} and the garlic.` },
+            {
+              title: 'Stir-fry',
+              text: 'Stir-fry everything in a hot pan with a little oil, then add the soy sauce.',
+              timerSeconds: 300,
+            },
+          ],
+          usesExpiring: [name],
+        })),
+      };
+    },
     async estimateShelfLives({ items }) {
       return {
         items: items.map(({ name, location }) => {

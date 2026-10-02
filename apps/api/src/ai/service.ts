@@ -1,17 +1,26 @@
+import { createHash } from 'node:crypto';
 import {
   AI_DAILY_LIMIT,
   AI_GLOBAL_DAILY_LIMIT,
   AI_PER_MINUTE_LIMIT,
   cleanedLineSchema,
   lineCaption,
+  avoidedIn,
+  dietAllows,
+  newId,
+  recipeSchema,
   shelfLifeResultSchema,
+  type AiRecipe,
   type CleanedLine,
   type CleanupLinesInput,
   type ShelfLifeInput,
   type ShelfLifeItem,
   type ShelfLifeResult,
+  type Recipe,
+  type RecipePrefs,
+  type RecipesInput,
 } from '@shelf-life/shared';
-import { and, eq, inArray, lt, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, lt, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import { schema } from '../db/client';
 import { docAccess } from '../services/access';
@@ -26,6 +35,59 @@ const lineKey = (line: string) =>
   `cleanup:${lineCaption(line).toLowerCase().replace(/\s+/g, ' ').trim()}`;
 const shelfKey = (name: string, location: string) =>
   `shelf:${name.toLowerCase().replace(/\s+/g, ' ').trim()}|${location}`;
+
+/** SRS 9.4: recipe suggestions are reused for 6 hours. */
+export const RECIPE_CACHE_MS = 6 * 3600_000;
+
+const BASICS = new Set(['salt', 'water', 'oil', 'vegetable oil', 'olive oil', 'cooking oil']);
+
+/**
+ * SRS 9.4 recipe cache key: a hash of the expiring items and the preferences only, so it holds
+ * nothing personal and anyone with the same expiring food and preferences shares the answer.
+ */
+export function recipeCacheKey(input: Pick<RecipesInput, 'expiring' | 'preferences'>): string {
+  const clean = (xs: readonly string[]) =>
+    [...new Set(xs.map((x) => x.trim().toLowerCase()))].sort();
+  const p: RecipePrefs = input.preferences;
+  const basis = JSON.stringify({
+    expiring: clean(input.expiring.map((e) => e.name)),
+    diet: p.diet,
+    cuisines: clean(p.cuisines),
+    maxMinutes: p.maxMinutes,
+    avoid: clean(p.avoid),
+  });
+  return `recipes:${createHash('sha256').update(basis).digest('hex')}`;
+}
+
+/** The model's recipe as an SRS 10 Recipe, or null if it breaks a hard rule (SRS 8.5, 9.3). */
+export function toRecipe(ai: AiRecipe, prefs: RecipePrefs): Recipe | null {
+  const parsed = recipeSchema.safeParse({
+    id: newId(),
+    source: 'ai',
+    title: ai.title,
+    cuisine: ai.cuisine,
+    minutes: ai.minutes,
+    servings: ai.servings,
+    diet: ai.diet,
+    ingredients: ai.ingredients.map((i) => ({
+      name: i.name,
+      amount: i.amount,
+      unit: i.unit,
+      ...(BASICS.has(i.name.trim().toLowerCase()) ? { basic: true } : {}),
+    })),
+    steps: ai.steps.map((s) => ({
+      title: s.title,
+      text: s.text,
+      ...(s.timerSeconds ? { timerSeconds: s.timerSeconds } : {}),
+    })),
+  });
+  if (!parsed.success) return null;
+  const r = parsed.data;
+  if (!dietAllows(prefs.diet, r.diet)) return null;
+  if (prefs.maxMinutes !== null && r.minutes > prefs.maxMinutes) return null;
+  if (avoidedIn(r, prefs.avoid).length > 0) return null;
+  return r;
+}
 
 /**
  * SRS 9: the AI proxy. Checks the caller can edit the pantry, serves cached answers first, then
@@ -172,6 +234,71 @@ export function aiService(deps: {
         }
       }
       return keys.map((k) => known.get(k)!);
+    },
+
+    /**
+     * SRS 9.2 recipe suggestions. Answers are cached for 6 hours by expiring items and
+     * preferences; the recipes themselves are kept so saved ones keep working (SAV-2).
+     */
+    async suggestRecipes(
+      userId: string,
+      input: RecipesInput,
+    ): Promise<{ recipes: Recipe[]; createdAt: string }> {
+      await requireEditor(userId, input.pantryId);
+      const key = recipeCacheKey(input);
+      const [hit] = await db
+        .select()
+        .from(schema.recipeCache)
+        .where(
+          and(eq(schema.recipeCache.key, key), gt(schema.recipeCache.expiresAt, new Date(now()))),
+        )
+        .limit(1);
+      if (hit) {
+        const rows = hit.recipeIds.length
+          ? await db.select().from(schema.recipe).where(inArray(schema.recipe.id, hit.recipeIds))
+          : [];
+        const byId = new Map(rows.map((r) => [r.id, r.payload]));
+        return {
+          recipes: hit.recipeIds.map((id) => byId.get(id)).filter((r): r is Recipe => !!r),
+          createdAt: hit.createdAt.toISOString(),
+        };
+      }
+      if (input.expiring.length === 0 && input.available.length === 0)
+        return { recipes: [], createdAt: new Date(now()).toISOString() };
+      const ai = need();
+      await spend(input.pantryId);
+      const fresh = await ai.suggestRecipes({
+        expiring: input.expiring,
+        available: input.available,
+        preferences: input.preferences,
+      });
+      const recipes = fresh.recipes
+        .map((r) => toRecipe(r, input.preferences))
+        .filter((r): r is Recipe => r !== null);
+      const createdAt = new Date(now());
+      await db.transaction(async (tx) => {
+        if (recipes.length > 0)
+          await tx.insert(schema.recipe).values(recipes.map((r) => ({ id: r.id, payload: r })));
+        await tx
+          .insert(schema.recipeCache)
+          .values({
+            key,
+            pantryId: input.pantryId,
+            recipeIds: recipes.map((r) => r.id),
+            createdAt,
+            expiresAt: new Date(createdAt.getTime() + RECIPE_CACHE_MS),
+          })
+          .onConflictDoUpdate({
+            target: schema.recipeCache.key,
+            set: {
+              pantryId: input.pantryId,
+              recipeIds: recipes.map((r) => r.id),
+              createdAt,
+              expiresAt: new Date(createdAt.getTime() + RECIPE_CACHE_MS),
+            },
+          });
+      });
+      return { recipes, createdAt: createdAt.toISOString() };
     },
   };
 }

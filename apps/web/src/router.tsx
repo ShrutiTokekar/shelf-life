@@ -28,6 +28,15 @@ const NewListPage = lazy(() =>
 const ShoppingModePage = lazy(() =>
   import('./pages/lists/ShoppingModePage').then((m) => ({ default: m.ShoppingModePage })),
 );
+const RecipesPage = lazy(() =>
+  import('./pages/recipes/RecipesPage').then((m) => ({ default: m.RecipesPage })),
+);
+const AnalyzePage = lazy(() =>
+  import('./pages/recipes/AnalyzePage').then((m) => ({ default: m.AnalyzePage })),
+);
+const RecipePage = lazy(() =>
+  import('./pages/recipes/RecipePage').then((m) => ({ default: m.RecipePage })),
+);
 const ReceiptsPage = lazy(() =>
   import('./pages/receipts/ReceiptsPage').then((m) => ({ default: m.ReceiptsPage })),
 );
@@ -127,10 +136,34 @@ export const routes: RouteObject[] = [
           </Suspense>
         ),
       },
-      placeholder('recipes', 'pages.recipes'),
-      placeholder('recipes/analyze', 'pages.analyze'),
-      placeholder('recipes/saved', 'pages.savedRecipes'),
-      placeholder('recipes/:id', 'pages.recipe'),
+      // SRS 6.9 + 6.14: one page, two tabs.
+      ...['recipes', 'recipes/saved'].map((path): RouteObject => ({
+        path,
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <RecipesPage />
+          </Suspense>
+        ),
+        handle: {
+          skipLink: { targetId: 'recipes-ranked', textKey: 'skip.recipes' },
+        } satisfies RouteHandle,
+      })),
+      {
+        path: 'recipes/analyze',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <AnalyzePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'recipes/:id',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <RecipePage />
+          </Suspense>
+        ),
+      },
       placeholder('recipes/:id/cook', 'pages.cook'),
       placeholder('reminders', 'pages.reminders'),
       { path: 'profile', element: <ProfilePage /> },

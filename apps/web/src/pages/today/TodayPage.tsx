@@ -1,4 +1,11 @@
-import { markDone, snooze, todayPriorities, unmarkDone, type Priority } from '@shelf-life/ranking';
+import {
+  markDone,
+  rankRecipes,
+  snooze,
+  todayPriorities,
+  unmarkDone,
+  type Priority,
+} from '@shelf-life/ranking';
 import { readActivity, readTodayState, updateListItem, writeTodayState } from '@shelf-life/docs';
 import {
   claimPatch,
@@ -24,10 +31,12 @@ import {
   ArrowRightIcon,
   BellIcon,
   CalendarIcon,
+  CartIcon,
   CheckIcon,
   EmptyJarIcon,
   HandIcon,
   ListIcon,
+  PotIcon,
   ScanIcon,
   WarnIcon,
 } from '../../components/icons';
@@ -38,6 +47,7 @@ import { ShelfLegend, ShelfTimeline } from '../../components/ShelfTimeline/Shelf
 import { PageSkeleton } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/Toast';
 import { Wordmark } from '../../components/Wordmark/Wordmark';
+import { useLocalRecipes, useRecipePrefs } from '../../features/recipes/useRecipes';
 import { formatTime } from '../../lib/format';
 import { useCurrentPantry } from '../../lib/pantries';
 import { usePeople } from '../../lib/people';
@@ -45,6 +55,7 @@ import { useMe } from '../../lib/session';
 import { getDoc, listDocName } from '../../lib/sync/docs';
 import { useDocSnapshot, useListsItems, useReceipts } from '../../lib/sync/useDocs';
 import { DESKTOP_QUERY, useMediaQuery } from '../../lib/useMediaQuery';
+import { useRecipeStore } from '../../stores/recipes';
 import { useUiSettings } from '../../stores/uiSettings';
 import { usePantryActions } from '../pantry/usePantryActions';
 
@@ -94,10 +105,39 @@ export function TodayPage() {
   const emptyState = useMemo(() => emptyTodayState(today), [today]);
   const state = useDocSnapshot(doc, readState, emptyState);
   const activity = useDocSnapshot(doc, readActivity, NO_ACTIVITY);
-  const ranked = useMemo(
-    () => todayPriorities({ today, pantry: items, listItems, receipts, state }),
-    [today, items, listItems, receipts, state],
+  // Tonight's recipes (SRS 8.5): the local set plus the last AI answer for this pantry.
+  const localRecipes = useLocalRecipes();
+  const ai = useRecipeStore((s) => s.ai);
+  const { prefs } = useRecipePrefs();
+  const recipes = useMemo(
+    () =>
+      localRecipes
+        ? rankRecipes({
+            recipes: [...(ai?.pantryId === pantryId ? ai.recipes : []), ...localRecipes],
+            pantry: items,
+            listItems,
+            today,
+            prefs,
+          })
+        : [],
+    [localRecipes, ai, pantryId, items, listItems, today, prefs],
   );
+  const topRecipe = recipes[0] ?? null;
+  // SRS 8.4 score 70: open list items tonight's top recipe needs.
+  const recipeNeeds = useMemo(
+    () =>
+      topRecipe
+        ? listItems.filter((l) => l.reason === 'recipe' && l.recipeId === topRecipe.recipe.id)
+        : [],
+    [listItems, topRecipe],
+  );
+  const ranked = useMemo(
+    () => todayPriorities({ today, pantry: items, listItems, receipts, state, recipeNeeds }),
+    [today, items, listItems, receipts, state, recipeNeeds],
+  );
+  /** The best-ranked recipe that uses this item (6c: the expiring card's "Make …"). */
+  const recipeFor = (item: PantryItem) =>
+    recipes.find((r) => r.used.some((u) => u.item.id === item.id))?.recipe ?? null;
 
   const setState = useCallback(
     (next: (s: TodayState) => TodayState) => {
@@ -137,10 +177,22 @@ export function TodayPage() {
       reason = overdue
         ? t('today.expires.overdueReason', { count: -(p.daysLeft ?? 0) })
         : t('today.expires.reason');
+      const make = overdue ? null : recipeFor(item);
       buttons = (
         <>
+          {make ? (
+            <Button asChild size={hero ? 'md' : 'sm'}>
+              <Link
+                to={`/recipes/${encodeURIComponent(make.id)}`}
+                aria-label={t('today.expires.makeLabel', { title: make.title, name: item.name })}
+              >
+                <PotIcon size={18} />
+                {t('today.expires.make', { title: make.title })}
+              </Link>
+            </Button>
+          ) : null}
           <Button
-            variant={hero ? 'primary' : 'secondary'}
+            variant={make ? 'secondary' : hero ? 'primary' : 'secondary'}
             size={hero ? 'md' : 'sm'}
             icon={<CheckIcon size={18} />}
             aria-label={t('today.actions.usedItLabel', { name: item.name })}
@@ -203,6 +255,27 @@ export function TodayPage() {
             {t('today.actions.notNeeded')}
           </Button>
         </>
+      );
+    } else if (p.kind === 'recipe_item' && p.listItem && topRecipe) {
+      const entry = p.listItem;
+      tone = 'plan';
+      urgency = { icon: <CartIcon size={15} />, text: t('today.recipe.tag') };
+      title = t('today.recipe.title', {
+        name: entry.name.toLowerCase(),
+        recipe: topRecipe.recipe.title.toLowerCase(),
+      });
+      reason = t('today.recipe.reason');
+      buttons = (
+        <Button
+          size={hero ? 'md' : 'sm'}
+          icon={<HandIcon size={18} />}
+          onClick={() => {
+            done(p.key);
+            claim(entry, p.key);
+          }}
+        >
+          {t('today.recipe.claim')}
+        </Button>
       );
     } else if (p.kind === 'plan_soon') {
       tone = 'plan';

@@ -15,6 +15,7 @@ import { aiRoutes } from './routes/ai';
 import { inviteRoutes } from './routes/invites';
 import { listRoutes } from './routes/lists';
 import { meRoutes } from './routes/me';
+import { recipeRoutes } from './routes/recipes';
 import { syncTokenRoutes } from './routes/syncToken';
 import type { AppEnv } from './types';
 
@@ -51,6 +52,7 @@ export function createApp({ env, db, auth, extraRoutes, ai }: AppDeps) {
   api.route('/me', meRoutes);
   api.route('/lists', listRoutes(env.APP_URL));
   api.route('/invites', inviteRoutes());
+  api.route('/recipes', recipeRoutes);
   api.route(
     '/ai',
     aiRoutes(
