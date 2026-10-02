@@ -8,6 +8,8 @@ import { CUISINES } from '@shelf-life/shared';
 import { HeartButton } from './HeartButton';
 import { RecipeHeroCard, RecipeRow, SavedRecipeCard } from './RecipeCards';
 import { RecipeTile } from './RecipeTile';
+import { SCENES, StepIllustration } from './StepIllustration';
+import { TimerButton } from './TimerButton';
 
 const TODAY = '2026-10-01';
 const item = (foodId: string, name: string, days: number): PantryItem => ({
@@ -92,4 +94,32 @@ export const CuisineTiles = () => (
       <RecipeTile key={c} cuisine={c} className="size-24" />
     ))}
   </div>
+);
+
+export const StepScenes = () => (
+  <div className="grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-5">
+    {SCENES.map((scene) => (
+      <figure key={scene} className="flex flex-col gap-1">
+        <StepIllustration step={{ title: SCENE_WORDS[scene], text: '' }} className="h-24" />
+        <figcaption className="text-center text-sm">{scene}</figcaption>
+      </figure>
+    ))}
+  </div>
+);
+
+const SCENE_WORDS: Record<(typeof SCENES)[number], string> = {
+  pan: 'Fry',
+  pot: 'Simmer',
+  bowl: 'Mix',
+  board: 'Chop',
+  tray: 'Roast',
+  blender: 'Blend',
+  wok: 'Stir-fry',
+  plate: 'Serve',
+  toast: 'Crisp',
+  rest: 'Rest',
+};
+
+export const Timer = () => (
+  <TimerButton recipeId="demo" recipeTitle="Demo" step={0} stepTitle="Simmer" seconds={90} />
 );

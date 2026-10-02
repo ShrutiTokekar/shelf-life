@@ -5,7 +5,9 @@ import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import '../lib/i18n';
 import { resetDocsForTests } from '../lib/sync/docs';
+import { useCookSession } from '../stores/cookSession';
 import { useRecipeStore } from '../stores/recipes';
+import { useTimers } from '../stores/timers';
 
 // jsdom lacks these; Radix Select and scroll-into-view calls need them.
 // (Guarded: node-environment tests like tokens.test.ts share this setup file.)
@@ -23,6 +25,8 @@ afterEach(() => {
   cleanup();
   resetDocsForTests();
   useRecipeStore.getState().clear();
+  useCookSession.setState({ servings: {} });
+  useTimers.setState({ timers: {} });
   // Fresh device storage for every test.
   globalThis.indexedDB = new IDBFactory();
   try {

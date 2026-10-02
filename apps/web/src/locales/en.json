@@ -37,7 +37,8 @@
     "review": "Skip to items",
     "receipts": "Skip to receipts",
     "list": "Skip to items to buy",
-    "recipes": "Skip to ranked recipes"
+    "recipes": "Skip to ranked recipes",
+    "recipe": "Skip to recipe steps"
   },
   "offline": {
     "banner": "Offline, changes will sync"
@@ -757,7 +758,8 @@
       "label": "Recipes",
       "tonight": "For tonight",
       "saved": "Saved · {{count}}",
-      "savedLong": "Saved recipes · {{count}}"
+      "savedLong": "Saved recipes · {{count}}",
+      "history": "History"
     },
     "pill": {
       "checked_one": "AI checked {{count}} item · {{when}}",
@@ -911,11 +913,17 @@
       "addToList": "+ List",
       "timer": "Timer: {{time}}",
       "step": "Step {{n}}",
-      "cookAlong": "Cook-along with timers and AI help is coming soon.",
       "notFound": "We couldn’t find that recipe.",
       "offline": "This recipe isn’t saved on this device. Save recipes to open them offline.",
       "aiNote": "Suggested by AI. Double-check allergens and cooking temperatures.",
-      "assumed": "Spice or condiment · assumed on hand"
+      "assumed": "Spice or condiment · assumed on hand",
+      "servings": "Servings",
+      "servingsName": "servings",
+      "bestTonight": "#1 Best match tonight",
+      "scaledNote": "The ingredients are scaled for {{count}} servings. Amounts in the steps are for the original {{original}}.",
+      "expiresToday": "Expires today",
+      "breadcrumb": "Breadcrumb",
+      "other": "({{other}})"
     },
     "chip": {
       "today": "today",
@@ -924,6 +932,57 @@
       "daysShort": "{{count}}d",
       "daysSpoken_one": "{{count}} day left",
       "daysSpoken_other": "{{count}} days left"
+    },
+    "history": {
+      "title": "Cooking history",
+      "emptyTitle": "Nothing cooked yet",
+      "emptyBody": "Tap “I made this” after cooking and it will show up here.",
+      "cooked": "Cooked {{when}}",
+      "cookedCount_one": "Cooked {{count}} time",
+      "cookedCount_other": "Cooked {{count}} times",
+      "unavailable": "This recipe isn’t available offline."
+    }
+  },
+  "cook": {
+    "timer": {
+      "start": "Start {{time}} timer",
+      "pause": "Pause",
+      "resume": "Resume",
+      "pauseLabel": "Pause timer for {{step}}, {{time}} left",
+      "resumeLabel": "Resume timer for {{step}}, {{time}} left",
+      "doneTitle": "Timer done",
+      "doneBody": "{{step}} · {{recipe}}",
+      "dismiss": "Dismiss timer"
+    },
+    "made": {
+      "open": "I made this",
+      "title": "Nice! What did you use?",
+      "body": "We’ll update your pantry. Anything you finish moves to Ran out.",
+      "bodyNone": "Nothing from your pantry to update. We’ll add it to your cooking history.",
+      "had": "had {{amount}} {{unit}}",
+      "all": "Used it all",
+      "some": "Some left",
+      "left": "How much is left?",
+      "leftUnknown": "Not sure",
+      "save": "Save to pantry",
+      "toast": "Saved: you made {{title}}",
+      "toastRanOut_one": "Saved: you made {{title}}. {{count}} item ran out.",
+      "toastRanOut_other": "Saved: you made {{title}}. {{count}} items ran out."
+    },
+    "start": "Start cooking",
+    "startWeb": "Start cook-along",
+    "askAi": "Ask AI",
+    "along": {
+      "title": "Cook along",
+      "exit": "Exit cook-along",
+      "progress": "Step {{n}} of {{total}} · {{title}}",
+      "back": "Back",
+      "next": "Next step",
+      "finish": "Finish",
+      "textSize": "Text size",
+      "awake": "Screen stays on while you cook",
+      "doneTitle": "All done!",
+      "doneBody": "Enjoy your {{title}}. Tell us what you used so your pantry stays right."
     }
   }
 }
