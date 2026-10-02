@@ -1,9 +1,9 @@
 import {
   acceptInviteResponseSchema,
   cleanupLinesResultSchema,
-  shelfLifeResultSchema,
+  shelfLivesResultSchema,
   type CleanedLine,
-  type Location,
+  type ShelfLifeItem,
   type ShelfLifeResult,
   apiErrorSchema,
   inviteSchema,
@@ -168,19 +168,19 @@ export async function aiCleanupLines(
   }
 }
 
-export async function aiShelfLife(
+/** Shelf-life estimates for several items in one AI call; answers in the same order. */
+export async function aiShelfLives(
   pantryId: string,
-  name: string,
-  location: Location,
-): Promise<ShelfLifeResult | null> {
-  if (!navigator.onLine) return null;
+  items: ShelfLifeItem[],
+): Promise<ShelfLifeResult[] | null> {
+  if (!navigator.onLine || items.length === 0) return null;
   try {
-    return shelfLifeResultSchema.parse(
+    return shelfLivesResultSchema.parse(
       await request<unknown>('/ai/shelf-life', {
         method: 'POST',
-        body: JSON.stringify({ pantryId, name, location }),
+        body: JSON.stringify({ pantryId, items }),
       }),
-    );
+    ).items;
   } catch {
     return null;
   }

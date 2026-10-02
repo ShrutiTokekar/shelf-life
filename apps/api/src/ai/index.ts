@@ -11,5 +11,9 @@ export function providerFromEnv(env: Env): AiProvider | null {
   if (choice === 'off') return null;
   if (choice === 'mock') return mockProvider();
   if (!env.GEMINI_API_KEY) return null;
-  return geminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL });
+  return geminiProvider({
+    apiKey: env.GEMINI_API_KEY,
+    model: env.GEMINI_MODEL,
+    lightModel: env.GEMINI_LIGHT_MODEL,
+  });
 }

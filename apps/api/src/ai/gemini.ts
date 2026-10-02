@@ -2,7 +2,7 @@ import {
   CATEGORIES,
   cleanupLinesResultSchema,
   LOCATIONS,
-  shelfLifeResultSchema,
+  shelfLivesResultSchema,
 } from '@shelf-life/shared';
 import type { ZodType } from 'zod';
 import { AiUnavailableError, type AiProvider } from './provider';
@@ -17,17 +17,30 @@ const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
  */
 export function geminiProvider(opts: {
   apiKey: string;
+  /** Recipes and chat (Milestone 6c, 7). */
   model: string;
+  /**
+   * Small, structured jobs (line cleanup, shelf life). Flash-Lite usually has its own, larger
+   * free quota, so these don't eat into the recipe model's.
+   */
+  lightModel?: string;
   fetch?: typeof globalThis.fetch;
   timeoutMs?: number;
 }): AiProvider {
   const fetchImpl = opts.fetch ?? globalThis.fetch;
+  const light = opts.lightModel ?? opts.model;
 
-  async function ask<T>(schema: ZodType<T>, system: string, user: string, temperature: number) {
+  async function ask<T>(
+    schema: ZodType<T>,
+    system: string,
+    user: string,
+    temperature: number,
+    model: string,
+  ) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       let res: Response;
       try {
-        res = await fetchImpl(`${ENDPOINT}/${encodeURIComponent(opts.model)}:generateContent`, {
+        res = await fetchImpl(`${ENDPOINT}/${encodeURIComponent(model)}:generateContent`, {
           method: 'POST',
           headers: { 'content-type': 'application/json', 'x-goog-api-key': opts.apiKey },
           body: JSON.stringify({
@@ -70,19 +83,23 @@ export function geminiProvider(opts: {
         'confidence is how sure you are, from 0 to 1. Do not invent items.',
       ].join('\n');
       const user = `Store: ${store ?? 'unknown'}\nLines:\n${lines.map((l, i) => `${i + 1}. ${l}`).join('\n')}`;
-      const result = await ask(cleanupLinesResultSchema, system, user, 0);
+      const result = await ask(cleanupLinesResultSchema, system, user, 0, light);
       if (result.lines.length !== lines.length)
         throw new AiUnavailableError('The AI model returned the wrong number of lines.');
       // Trust our own copy of each line, not the model's echo.
       return { lines: result.lines.map((l, i) => ({ ...l, raw: lines[i]! })) };
     },
-    async estimateShelfLife({ name, location }) {
+    async estimateShelfLives({ items }) {
       const system = [
-        'Estimate how many days a grocery item stays good from the day it is bought, kept where stated.',
+        'For each grocery item, estimate how many days it stays good from the day it is bought, kept where stated.',
         'Be conservative, in the spirit of USDA FoodKeeper guidance.',
-        'Respond with JSON only, exactly: {"days":integer,"basis":string} where basis is a short reason (under 100 characters).',
+        'Respond with JSON only, exactly: {"items":[{"days":integer,"basis":string}]} with one entry per item, in the same order; basis is a short reason (under 100 characters).',
       ].join('\n');
-      return ask(shelfLifeResultSchema, system, `Item: ${name}\nStored in: ${location}`, 0);
+      const user = items.map((i, n) => `${n + 1}. ${i.name} (stored in: ${i.location})`).join('\n');
+      const result = await ask(shelfLivesResultSchema, system, user, 0, light);
+      if (result.items.length !== items.length)
+        throw new AiUnavailableError('The AI model returned the wrong number of items.');
+      return result;
     },
   };
 }

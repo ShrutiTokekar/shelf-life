@@ -58,6 +58,8 @@ export function createApp({ env, db, auth, extraRoutes, ai }: AppDeps) {
         db,
         provider: ai === undefined ? providerFromEnv(env) : ai,
         dailyLimit: env.AI_DAILY_LIMIT,
+        globalDailyLimit: env.AI_GLOBAL_DAILY_LIMIT,
+        perMinuteLimit: env.AI_PER_MINUTE_LIMIT,
       }),
     ),
   );

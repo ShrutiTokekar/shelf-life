@@ -15,7 +15,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as Y from 'yjs';
 import { useToast } from '../../components/Toast/Toast';
-import { aiShelfLife } from '../../lib/api';
+import { aiShelfLives } from '../../lib/api';
 import { getDoc, listDocName } from '../../lib/sync/docs';
 import {
   addItems,
@@ -161,15 +161,18 @@ export function usePantryActions(opts: {
         };
         addItems(doc, [item]);
         if (estimated && !food) {
-          void aiShelfLife(pantryId, item.name, item.location).then((estimate) => {
-            const current = estimate ? readItem(doc, item.id) : null;
-            // Only if nobody has changed the date since.
-            if (estimate && current?.expirySource === 'category_default')
-              updateItem(doc, item.id, {
-                expiresOn: addDays(today, estimate.days),
-                expirySource: 'ai',
-              });
-          });
+          void aiShelfLives(pantryId, [{ name: item.name, location: item.location }]).then(
+            (answers) => {
+              const estimate = answers?.[0];
+              const current = estimate ? readItem(doc, item.id) : null;
+              // Only if nobody has changed the date since.
+              if (estimate && current?.expirySource === 'category_default')
+                updateItem(doc, item.id, {
+                  expiresOn: addDays(today, estimate.days),
+                  expirySource: 'ai',
+                });
+            },
+          );
         }
         toast({
           message: t('pantry.toast.added', { name: item.name }),

@@ -1,11 +1,14 @@
 import {
   AI_DAILY_LIMIT,
+  AI_GLOBAL_DAILY_LIMIT,
+  AI_PER_MINUTE_LIMIT,
   cleanedLineSchema,
   lineCaption,
   shelfLifeResultSchema,
   type CleanedLine,
   type CleanupLinesInput,
   type ShelfLifeInput,
+  type ShelfLifeItem,
   type ShelfLifeResult,
 } from '@shelf-life/shared';
 import { and, eq, inArray, lt, sql } from 'drizzle-orm';
@@ -32,31 +35,63 @@ const shelfKey = (name: string, location: string) =>
 export function aiService(deps: {
   db: Db;
   provider: AiProvider | null;
+  /** Per pantry per day (SRS 9.4). */
   dailyLimit?: number;
+  /** For the whole app per day, and per minute: under Google's project-wide free quota. */
+  globalDailyLimit?: number;
+  perMinuteLimit?: number;
   today?: () => string;
+  now?: () => number;
 }) {
   const { db, provider } = deps;
   const limit = deps.dailyLimit ?? AI_DAILY_LIMIT;
+  const globalLimit = deps.globalDailyLimit ?? AI_GLOBAL_DAILY_LIMIT;
+  const perMinute = deps.perMinuteLimit ?? AI_PER_MINUTE_LIMIT;
   const today = deps.today ?? (() => new Date().toISOString().slice(0, 10));
+  const now = deps.now ?? (() => Date.now());
+  // Calls in the last minute. In memory is fine: the API runs as one service (Render).
+  const recent: number[] = [];
 
   async function requireEditor(userId: string, pantryId: string) {
     if ((await docAccess(db, userId, `pantry:${pantryId}`)) !== 'write')
       throw new NotFoundError('Pantry not found.');
   }
 
-  /** Take one call from today's allowance, atomically. */
+  /**
+   * Take one call from the pantry's daily allowance and the app's, atomically (both or
+   * neither), after the per-minute check. Over the pantry's limit is AiLimitError; over the
+   * app's is AiUnavailableError (it isn't this household's doing). Either way the app falls back.
+   */
   async function spend(pantryId: string) {
+    const t = now();
+    while (recent.length > 0 && t - recent[0]! >= 60_000) recent.shift();
+    if (recent.length >= perMinute) throw new AiUnavailableError('AI is busy. Try again soon.');
     const day = today();
-    const rows = await db
-      .insert(schema.aiUsage)
-      .values({ pantryId, day, count: 1 })
-      .onConflictDoUpdate({
-        target: [schema.aiUsage.pantryId, schema.aiUsage.day],
-        set: { count: sql`${schema.aiUsage.count} + 1` },
-        where: lt(schema.aiUsage.count, limit),
-      })
-      .returning({ count: schema.aiUsage.count });
-    if (rows.length === 0) throw new AiLimitError('Today’s AI help for this pantry is used up.');
+    await db.transaction(async (tx) => {
+      const mine = await tx
+        .insert(schema.aiUsage)
+        .values({ pantryId, day, count: 1 })
+        .onConflictDoUpdate({
+          target: [schema.aiUsage.pantryId, schema.aiUsage.day],
+          set: { count: sql`${schema.aiUsage.count} + 1` },
+          where: lt(schema.aiUsage.count, limit),
+        })
+        .returning({ count: schema.aiUsage.count });
+      if (mine.length === 0 || mine[0]!.count > limit)
+        throw new AiLimitError('Today’s AI help for this pantry is used up.');
+      const all = await tx
+        .insert(schema.aiUsageGlobal)
+        .values({ day, count: 1 })
+        .onConflictDoUpdate({
+          target: schema.aiUsageGlobal.day,
+          set: { count: sql`${schema.aiUsageGlobal.count} + 1` },
+          where: lt(schema.aiUsageGlobal.count, globalLimit),
+        })
+        .returning({ count: schema.aiUsageGlobal.count });
+      if (all.length === 0 || all[0]!.count > globalLimit)
+        throw new AiUnavailableError('The app’s AI help for today is used up.');
+    });
+    recent.push(t);
   }
 
   function need(): AiProvider {
@@ -105,22 +140,38 @@ export function aiService(deps: {
       return input.lines.map((raw, i) => ({ ...cached.get(keys[i]!)!, raw }));
     },
 
-    /** SRS 9.2 shelf-life estimate for an item the dictionary doesn't know. */
-    async estimateShelfLife(userId: string, input: ShelfLifeInput): Promise<ShelfLifeResult> {
+    /** SRS 9.2 shelf-life estimates for items the dictionary doesn't know: one call per batch. */
+    async estimateShelfLives(userId: string, input: ShelfLifeInput): Promise<ShelfLifeResult[]> {
       await requireEditor(userId, input.pantryId);
-      const key = shelfKey(input.name, input.location);
-      const [row] = await db
+      const keys = input.items.map((i) => shelfKey(i.name, i.location));
+      const known = new Map<string, ShelfLifeResult>();
+      const rows = await db
         .select()
         .from(schema.aiCache)
-        .where(eq(schema.aiCache.key, key))
-        .limit(1);
-      const hit = row ? shelfLifeResultSchema.safeParse(row.value) : null;
-      if (hit?.success) return hit.data;
-      const ai = need();
-      await spend(input.pantryId);
-      const result = await ai.estimateShelfLife({ name: input.name, location: input.location });
-      await db.insert(schema.aiCache).values({ key, value: result }).onConflictDoNothing();
-      return result;
+        .where(inArray(schema.aiCache.key, [...new Set(keys)]));
+      for (const r of rows) {
+        const parsed = shelfLifeResultSchema.safeParse(r.value);
+        if (parsed.success) known.set(r.key, parsed.data);
+      }
+      const missing: ShelfLifeItem[] = [];
+      input.items.forEach((item, i) => {
+        if (!known.has(keys[i]!) && !missing.some((m) => shelfKey(m.name, m.location) === keys[i]))
+          missing.push({ name: item.name, location: item.location });
+      });
+      if (missing.length > 0) {
+        const ai = need();
+        await spend(input.pantryId);
+        const fresh = await ai.estimateShelfLives({ items: missing });
+        for (const [n, item] of missing.entries()) {
+          const key = shelfKey(item.name, item.location);
+          known.set(key, fresh.items[n]!);
+          await db
+            .insert(schema.aiCache)
+            .values({ key, value: fresh.items[n]! })
+            .onConflictDoNothing();
+        }
+      }
+      return keys.map((k) => known.get(k)!);
     },
   };
 }

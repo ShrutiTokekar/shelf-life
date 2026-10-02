@@ -56,7 +56,18 @@ SYNC_JWT_SECRET=
 GEMINI_API_KEY=
 ```
 
-`.env` is git-ignored. Never commit it or paste its values anywhere public. Optional AI settings: `GEMINI_MODEL` (default `gemini-3.5-flash`), `AI_PROVIDER` (`gemini`, `mock` or `off`; by default `gemini` when a key is set, otherwise `mock` locally and `off` in production) and `AI_DAILY_LIMIT` (default 30 calls per pantry per day). Web Push variables arrive in Milestone 8.
+`.env` is git-ignored. Never commit it or paste its values anywhere public. Optional AI settings:
+
+| Variable                | Default                                                          | What it does                                                                         |
+| ----------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `GEMINI_MODEL`          | `gemini-3.5-flash`                                               | Model for recipes                                                                    |
+| `GEMINI_LIGHT_MODEL`    | `gemini-3.5-flash-lite`                                          | Model for small jobs (receipt cleanup, shelf life), so they use their own free quota |
+| `AI_PROVIDER`           | `gemini` with a key, else `mock` locally and `off` in production | `gemini`, `mock` or `off`                                                            |
+| `AI_DAILY_LIMIT`        | 30                                                               | AI calls per pantry (household) per day                                              |
+| `AI_GLOBAL_DAILY_LIMIT` | 500                                                              | AI calls per day for the whole app                                                   |
+| `AI_PER_MINUTE_LIMIT`   | 10                                                               | AI calls per minute for the whole app                                                |
+
+Google's free quota is shared by every user of your key. Check it in Google AI Studio → **Rate limit**, and set `AI_GLOBAL_DAILY_LIMIT` and `AI_PER_MINUTE_LIMIT` just under it, so the app falls back politely instead of Google refusing requests. Answers are cached and shared, so repeated receipt lines and items cost nothing. Web Push variables arrive in Milestone 8.
 
 ### 4. Create a Google OAuth client (free)
 

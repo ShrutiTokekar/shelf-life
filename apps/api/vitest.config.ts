@@ -12,6 +12,8 @@ export default defineProject({
       NODE_ENV: 'test',
       BETTER_AUTH_SECRET: 'test-secret-at-least-32-characters-long!!',
       SYNC_JWT_SECRET: 'test-sync-secret-at-least-32-characters!!',
+      // The per-minute AI limit has its own test; don't let it trip the per-pantry one.
+      AI_PER_MINUTE_LIMIT: '1000',
       GOOGLE_CLIENT_ID: 'test-google-client-id',
       GOOGLE_CLIENT_SECRET: 'test-google-client-secret',
       APP_URL: 'https://localhost:5173',

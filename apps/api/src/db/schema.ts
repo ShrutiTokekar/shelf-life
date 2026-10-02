@@ -212,6 +212,12 @@ export const aiUsage = pgTable(
   (t) => [primaryKey({ columns: [t.pantryId, t.day] })],
 );
 
+/** App-wide AI calls per day, kept under Google's free quota for the whole project. */
+export const aiUsageGlobal = pgTable('ai_usage_global', {
+  day: date('day').primaryKey(),
+  count: integer('count').notNull().default(0),
+});
+
 /**
  * SRS 9.4: AI answers cached by their input, shared by everyone. Keys hold only receipt text or
  * an item name and storage place, never anything personal.

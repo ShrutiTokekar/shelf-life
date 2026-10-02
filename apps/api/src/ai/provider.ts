@@ -1,8 +1,8 @@
 import type {
   CleanupLinesInput,
   CleanupLinesResult,
-  ShelfLifeInput,
-  ShelfLifeResult,
+  ShelfLifeItem,
+  ShelfLivesResult,
 } from '@shelf-life/shared';
 
 /**
@@ -13,7 +13,8 @@ import type {
 export type AiProvider = {
   name: string;
   cleanupLines(input: Omit<CleanupLinesInput, 'pantryId'>): Promise<CleanupLinesResult>;
-  estimateShelfLife(input: Omit<ShelfLifeInput, 'pantryId'>): Promise<ShelfLifeResult>;
+  /** One call for several items; answers in the same order. */
+  estimateShelfLives(input: { items: ShelfLifeItem[] }): Promise<ShelfLivesResult>;
 };
 
 /** AI is off, failed twice, or answered with something that doesn't fit the schema. */

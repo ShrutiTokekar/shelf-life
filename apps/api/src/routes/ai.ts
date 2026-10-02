@@ -12,6 +12,6 @@ export function aiRoutes(ai: AiService) {
     })
     .post('/shelf-life', async (c) => {
       const input = shelfLifeInputSchema.parse(await c.req.json().catch(() => ({})));
-      return c.json(await ai.estimateShelfLife(c.var.user.id, input));
+      return c.json({ items: await ai.estimateShelfLives(c.var.user.id, input) });
     });
 }

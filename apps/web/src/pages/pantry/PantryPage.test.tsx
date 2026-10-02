@@ -150,7 +150,9 @@ describe('PantryPage', () => {
     const { addDays, todayIso } = await import('@shelf-life/shared');
     const { mockApi } = await import('../../test/mockApi');
     const { readItems } = await import('@shelf-life/docs');
-    const fetchSpy = mockApi({ 'POST /ai/shelf-life': { days: 40, basis: 'Paste, refrigerated' } });
+    const fetchSpy = mockApi({
+      'POST /ai/shelf-life': { items: [{ days: 40, basis: 'Paste, refrigerated' }] },
+    });
     renderApp('/pantry', seededMe);
     await screen.findByRole('heading', { name: 'Your pantry is empty' });
     const add = async (name: string) => {

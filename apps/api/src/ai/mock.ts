@@ -43,11 +43,15 @@ export function mockProvider(): AiProvider {
         }),
       };
     },
-    async estimateShelfLife({ name, location }) {
-      const food = foodByName(name);
-      return food
-        ? { days: shelfLifeFor(food, location).days, basis: 'Typical for this food (mock)' }
-        : { days: DEFAULT_SHELF_LIFE_DAYS.other[location], basis: 'Category default (mock)' };
+    async estimateShelfLives({ items }) {
+      return {
+        items: items.map(({ name, location }) => {
+          const food = foodByName(name);
+          return food
+            ? { days: shelfLifeFor(food, location).days, basis: 'Typical for this food (mock)' }
+            : { days: DEFAULT_SHELF_LIFE_DAYS.other[location], basis: 'Category default (mock)' };
+        }),
+      };
     },
   };
 }

@@ -45,7 +45,7 @@ import { useCurrentPantry } from '../../lib/pantries';
 import { useMe } from '../../lib/session';
 import { applyReview } from '@shelf-life/docs';
 import { useReceipts } from '../../lib/sync/useDocs';
-import { aiCleanupLines, aiShelfLife } from '../../lib/api';
+import { aiCleanupLines, aiShelfLives } from '../../lib/api';
 import { useReviewDraft, type PantryHighlightState } from '../../stores/reviewDraft';
 
 /**
@@ -214,7 +214,7 @@ function ReviewForm({ draft, backTo, ready, onSave }: ReviewFormProps) {
       );
       if (alive() && results) {
         update((d) => applyAiCleanup(d, results));
-        // Items the dictionary still doesn't know get an AI shelf-life estimate (a few at most).
+        // Items the dictionary still doesn't know get AI shelf-life estimates: one call for all.
         const unknown = (useReviewDraft.getState().draft?.items ?? [])
           .filter(
             (i) =>
@@ -223,11 +223,18 @@ function ReviewForm({ draft, backTo, ready, onSave }: ReviewFormProps) {
               i.expirySource === 'category_default' &&
               targets.some((tg) => tg.index === i.index),
           )
-          .slice(0, 5);
-        for (const item of unknown) {
-          const estimate = await aiShelfLife(writable.id, item.name, item.location);
-          if (alive() && estimate) update((d) => applyAiShelfLife(d, item.index, estimate.days));
-        }
+          .slice(0, 10);
+        const estimates = await aiShelfLives(
+          writable.id,
+          unknown.map((i) => ({ name: i.name, location: i.location })),
+        );
+        if (alive() && estimates)
+          update((d) =>
+            unknown.reduce(
+              (acc, item, n) => applyAiShelfLife(acc, item.index, estimates[n]!.days),
+              d,
+            ),
+          );
       }
       setAiPending(0);
     })();

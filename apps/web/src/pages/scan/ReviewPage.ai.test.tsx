@@ -50,7 +50,7 @@ describe('ReviewPage AI cleanup (SRS 9.2, REV-4)', () => {
             ],
           };
         },
-        'POST /ai/shelf-life': { days: 60, basis: 'Paste, refrigerated' },
+        'POST /ai/shelf-life': { items: [{ days: 60, basis: 'Paste, refrigerated' }] },
       });
       blurryScan();
       // StrictMode, as in development: React mounts twice; AI must still apply, and be asked once.

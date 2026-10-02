@@ -25,6 +25,8 @@ const envSchema = z.object({
   /** SRS 9.1: Gemini API key (Google AI Studio, free tier). Never sent to the browser. */
   GEMINI_API_KEY: z.string().min(1).optional(),
   GEMINI_MODEL: z.string().min(1).default('gemini-3.5-flash'),
+  /** Small jobs (receipt cleanup, shelf life), so they use their own free quota. */
+  GEMINI_LIGHT_MODEL: z.string().min(1).default('gemini-3.5-flash-lite'),
   /**
    * gemini (needs the key), mock (fixtures from the app's dictionary) or off. Default: gemini
    * when a key is set, otherwise mock in development and tests and off in production.
@@ -32,6 +34,12 @@ const envSchema = z.object({
   AI_PROVIDER: z.enum(['gemini', 'mock', 'off']).optional(),
   /** SRS 9.4: AI calls per pantry per day. */
   AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(30),
+  /**
+   * The whole app's AI calls per day and per minute. Set just under the free-tier limits AI Studio
+   * shows for the project (Rate limit page), which every user shares.
+   */
+  AI_GLOBAL_DAILY_LIMIT: z.coerce.number().int().min(0).default(500),
+  AI_PER_MINUTE_LIMIT: z.coerce.number().int().min(1).default(10),
 });
 
 export type Env = z.infer<typeof envSchema>;

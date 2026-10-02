@@ -27,11 +27,16 @@ export type CleanedLine = z.infer<typeof cleanedLineSchema>;
 export const cleanupLinesResultSchema = z.object({ lines: z.array(cleanedLineSchema) });
 export type CleanupLinesResult = z.infer<typeof cleanupLinesResultSchema>;
 
-/** Shelf-life estimate for an item the dictionary doesn't know. */
-export const shelfLifeInputSchema = z.object({
-  pantryId: z.uuid(),
+/** Shelf-life estimates for items the dictionary doesn't know, batched: one AI call per scan. */
+export const shelfLifeItemSchema = z.object({
   name: z.string().trim().min(1).max(60),
   location: z.enum(LOCATIONS),
+});
+export type ShelfLifeItem = z.infer<typeof shelfLifeItemSchema>;
+
+export const shelfLifeInputSchema = z.object({
+  pantryId: z.uuid(),
+  items: z.array(shelfLifeItemSchema).min(1).max(10),
 });
 export type ShelfLifeInput = z.infer<typeof shelfLifeInputSchema>;
 
@@ -42,5 +47,14 @@ export const shelfLifeResultSchema = z.object({
 });
 export type ShelfLifeResult = z.infer<typeof shelfLifeResultSchema>;
 
+export const shelfLivesResultSchema = z.object({ items: z.array(shelfLifeResultSchema) });
+export type ShelfLivesResult = z.infer<typeof shelfLivesResultSchema>;
+
 /** SRS 9.4: AI calls per pantry per day. */
 export const AI_DAILY_LIMIT = 30;
+/**
+ * App-wide AI calls per day and per minute, kept under Google's free-tier quota for the whole
+ * project (shared by every user). Set from AI Studio's rate-limit page with the env vars.
+ */
+export const AI_GLOBAL_DAILY_LIMIT = 500;
+export const AI_PER_MINUTE_LIMIT = 10;
