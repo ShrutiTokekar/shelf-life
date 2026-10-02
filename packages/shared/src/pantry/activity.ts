@@ -30,6 +30,8 @@ export const activitySchema = z.object({
   itemId: z.string().nullable(),
   /** For `used`: was it used on or before its use-by date? null when not applicable. */
   beforeExpiry: z.boolean().nullable(),
+  /** For `cooked`: the recipe made (feeds Recipes → History and "recipes cooked"). */
+  recipeId: z.string().nullable().optional(),
   createdAt: z.string(),
 });
 export type Activity = z.infer<typeof activitySchema>;

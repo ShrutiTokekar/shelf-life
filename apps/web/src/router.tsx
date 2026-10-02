@@ -37,6 +37,9 @@ const AnalyzePage = lazy(() =>
 const RecipePage = lazy(() =>
   import('./pages/recipes/RecipePage').then((m) => ({ default: m.RecipePage })),
 );
+const CookPage = lazy(() =>
+  import('./pages/recipes/CookPage').then((m) => ({ default: m.CookPage })),
+);
 const ReceiptsPage = lazy(() =>
   import('./pages/receipts/ReceiptsPage').then((m) => ({ default: m.ReceiptsPage })),
 );
@@ -65,6 +68,17 @@ export const routes: RouteObject[] = [
       <RequireAuth>
         <Suspense fallback={<PageSkeleton />}>
           <ScanPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // RCP-7 cook-along is full screen (Figma 16 has no app nav).
+    path: '/recipes/:id/cook',
+    element: (
+      <RequireAuth>
+        <Suspense fallback={<PageSkeleton />}>
+          <CookPage />
         </Suspense>
       </RequireAuth>
     ),
@@ -137,7 +151,7 @@ export const routes: RouteObject[] = [
         ),
       },
       // SRS 6.9 + 6.14: one page, two tabs.
-      ...['recipes', 'recipes/saved'].map((path): RouteObject => ({
+      ...['recipes', 'recipes/saved', 'recipes/history'].map((path): RouteObject => ({
         path,
         element: (
           <Suspense fallback={<PageSkeleton />}>
@@ -163,8 +177,10 @@ export const routes: RouteObject[] = [
             <RecipePage />
           </Suspense>
         ),
+        handle: {
+          skipLink: { targetId: 'recipe-steps', textKey: 'skip.recipe' },
+        } satisfies RouteHandle,
       },
-      placeholder('recipes/:id/cook', 'pages.cook'),
       placeholder('reminders', 'pages.reminders'),
       { path: 'profile', element: <ProfilePage /> },
       {

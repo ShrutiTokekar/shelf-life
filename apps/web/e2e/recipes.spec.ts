@@ -76,3 +76,57 @@ test.describe('Recipes (SRS 6.8, 6.9, 6.14)', () => {
     await expectNoHorizontalScroll(page);
   });
 });
+
+test.describe('Recipe + cook-along (SRS 6.15)', () => {
+  test('RCP-3 RCP-7 RCP-10 scale, cook along step by step, then "I made this"', async ({
+    page,
+  }) => {
+    await openSeededPantry(page);
+    await page.goto('/recipes/masala-omelette');
+    await expect(page.getByRole('heading', { level: 1, name: 'Masala omelette' })).toBeVisible();
+    await expectNoSeriousA11yViolations(page);
+
+    // Scale 1 → 2 servings: 2 eggs become 4.
+    const servings = page.getByRole('group', { name: 'Servings: 1' });
+    await servings.getByRole('button', { name: 'More servings' }).click();
+    await expect(page.getByTestId('ingredient').first()).toContainText('4 Eggs');
+
+    // Cook-along: full screen, step by step.
+    await page
+      .getByRole('link', { name: /Start cook/ })
+      .first()
+      .click();
+    await expect(page.getByText('Step 1 of 3 · Masala omelette')).toBeVisible();
+    await expectNoSeriousA11yViolations(page);
+    await page.getByRole('button', { name: /Next step/ }).click();
+    await expect(page.getByRole('button', { name: 'Start 1:00 timer' })).toBeVisible();
+    await page.getByRole('button', { name: /Next step/ }).click();
+    await page.getByRole('button', { name: /^Finish$/ }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'All done!' })).toBeVisible();
+
+    // I made this: the sample pantry's eggs ran out today, so nothing to subtract from them;
+    // whatever else it used is listed. Saving records it in History.
+    await page.getByRole('button', { name: 'I made this' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Nice! What did you use?' });
+    await expect(sheet).toBeVisible();
+    await expectNoSeriousA11yViolations(page);
+    await sheet.getByRole('button', { name: 'Save to pantry' }).click();
+    await expect(page.getByText(/you made Masala omelette/)).toBeVisible();
+
+    await page.goto('/recipes/history');
+    await expect(page.getByTestId('cooked-recipe')).toContainText('Masala omelette');
+  });
+
+  test('A11Y-6 the recipe page at the largest text size doesn’t scroll sideways', async ({
+    page,
+  }) => {
+    await openSeededPantry(page);
+    await setTextSize(page, 'largest');
+    await page.goto('/recipes/palak-paneer-quick');
+    await expect(page.getByRole('heading', { level: 2, name: 'Steps' })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await page.goto('/recipes/palak-paneer-quick/cook');
+    await expect(page.getByText(/Step 1 of 5/)).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+});
