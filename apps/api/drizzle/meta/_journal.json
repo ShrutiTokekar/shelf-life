@@ -29,6 +29,13 @@
       "when": 1790899860028,
       "tag": "0003_ai_global",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790903634904,
+      "tag": "0004_recipes",
+      "breakpoints": true
     }
   ]
 }

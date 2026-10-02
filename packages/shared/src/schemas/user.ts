@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { TEXT_SIZES } from '../constants';
+import { recipePrefsSchema } from '../recipes/types';
 
 export const userSchema = z.object({
   id: z.string(),
@@ -10,13 +11,15 @@ export const userSchema = z.object({
 });
 export type User = z.infer<typeof userSchema>;
 
-/** Settings stored server-side. Most fields are used from Milestone 6/8 on. */
-export const userSettingsSchema = z.object({
-  textSize: z.enum(TEXT_SIZES),
-  highContrast: z.boolean(),
-  reduceMotion: z.boolean(),
-  language: z.enum(['en', 'hi']),
-});
+/** Settings stored server-side: display (Milestone 1) and recipe preferences (Milestone 6). */
+export const userSettingsSchema = z
+  .object({
+    textSize: z.enum(TEXT_SIZES),
+    highContrast: z.boolean(),
+    reduceMotion: z.boolean(),
+    language: z.enum(['en', 'hi']),
+  })
+  .extend(recipePrefsSchema.shape);
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 
 export const pantrySchema = z.object({
@@ -26,3 +29,7 @@ export const pantrySchema = z.object({
   createdAt: z.string(),
 });
 export type Pantry = z.infer<typeof pantrySchema>;
+
+/** PATCH /me/settings: any subset of the settings. */
+export const settingsPatchSchema = userSettingsSchema.partial();
+export type SettingsPatch = z.infer<typeof settingsPatchSchema>;

@@ -26,6 +26,10 @@ function counting(): AiProvider & { calls: number } {
       p.calls++;
       return base.estimateShelfLives(input);
     },
+    async suggestRecipes(input) {
+      p.calls++;
+      return base.suggestRecipes(input);
+    },
   };
   return p;
 }

@@ -1,5 +1,5 @@
 import { eq, inArray } from 'drizzle-orm';
-import type { MeResponse } from '@shelf-life/shared';
+import { DEFAULT_RECIPE_PREFS, type MeResponse, type SettingsPatch } from '@shelf-life/shared';
 import type { SessionUser } from '../auth';
 import type { Db } from '../db/client';
 import { schema } from '../db/client';
@@ -9,7 +9,38 @@ const DEFAULT_SETTINGS: MeResponse['settings'] = {
   highContrast: false,
   reduceMotion: false,
   language: 'en',
+  ...DEFAULT_RECIPE_PREFS,
 };
+
+type SettingsRow = typeof schema.userSettings.$inferSelect;
+
+function settingsFrom(row: SettingsRow | undefined): MeResponse['settings'] {
+  if (!row) return DEFAULT_SETTINGS;
+  return {
+    textSize: row.textSize,
+    highContrast: row.highContrast,
+    reduceMotion: row.reduceMotion,
+    language: row.language,
+    diet: row.diet,
+    cuisines: row.cuisines,
+    maxMinutes: row.maxMinutes,
+    avoid: row.avoid,
+  };
+}
+
+/** PATCH /me/settings (SRS 11.1): update any subset; returns the full settings. */
+export async function patchSettings(
+  db: Db,
+  userId: string,
+  patch: SettingsPatch,
+): Promise<MeResponse['settings']> {
+  const [row] = await db
+    .insert(schema.userSettings)
+    .values({ userId, ...patch })
+    .onConflictDoUpdate({ target: schema.userSettings.userId, set: patch })
+    .returning();
+  return settingsFrom(row);
+}
 
 /** GET /me: current user, pantry, lists with roles, settings (SRS 11.1). */
 export async function getMe(db: Db, user: SessionUser): Promise<MeResponse> {
@@ -110,13 +141,6 @@ export async function getMe(db: Db, user: SessionUser): Promise<MeResponse> {
       }))
       // Your own pantry first.
       .sort((a, b) => Number(b.own) - Number(a.own)),
-    settings: settingsRow
-      ? {
-          textSize: settingsRow.textSize,
-          highContrast: settingsRow.highContrast,
-          reduceMotion: settingsRow.reduceMotion,
-          language: settingsRow.language,
-        }
-      : DEFAULT_SETTINGS,
+    settings: settingsFrom(settingsRow),
   };
 }
