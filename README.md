@@ -67,7 +67,7 @@ GEMINI_API_KEY=
 | `AI_GLOBAL_DAILY_LIMIT` | 500                                                              | AI calls per day for the whole app                                                   |
 | `AI_PER_MINUTE_LIMIT`   | 10                                                               | AI calls per minute for the whole app                                                |
 
-Google's free quota is shared by every user of your key. Check it in Google AI Studio → **Rate limit**, and set `AI_GLOBAL_DAILY_LIMIT` and `AI_PER_MINUTE_LIMIT` just under it, so the app falls back politely instead of Google refusing requests. Answers are cached and shared, so repeated receipt lines and items cost nothing. Web Push variables arrive in Milestone 8.
+Google's free quota is shared by every user of your key. Check it in Google AI Studio → **Rate limit**, and set `AI_GLOBAL_DAILY_LIMIT` and `AI_PER_MINUTE_LIMIT` just under it, so the app falls back politely instead of Google refusing requests. Answers are cached and shared, so repeated receipt lines and items cost nothing, and recipe suggestions for the same expiring food and preferences are reused for 6 hours. With AI off or used up, recipes come from the app's own collection (`packages/shared/src/recipes`, 61 original recipes, CC0) ranked on the device. Web Push variables arrive in Milestone 8.
 
 ### 4. Create a Google OAuth client (free)
 

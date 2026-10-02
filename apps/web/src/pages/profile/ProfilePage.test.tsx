@@ -1,9 +1,11 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { seriousViolations } from '../../test/axe';
 import { returningUserMe } from '../../test/fixtures';
+import { mockApi } from '../../test/mockApi';
 import { renderApp } from '../../test/renderApp';
+import { useRecipeStore } from '../../stores/recipes';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -69,6 +71,31 @@ describe('ProfilePage', () => {
   it('has no serious axe violations', async () => {
     const { container } = renderApp('/profile', returningUserMe);
     await screen.findByRole('heading', { level: 1, name: 'Profile' });
+    expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it('PRO-3 "What the AI should know" saves diet, time, cuisines and the avoid list', async () => {
+    const patches: unknown[] = [];
+    mockApi({
+      'PATCH /me/settings': (init: RequestInit) => {
+        patches.push(JSON.parse(String(init.body)));
+        return returningUserMe.settings;
+      },
+      'GET /me/saved-recipes': { saved: [] },
+    });
+    const { container } = renderApp('/profile', returningUserMe);
+    const card = await screen.findByRole('region', { name: 'What the AI should know' });
+    await userEvent.click(within(card).getByRole('button', { name: 'Mexican' }));
+    const avoid = within(card).getByRole('textbox', { name: 'Ingredients to avoid' });
+    await userEvent.type(avoid, 'Peanuts, mushrooms ,');
+    await userEvent.tab();
+    await waitFor(() =>
+      expect(patches.at(-1)).toMatchObject({
+        cuisines: ['mexican'],
+        avoid: ['peanuts', 'mushrooms'],
+      }),
+    );
+    expect(useRecipeStore.getState().prefs).toMatchObject({ avoid: ['peanuts', 'mushrooms'] });
     expect(await seriousViolations(container)).toEqual([]);
   });
 });
