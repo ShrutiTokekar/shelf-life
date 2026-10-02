@@ -112,6 +112,34 @@ describe('SRS 8.5 score', () => {
     expect(scoreRecipe(ranOut, prefs())).toBeCloseTo(-3 - 4 - 1);
   });
 
+  it('spices and condiments the pantry never tracked are assumed on hand, like salt', () => {
+    const r = recipe({
+      ingredients: [ing('Spinach', 'spinach'), ing('Cumin', 'cumin'), ing('Soy sauce')],
+    });
+    const m = matchRecipe(r, [item('spinach', 0)], [], TODAY);
+    expect(m.missing).toEqual([]);
+    expect(m.assumed.map((i) => i.name)).toEqual(['Cumin', 'Soy sauce']);
+    expect([m.have, m.total]).toEqual([1, 1]);
+    // Tracked spices count as usual: in stock is used; ran out is missing (−4).
+    const tracked = matchRecipe(
+      r,
+      [
+        item('spinach', 0),
+        item('cumin', 200),
+        item('soy-sauce', 90, { status: 'out', outAt: TODAY }),
+      ],
+      [],
+      TODAY,
+    );
+    expect(tracked.used.map((u) => u.ingredient.name)).toEqual(['Spinach', 'Cumin']);
+    expect(tracked.missing).toEqual([
+      expect.objectContaining({
+        state: 'ran_out',
+        ingredient: expect.objectContaining({ name: 'Soy sauce' }),
+      }),
+    ]);
+  });
+
   it('uses the soonest-expiring matching item and skips expired ones', () => {
     const r = recipe({ ingredients: [ing('Milk', 'milk')] });
     const m = matchRecipe(r, [item('milk', 6), item('milk', 1), item('milk', -1)], [], TODAY);

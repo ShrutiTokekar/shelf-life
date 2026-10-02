@@ -2,6 +2,7 @@ import {
   avoidedIn,
   daysLeft,
   dietAllows,
+  foodById,
   foodByName,
   type IsoDate,
   type ListItem,
@@ -55,7 +56,9 @@ export type RecipeMatch = {
   /** Used items expiring within a week, soonest first ("Saves" chips). */
   saves: UsedItem[];
   missing: MissingIngredient[];
-  /** "You have X of Y ingredients": required ones (not basics or optional extras). */
+  /** Spices and condiments this pantry has never tracked: assumed on hand, like salt. */
+  assumed: RecipeIngredient[];
+  /** "You have X of Y ingredients": required ones (not basics, optional extras or assumed). */
   have: number;
   total: number;
 };
@@ -90,6 +93,10 @@ function sameFood(ing: RecipeIngredient, foodId: string | null, item: PantryItem
 
 const isRequired = (ing: RecipeIngredient) => !ing.basic && !ing.optional;
 
+/** Spices and condiments (the dictionary's spices_oils category). */
+const isSpiceOrCondiment = (foodId: string | null) =>
+  !!foodId && foodById(foodId)?.category === 'spices_oils';
+
 /**
  * Which pantry items a recipe would use, and which required ingredients are missing. Each
  * ingredient uses the matching item that expires soonest; expired items aren't used.
@@ -105,12 +112,23 @@ export function matchRecipe(
   const open = listItems.filter((l) => !l.checked);
   const used: UsedItem[] = [];
   const missing: MissingIngredient[] = [];
+  const assumed: RecipeIngredient[] = [];
   const taken = new Set<string>();
   let have = 0;
   let total = 0;
 
   for (const ing of recipe.ingredients) {
     const foodId = ingredientFoodId(ing);
+    // Most people never add their spices and condiments. One this pantry has never tracked is
+    // assumed on hand; one it tracks counts as usual (so a spice that ran out is missing).
+    if (
+      isRequired(ing) &&
+      isSpiceOrCondiment(foodId) &&
+      !pantry.some((p) => (p.status === 'active' || p.status === 'out') && sameFood(ing, foodId, p))
+    ) {
+      assumed.push(ing);
+      continue;
+    }
     const match = active
       .filter((p) => !taken.has(p.id) && sameFood(ing, foodId, p))
       .sort((a, b) => a.expiresOn.localeCompare(b.expiresOn))[0];
@@ -140,7 +158,7 @@ export function matchRecipe(
   const saves = used
     .filter((u) => u.daysLeft <= SAVES_WITHIN_DAYS)
     .sort((a, b) => a.daysLeft - b.daysLeft || a.item.name.localeCompare(b.item.name));
-  return { recipe, used, saves, missing, have, total };
+  return { recipe, used, saves, missing, assumed, have, total };
 }
 
 const PENALTY: Record<MissingIngredient['state'], number> = {

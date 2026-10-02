@@ -79,7 +79,8 @@ describe('RecipesPage: Cook with what’s left (SRS 6.9)', () => {
     );
     // AI and local candidates are ranked together by SRS 8.5 (not by the model, SRS 9.3): the
     // wraps use spinach + paneer and miss only tortillas (10 + 7 − 3 − 0.75 = 13.25); palak
-    // paneer uses more but misses four spices (20.5 − 12 − 1.5 = 7).
+    // paneer uses more but misses garlic and ginger (20.5 − 6 − 1.5 = 13). Its spices are
+    // assumed on hand: this pantry never tracked them.
     expect(within(hero).getByRole('heading', { level: 2 })).toHaveTextContent(
       'Spinach paneer wraps',
     );
@@ -200,8 +201,9 @@ describe('Saved recipes (SRS 6.14)', () => {
     const card = screen.getByTestId('saved-recipe');
     expect(card).toHaveTextContent('Weeknight palak paneer');
     expect(card).toHaveTextContent('Spinach expires today');
-    // Has spinach, paneer, onion, tomato; missing garlic, ginger, cumin, garam masala.
-    expect(screen.getByRole('heading', { name: /Needs more shopping · 1/ })).toBeInTheDocument();
+    // Has spinach, paneer, onion, tomato; missing garlic and ginger (spices are assumed).
+    expect(screen.getByRole('heading', { name: /Missing 1–2 things · 1/ })).toBeInTheDocument();
+    expect(card).toHaveTextContent('Spinach expires today');
   });
 
   it('SAV-2 offline: saving works and is sent once back online', async () => {

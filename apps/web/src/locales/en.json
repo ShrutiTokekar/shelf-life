@@ -914,7 +914,8 @@
       "cookAlong": "Cook-along with timers and AI help is coming soon.",
       "notFound": "We couldn’t find that recipe.",
       "offline": "This recipe isn’t saved on this device. Save recipes to open them offline.",
-      "aiNote": "Suggested by AI. Double-check allergens and cooking temperatures."
+      "aiNote": "Suggested by AI. Double-check allergens and cooking temperatures.",
+      "assumed": "Spice or condiment · assumed on hand"
     },
     "chip": {
       "today": "today",

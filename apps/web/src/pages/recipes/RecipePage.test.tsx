@@ -39,6 +39,10 @@ describe('RecipePage (SRS 6.15, Milestone 6 version)', () => {
     const onion = rows.find((r) => r.textContent?.startsWith('Onion'))!;
     expect(onion).toHaveTextContent('Missing');
     expect(rows.find((r) => r.textContent?.startsWith('Salt'))).toHaveTextContent('Kitchen basic');
+    expect(rows.find((r) => r.textContent?.startsWith('Cumin'))).toHaveTextContent(
+      'Spice or condiment · assumed on hand',
+    );
+    expect(screen.getByText('You have 2 of 6 ingredients')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { level: 3, name: /^Step 1:\s?Wilt the spinach$/ }),
     ).toBeVisible();

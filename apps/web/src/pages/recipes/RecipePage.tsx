@@ -99,6 +99,7 @@ export function RecipePage() {
   const match = matchRecipe(recipe, data.items, data.listItems, data.today);
   const have = new Set(match.used.map((u) => u.ingredient));
   const missing = new Map(match.missing.map((m) => [m.ingredient, m]));
+  const assumed = new Set(match.assumed);
 
   return (
     <article className="mx-auto flex w-full max-w-5xl flex-col gap-6 page-x pb-8 pt-4 lg:pt-7">
@@ -170,7 +171,9 @@ export function RecipePage() {
                     : t('recipes.detail.missing')
                   : ing.basic
                     ? t('recipes.detail.basic')
-                    : t('recipes.detail.optional');
+                    : assumed.has(ing)
+                      ? t('recipes.detail.assumed')
+                      : t('recipes.detail.optional');
               return (
                 <li
                   key={`${ing.name}-${i}`}
