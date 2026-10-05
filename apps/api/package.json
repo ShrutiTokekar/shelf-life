@@ -17,7 +17,7 @@
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "@shelf-life/shared": "workspace:*",
-    "better-auth": "^1.7.6",
+    "better-auth": "^1.7.7",
     "drizzle-orm": "^0.45.3",
     "hono": "^4.13.9",
     "jose": "^6.2.12",
