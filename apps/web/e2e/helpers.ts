@@ -23,11 +23,16 @@ export async function completeOnboarding(page: Page, name = 'Home') {
   await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
 }
 
-/** SRS 13: zero serious or critical axe violations. */
+/**
+ * SRS 13: zero serious or critical axe violations. While a modal dialog is open only the dialog
+ * is checked: the page behind it is dimmed, inert and hidden from assistive tech, and axe's
+ * contrast check misreads it through the overlay. Pages are checked with the dialog closed too.
+ */
 export async function expectNoSeriousA11yViolations(page: Page) {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
+  const modal = page.locator('[role="dialog"], [role="alertdialog"]').filter({ visible: true });
+  const builder = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']);
+  if ((await modal.count()) > 0) builder.include('[role="dialog"], [role="alertdialog"]');
+  const results = await builder.analyze();
   const serious = results.violations
     .filter((v) => v.impact === 'serious' || v.impact === 'critical')
     .map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);

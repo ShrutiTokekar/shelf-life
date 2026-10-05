@@ -130,3 +130,34 @@ test.describe('Recipe + cook-along (SRS 6.15)', () => {
     await expectNoHorizontalScroll(page);
   });
 });
+
+test.describe('AI swap + chat (RCP-4, RCP-8)', () => {
+  test('chat answers with actions that change the recipe; the safety footer is shown', async ({
+    page,
+  }, info) => {
+    // E2E runs the API with the mock AI provider: no outside calls.
+    await openSeededPantry(page);
+    await page.goto('/recipes/black-bean-quesadillas');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Black bean and pepper quesadillas' }),
+    ).toBeVisible();
+
+    // Wide screens show the chat as a side panel (web 17); otherwise "Ask AI" opens a sheet.
+    const wide = (page.viewportSize()?.width ?? 0) >= 1280;
+    if (!wide) await page.getByRole('button', { name: 'Ask AI' }).first().click();
+    const chat = wide
+      ? page.getByRole('region', { name: 'Ask Shelf Life AI' })
+      : page.getByRole('dialog', { name: 'Ask Shelf Life AI' });
+    await expect(chat.getByText(/AI can make mistakes/)).toBeVisible();
+
+    await chat.getByRole('button', { name: 'Make it for 4' }).click();
+    const log = chat.getByRole('log');
+    await expect(log).toContainText('for 4 servings (mock)');
+    await expectNoSeriousA11yViolations(page);
+    await log.getByRole('button', { name: 'Make it for 4' }).click();
+    await expect(log.getByRole('button', { name: 'Make it for 4, done' })).toBeDisabled();
+    if (!wide) await page.keyboard.press('Escape');
+    await expect(page.getByRole('group', { name: 'Servings: 4' })).toBeVisible();
+    info.annotations.push({ type: 'layout', description: wide ? 'side panel' : 'sheet' });
+  });
+});
