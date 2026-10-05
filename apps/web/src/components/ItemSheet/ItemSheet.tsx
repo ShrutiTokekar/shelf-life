@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { Button } from '../Button/Button';
 import { categoryIcon } from '../CategoryChips/CategoryChips';
-import { EmptyJarIcon, TrashIcon, WarnIcon } from '../icons';
+import { EmptyJarIcon, JarIcon, TrashIcon, WarnIcon } from '../icons';
 import { listDotClass } from '../PantryLabel/PantryLabel';
 import { Select } from '../Select/Select';
 
@@ -33,6 +33,8 @@ export type ItemSheetProps = {
   /** `estimated` is true when the date is still the category default the user didn't change. */
   onSave: (form: ItemForm, meta: { estimated: boolean }) => void;
   onRanOut?: () => void;
+  /** SRS 8.6: mark or unmark "Running low" (shows on Reminders). */
+  onRunningLow?: (low: boolean) => void;
   onDelete?: () => void;
   /** The review screen sets one pantry label for the whole receipt (REV-6), so it hides this. */
   hideList?: boolean;
@@ -102,6 +104,7 @@ function ItemSheetForm({
   onClose,
   onSave,
   onRanOut,
+  onRunningLow,
   onDelete,
   hideList = false,
 }: ItemSheetProps) {
@@ -312,6 +315,16 @@ function ItemSheetForm({
               onClick={onRanOut}
             >
               {t('itemSheet.ranOut')}
+            </Button>
+          ) : null}
+          {item?.status === 'active' && onRunningLow ? (
+            <Button
+              variant="secondary"
+              fullWidth
+              icon={<JarIcon size={18} />}
+              onClick={() => onRunningLow(!item.lowAt)}
+            >
+              {item.lowAt ? t('itemSheet.notLow') : t('itemSheet.runningLow')}
             </Button>
           ) : null}
           {onDelete ? (

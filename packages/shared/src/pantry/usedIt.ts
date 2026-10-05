@@ -1,4 +1,5 @@
 import type { IsoDate } from '../dates';
+import { withQuantity } from './reminders';
 import type { PantryItem } from './types';
 
 /**
@@ -50,7 +51,8 @@ export function isCountable(item: Pick<PantryItem, 'quantity' | 'unit'>): boolea
 
 export type UsedItResult = {
   /** Fields to write back to the item. */
-  patch: Pick<PantryItem, 'quantity' | 'status' | 'outAt'>;
+  patch: Pick<PantryItem, 'quantity' | 'status' | 'outAt'> &
+    Partial<Pick<PantryItem, 'startQuantity' | 'lowAt'>>;
   /** true when this tap finished the item, so it moves to Ran out (SRS 8.6). */
   ranOut: boolean;
 };
@@ -60,12 +62,13 @@ export type UsedItResult = {
  * weighed or measured items are finished in one tap. Either way the last tap marks the item out.
  */
 export function applyUsedIt(
-  item: Pick<PantryItem, 'quantity' | 'unit'>,
+  item: Pick<PantryItem, 'quantity' | 'unit' | 'startQuantity' | 'lowAt'>,
   today: IsoDate,
 ): UsedItResult {
   if (isCountable(item) && item.quantity! > 1) {
+    // SRS 8.6: remember how many there were, for "running low".
     return {
-      patch: { quantity: item.quantity! - 1, status: 'active', outAt: null },
+      patch: { ...withQuantity(item, item.quantity! - 1), status: 'active', outAt: null },
       ranOut: false,
     };
   }

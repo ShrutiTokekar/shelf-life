@@ -48,6 +48,8 @@ import { PageSkeleton } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/Toast';
 import { Wordmark } from '../../components/Wordmark/Wordmark';
 import { useLocalRecipes, useRecipePrefs } from '../../features/recipes/useRecipes';
+import { useReminders } from '../../features/reminders/useReminders';
+import { Badge } from '../../components/Badge/Badge';
 import { formatTime } from '../../lib/format';
 import { useCurrentPantry } from '../../lib/pantries';
 import { usePeople } from '../../lib/people';
@@ -487,6 +489,14 @@ export function TodayPage() {
               }
             : undefined
         }
+        onRunningLow={
+          editing
+            ? (low) => {
+                actions.runningLow(editing, low);
+                setEditing(null);
+              }
+            : undefined
+        }
         onDelete={
           editing
             ? () => {
@@ -504,6 +514,7 @@ export function TodayPage() {
 function MobileTopBar() {
   const { t } = useTranslation();
   const me = useMe();
+  const { unread } = useReminders();
   const { textSize, setTextSize } = useUiSettings();
   const next = TEXT_SIZES[(TEXT_SIZES.indexOf(textSize) + 1) % TEXT_SIZES.length]!;
   return (
@@ -522,10 +533,15 @@ function MobileTopBar() {
         </button>
         <Link
           to="/reminders"
-          aria-label={t('nav.reminders')}
-          className="flex size-11 items-center justify-center rounded-xl bg-white text-ink bordered"
+          aria-label={
+            unread > 0 ? t('nav.remindersWithCount', { count: unread }) : t('nav.reminders')
+          }
+          className="relative flex size-11 items-center justify-center rounded-xl bg-white text-ink bordered"
         >
           <BellIcon size={22} />
+          {unread > 0 ? (
+            <Badge count={unread} tone="terra" className="absolute -right-2 -top-2" />
+          ) : null}
         </Link>
         <Link
           to="/profile"

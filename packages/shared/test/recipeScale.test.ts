@@ -84,7 +84,8 @@ describe('RCP-10 I made this', () => {
     expect(applyCooked({ quantity: 6 }, { kind: 'all' }, today)?.ranOut).toBe(true);
     expect(applyCooked({ quantity: 6 }, { kind: 'some', left: 0 }, today)?.ranOut).toBe(true);
     expect(applyCooked({ quantity: 6 }, { kind: 'some', left: 2 }, today)).toEqual({
-      patch: { quantity: 2, status: 'active', outAt: null },
+      // SRS 8.6: remembers there were 6, for running low.
+      patch: { quantity: 2, status: 'active', outAt: null, startQuantity: 6, lowAt: null },
       ranOut: false,
     });
     expect(applyCooked({ quantity: 1 }, { kind: 'some', left: null }, today)).toBeNull();

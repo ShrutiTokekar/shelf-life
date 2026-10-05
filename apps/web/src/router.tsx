@@ -40,6 +40,9 @@ const RecipePage = lazy(() =>
 const CookPage = lazy(() =>
   import('./pages/recipes/CookPage').then((m) => ({ default: m.CookPage })),
 );
+const RemindersPage = lazy(() =>
+  import('./pages/reminders/RemindersPage').then((m) => ({ default: m.RemindersPage })),
+);
 const ReceiptsPage = lazy(() =>
   import('./pages/receipts/ReceiptsPage').then((m) => ({ default: m.ReceiptsPage })),
 );
@@ -181,7 +184,17 @@ export const routes: RouteObject[] = [
           skipLink: { targetId: 'recipe-steps', textKey: 'skip.recipe' },
         } satisfies RouteHandle,
       },
-      placeholder('reminders', 'pages.reminders'),
+      {
+        path: 'reminders',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <RemindersPage />
+          </Suspense>
+        ),
+        handle: {
+          skipLink: { targetId: 'reminders', textKey: 'skip.reminders' },
+        } satisfies RouteHandle,
+      },
       {
         path: 'profile',
         element: <ProfilePage />,

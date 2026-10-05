@@ -125,9 +125,9 @@ describe('SRS 8.3 expiry estimation', () => {
 });
 
 describe('PAN-8 / SRS 8.6 "Used it"', () => {
-  it('counts down countable items one at a time', () => {
+  it('counts down countable items one at a time, remembering how many there were (SRS 8.6)', () => {
     expect(applyUsedIt({ quantity: 6, unit: '' }, TODAY)).toEqual({
-      patch: { quantity: 5, status: 'active', outAt: null },
+      patch: { quantity: 5, status: 'active', outAt: null, startQuantity: 6, lowAt: null },
       ranOut: false,
     });
     expect(applyUsedIt({ quantity: 2, unit: 'Bags' }, TODAY).patch.quantity).toBe(1);
