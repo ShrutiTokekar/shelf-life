@@ -20,7 +20,7 @@
     "@shelf-life/shared": "workspace:*",
     "better-auth": "^1.7.7",
     "drizzle-orm": "^0.45.3",
-    "hono": "^4.13.9",
+    "hono": "^4.13.12",
     "jose": "^6.2.12",
     "postgres": "^3.4.9",
     "yjs": "^13.6.33",
