@@ -9,6 +9,7 @@ import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { ErrorState } from '../../components/ErrorState/ErrorState';
 import {
   CheckIcon,
+  ClockIcon,
   HeartIcon,
   PotIcon,
   RefreshIcon,
@@ -29,6 +30,11 @@ import { cx } from '../../lib/cx';
 import { usePeople } from '../../lib/people';
 import { useMe } from '../../lib/session';
 import { useRecipeStore } from '../../stores/recipes';
+import { RecipeTile } from '../../components/Recipe/RecipeTile';
+import { readActivity } from '@shelf-life/docs';
+import type { Activity } from '@shelf-life/shared';
+import { useDocSnapshot, useReceipts } from '../../lib/sync/useDocs';
+import { useLocalRecipes } from '../../features/recipes/useRecipes';
 
 /** REC-4: #1 plus runners-up #2–#6. */
 const SHOWN = 6;
@@ -42,7 +48,12 @@ type Data = ReturnType<typeof usePantryRecipes>;
  */
 export function RecipesPage() {
   const { t } = useTranslation();
-  const tab = useLocation().pathname.startsWith('/recipes/saved') ? 'saved' : 'tonight';
+  const path = useLocation().pathname;
+  const tab = path.startsWith('/recipes/saved')
+    ? 'saved'
+    : path.startsWith('/recipes/history')
+      ? 'history'
+      : 'tonight';
   const data = usePantryRecipes();
   const savedCount = Object.keys(useRecipeStore((s) => s.saved)).length;
   const { check, status } = data;
@@ -57,7 +68,11 @@ export function RecipesPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-[2rem] leading-[1.1] lg:text-[4rem]">
-            {tab === 'saved' ? t('pages.savedRecipes') : t('recipes.title')}
+            {tab === 'saved'
+              ? t('pages.savedRecipes')
+              : tab === 'history'
+                ? t('recipes.history.title')
+                : t('recipes.title')}
           </h1>
           {tab === 'tonight' ? (
             <p className="mt-2 hidden text-lg text-secondary lg:block">{t('recipes.subtitle')}</p>
@@ -77,9 +92,22 @@ export function RecipesPage() {
                 <HeartIcon key="i" size={18} fill="currentColor" />,
                 t('recipes.tabs.saved', { count: savedCount }),
               ],
+              [
+                'history',
+                '/recipes/history',
+                <ClockIcon key="i" size={18} />,
+                t('recipes.tabs.history'),
+              ],
             ] as const
           ).map(([key, to, icon, label]) => (
-            <li key={key} className="flex-1 lg:flex-none">
+            // SAV-1: History is a web tab (Figma 12); the page still works on a phone.
+            <li
+              key={key}
+              className={cx(
+                'flex-1 lg:flex-none',
+                key === 'history' && tab !== 'history' && 'max-lg:hidden',
+              )}
+            >
               <Link
                 to={to}
                 aria-current={tab === key ? 'page' : undefined}
@@ -103,6 +131,8 @@ export function RecipesPage() {
           <ErrorState message={t('recipes.error')} onRetry={data.retry} />
         ) : tab === 'tonight' ? (
           <Tonight data={data} />
+        ) : tab === 'history' ? (
+          <History data={data} />
         ) : (
           <Saved data={data} />
         )}
@@ -420,5 +450,81 @@ function SavedStatus({ r }: { r: RankedRecipe & { readiness: string } }) {
           .join(', '),
       })}
     </span>
+  );
+}
+
+const NO_ACTIVITY: Activity[] = [];
+
+/** SAV-1 History (web): recipes this person cooked ("I made this"), newest first. */
+function History({ data }: { data: Data }) {
+  const { t } = useTranslation();
+  const me = useMe();
+  const { doc } = useReceipts(data.pantry.id);
+  const activity = useDocSnapshot(doc, readActivity, NO_ACTIVITY);
+  const local = useLocalRecipes();
+  const { saved, seen } = useRecipeStore.getState();
+  const cooked = useMemo(() => {
+    const byRecipe = new Map<string, { last: Activity; count: number }>();
+    for (const a of activity) {
+      if (a.type !== 'cooked' || a.actorId !== me.user.id || !a.recipeId) continue;
+      const prev = byRecipe.get(a.recipeId);
+      if (!prev) byRecipe.set(a.recipeId, { last: a, count: 1 });
+      else
+        byRecipe.set(a.recipeId, {
+          last: a.createdAt > prev.last.createdAt ? a : prev.last,
+          count: prev.count + 1,
+        });
+    }
+    return [...byRecipe.values()].sort((a, b) => b.last.createdAt.localeCompare(a.last.createdAt));
+  }, [activity, me.user.id]);
+
+  if (cooked.length === 0)
+    return (
+      <EmptyState
+        icon={<PotIcon size={32} />}
+        title={t('recipes.history.emptyTitle')}
+        body={t('recipes.history.emptyBody')}
+        action={
+          <Button asChild>
+            <Link to="/recipes">{t('recipes.saved.emptyAction')}</Link>
+          </Button>
+        }
+      />
+    );
+
+  const when = (iso: string) =>
+    new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' }).format(
+      new Date(iso),
+    );
+  return (
+    <ul className="grid gap-3 lg:grid-cols-2">
+      {cooked.map(({ last, count }) => {
+        const id = last.recipeId!;
+        const recipe = local?.find((r) => r.id === id) ?? saved[id]?.recipe ?? seen[id];
+        return (
+          <li
+            key={id}
+            data-testid="cooked-recipe"
+            className="relative flex items-center gap-4 rounded-card bg-white p-3 bordered"
+          >
+            <RecipeTile cuisine={recipe?.cuisine ?? 'everyday'} className="size-20" />
+            <div className="min-w-0 flex-1">
+              <h2 className="font-wordmark text-lg leading-tight [overflow-wrap:anywhere]">
+                <Link
+                  to={`/recipes/${encodeURIComponent(id)}`}
+                  className="after:absolute after:inset-0 after:content-['']"
+                >
+                  {recipe?.title ?? last.subject}
+                </Link>
+              </h2>
+              <p className="text-sm text-secondary">
+                {t('recipes.history.cooked', { when: when(last.createdAt) })}
+                {count > 1 ? ` · ${t('recipes.history.cookedCount', { count })}` : ''}
+              </p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

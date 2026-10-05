@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useMatches } from 'react-router-dom';
+import { TimerHost } from '../../features/cooking/TimerHost';
 import { useRecipeSync } from '../../features/recipes/useRecipeSync';
 import { useMe } from '../../lib/session';
 import { useList } from '../../lib/sync/useDocs';
@@ -57,6 +58,7 @@ export function AppShell() {
         onHighContrastChange={settings.setHighContrast}
       />
       <OfflineBanner />
+      <TimerHost />
       <main id="main" tabIndex={-1} className="outline-none">
         <Outlet />
       </main>
