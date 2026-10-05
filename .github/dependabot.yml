@@ -1,4 +1,7 @@
 # SEC-8 dependency scanning (free).
+# Automatic PRs are minor and patch updates only (bug and security fixes). Major versions (React
+# 19, …) change behaviour and are upgraded deliberately, as planned work with full testing.
+# GitHub security alerts still flag vulnerable versions of any kind.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -6,7 +9,18 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+    groups:
+      # One PR for all small dev-tool updates instead of one each.
+      dev-tools:
+        dependency-type: development
+        update-types: ['minor', 'patch']
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
