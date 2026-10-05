@@ -26,7 +26,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^17.0.15",
-    "react-router-dom": "^6.30.6",
+    "react-router-dom": "^7.18.4",
     "tesseract.js": "^7.0.0",
     "y-indexeddb": "^9.0.12",
     "y-websocket": "^3.1.0",
