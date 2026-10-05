@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useMatches } from 'react-router-dom';
 import { TimerHost } from '../../features/cooking/TimerHost';
 import { useRecipeSync } from '../../features/recipes/useRecipeSync';
+import { useSettingsSync } from '../../features/settings/useSettingsSync';
 import { useMe } from '../../lib/session';
 import { useList } from '../../lib/sync/useDocs';
 import { usePlace } from '../../stores/place';
@@ -27,6 +28,8 @@ export function AppShell() {
   const settings = useUiSettings();
   // Saved recipes and recipe preferences changed offline are sent once back online.
   useRecipeSync();
+  // PRO-4: display settings follow the account.
+  useSettingsSync();
 
   const handle = [...matches].reverse().find((m) => (m.handle as RouteHandle | undefined)?.skipLink)
     ?.handle as RouteHandle | undefined;

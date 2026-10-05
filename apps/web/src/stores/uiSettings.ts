@@ -2,13 +2,19 @@ import type { TextSize } from '@shelf-life/shared';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-type UiSettings = {
-  textSize: TextSize;
-  highContrast: boolean;
-  reduceMotion: boolean;
+type Display = { textSize: TextSize; highContrast: boolean; reduceMotion: boolean };
+
+type UiSettings = Display & {
+  /** This device has taken the account's settings once (a new device starts from them). */
+  accountSynced: boolean;
+  /** Changed here and not yet saved to the account (saved when online, PRO-4). */
+  dirty: boolean;
   setTextSize: (size: TextSize) => void;
   setHighContrast: (on: boolean) => void;
   setReduceMotion: (on: boolean) => void;
+  /** Take the account's settings (first use on this device). */
+  adopt: (from: Display) => void;
+  markSaved: () => void;
 };
 
 const safeLocalStorage = createJSONStorage(() => {
@@ -24,8 +30,8 @@ const safeLocalStorage = createJSONStorage(() => {
 });
 
 /**
- * Display settings (A11Y-6, A11Y-7). Kept on this device for now; saved to the account
- * (PATCH /me/settings) with the Profile page in Milestone 8.
+ * Display settings (A11Y-6, A11Y-7, PRO-4). Applied from this device instantly (and offline) and
+ * saved to the account, so a new device starts with them (useSettingsSync).
  */
 export const useUiSettings = create<UiSettings>()(
   persist(
@@ -33,17 +39,23 @@ export const useUiSettings = create<UiSettings>()(
       textSize: 'default',
       highContrast: false,
       reduceMotion: false,
-      setTextSize: (textSize) => set({ textSize }),
-      setHighContrast: (highContrast) => set({ highContrast }),
-      setReduceMotion: (reduceMotion) => set({ reduceMotion }),
+      accountSynced: false,
+      dirty: false,
+      setTextSize: (textSize) => set({ textSize, dirty: true }),
+      setHighContrast: (highContrast) => set({ highContrast, dirty: true }),
+      setReduceMotion: (reduceMotion) => set({ reduceMotion, dirty: true }),
+      adopt: (from) => set({ ...from, accountSynced: true, dirty: false }),
+      markSaved: () => set({ accountSynced: true, dirty: false }),
     }),
     {
       name: 'shelf-life:ui-settings',
       storage: safeLocalStorage,
-      partialize: ({ textSize, highContrast, reduceMotion }) => ({
+      partialize: ({ textSize, highContrast, reduceMotion, accountSynced, dirty }) => ({
         textSize,
         highContrast,
         reduceMotion,
+        accountSynced,
+        dirty,
       }),
     },
   ),

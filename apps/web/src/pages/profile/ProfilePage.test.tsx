@@ -14,7 +14,7 @@ describe('ProfilePage', () => {
     renderApp('/profile', returningUserMe);
     expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeInTheDocument();
     expect(screen.getByText('Ananya Mehta')).toBeInTheDocument();
-    expect(screen.getByText('ananya@example.com')).toBeInTheDocument();
+    expect(screen.getByText(/ananya@example\.com/)).toBeInTheDocument();
   });
 
   it('PRO-6 links to Receipt history', async () => {
