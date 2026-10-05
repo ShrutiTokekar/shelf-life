@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import {
+  chatInputSchema,
   cleanupLinesInputSchema,
+  swapInputSchema,
   recipesInputSchema,
   shelfLifeInputSchema,
 } from '@shelf-life/shared';
@@ -21,5 +23,16 @@ export function aiRoutes(ai: AiService) {
     .post('/recipes', async (c) => {
       const input = recipesInputSchema.parse(await c.req.json().catch(() => ({})));
       return c.json(await ai.suggestRecipes(c.var.user.id, input));
+    })
+    .post('/swap', async (c) => {
+      const input = swapInputSchema.parse(await c.req.json().catch(() => ({})));
+      return c.json(await ai.suggestSwap(c.var.user.id, input));
+    })
+    .post('/chat', async (c) => {
+      const input = chatInputSchema.parse(await c.req.json().catch(() => ({})));
+      return c.json(await ai.chat(c.var.user.id, input));
+    })
+    .get('/chat/:threadId', async (c) => {
+      return c.json({ messages: await ai.chatThread(c.var.user.id, c.req.param('threadId')) });
     });
 }

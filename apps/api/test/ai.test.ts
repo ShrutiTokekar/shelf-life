@@ -16,6 +16,7 @@ afterEach(async () => {
 function counting(): AiProvider & { calls: number } {
   const base = mockProvider();
   const p: AiProvider & { calls: number } = {
+    ...base,
     name: 'counting',
     calls: 0,
     async cleanupLines(input) {

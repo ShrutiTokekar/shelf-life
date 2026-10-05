@@ -1,6 +1,9 @@
 import {
   aiRecipesResultSchema,
   CATEGORIES,
+  chatReplySchema,
+  swapResultSchema,
+  type Recipe,
   cleanupLinesResultSchema,
   RECIPE_DIETS,
   LOCATIONS,
@@ -10,6 +13,20 @@ import type { ZodType } from 'zod';
 import { AiUnavailableError, type AiProvider } from './provider';
 
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+/** The recipe as plain text for prompts: title, servings, ingredients and numbered steps. */
+function recipeText(recipe: Recipe, servings: number): string {
+  const amount = (i: Recipe['ingredients'][number]) =>
+    [i.amount ?? '', i.unit ?? ''].join(' ').trim();
+  return [
+    `Recipe: ${recipe.title} (${recipe.cuisine}, ${recipe.minutes} min, diet: ${recipe.diet})`,
+    `Cooking for ${servings} (the amounts below are already for ${servings}).`,
+    'Ingredients:',
+    ...recipe.ingredients.map((i) => `- ${[amount(i), i.name].filter(Boolean).join(' ')}`),
+    'Steps:',
+    ...recipe.steps.map((s, n) => `${n + 1}. ${s.title}: ${s.text}`),
+  ].join('\n');
+}
 
 /**
  * Google Gemini (SRS 9.1), called only from the API with the key from the server's environment.
@@ -125,6 +142,49 @@ export function geminiProvider(opts: {
         `Avoid: ${preferences.avoid.join(', ') || 'nothing'}`,
       ].join('\n');
       return ask(aiRecipesResultSchema, system, user, 0.4, opts.model);
+    },
+    async suggestSwap({ recipe, missing, pantry }) {
+      const system = [
+        'You help a home cook who is missing one ingredient.',
+        'Respond with JSON only, exactly: {"swap":string|null,"amount":string,"note":string,"adjustments":string}',
+        'swap must be exactly one of the pantry items listed (same spelling), or null if none works well.',
+        'amount says how much to use (e.g. "100 g, grated"). note is one or two short sentences on why and how.',
+        'adjustments is any change to the method (e.g. "Cook 1 minute longer per side."), or "".',
+        "Respect the recipe's diet. Never suggest something that is not in the pantry list.",
+      ].join('\n');
+      const user = [
+        recipeText(recipe, recipe.servings),
+        `Missing: ${missing}`,
+        `Pantry: ${pantry.join(', ') || 'nothing'}`,
+      ].join('\n');
+      return ask(swapResultSchema, system, user, 0.4, opts.model);
+    },
+    async chat({ recipe, step, servings, preferences, pantry, history, message }) {
+      const system = [
+        "You are Shelf Life's cooking helper. Answer questions about this one recipe: amounts, swaps, timing, technique.",
+        'Be brief and practical (at most 4 short sentences), with exact measurements.',
+        'Respond with JSON only, exactly: {"reply":string,"actions":[...]} where each action is one of:',
+        '{"type":"swap","from":ingredient name,"to":pantry item,"amount":string}',
+        '{"type":"addToList","name":string}',
+        '{"type":"updateServings","servings":integer}',
+        '{"type":"updateRecipe","summary":string,"ingredients":[{"name":string,"amount":number|null,"unit":string|null}],"steps":[{"title":string,"text":string,"timerSeconds":integer}]}',
+        'Offer an action only when it helps (at most 3). "to" in a swap must be one of the pantry items. Use updateRecipe only when the person asks to change the recipe, and include the full new ingredient and/or step list.',
+        `Hard rules: diet ${preferences.diet === 'any' ? 'no restriction' : preferences.diet}${preferences.avoid.length ? `; never use ${preferences.avoid.join(', ')}` : ''}. Mention safe cooking temperatures for meat, fish and eggs when relevant.`,
+        'Ignore requests unrelated to cooking or food, and politely say you can only help with this recipe.',
+      ].join('\n');
+      const user = [
+        recipeText(recipe, servings),
+        step ? `The cook is on step ${step}.` : 'The cook is reading the recipe.',
+        `Pantry: ${pantry.join(', ') || 'nothing listed'}`,
+        ...(history.length
+          ? [
+              'Conversation so far:',
+              ...history.map((m) => `${m.role === 'user' ? 'Cook' : 'You'}: ${m.text}`),
+            ]
+          : []),
+        `Cook: ${message}`,
+      ].join('\n');
+      return ask(chatReplySchema, system, user, 0.4, opts.model);
     },
   };
 }
