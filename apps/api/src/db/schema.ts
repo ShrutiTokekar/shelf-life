@@ -15,7 +15,14 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { DIETS, LIST_COLORS, LIST_ROLES, TEXT_SIZES, type Recipe } from '@shelf-life/shared';
+import {
+  DIETS,
+  LIST_COLORS,
+  LIST_ROLES,
+  TEXT_SIZES,
+  type ChatAction,
+  type Recipe,
+} from '@shelf-life/shared';
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>
@@ -275,4 +282,39 @@ export const savedRecipe = pgTable(
     savedAt: timestamp('saved_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.recipeId] })],
+);
+
+/** SRS 10 ChatThread (RCP-8): one person's chat about one recipe. Kept 30 days. */
+export const chatThread = pgTable(
+  'chat_thread',
+  {
+    id: uuid('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    recipeId: text('recipe_id').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('chat_thread_user_id_idx').on(t.userId)],
+);
+
+export const chatRole = pgEnum('chat_role', ['user', 'ai']);
+
+/** SRS 10 ChatMessage. `actions` are the buttons an AI reply offered. Kept 30 days. */
+export const chatMessage = pgTable(
+  'chat_message',
+  {
+    id: uuid('id').primaryKey(),
+    threadId: uuid('thread_id')
+      .notNull()
+      .references(() => chatThread.id, { onDelete: 'cascade' }),
+    role: chatRole('role').notNull(),
+    text: text('text').notNull(),
+    actions: jsonb('actions').$type<ChatAction[]>().notNull().default([]),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('chat_message_thread_id_idx').on(t.threadId, t.createdAt),
+    index('chat_message_created_at_idx').on(t.createdAt),
+  ],
 );

@@ -1,5 +1,13 @@
 import {
   acceptInviteResponseSchema,
+  chatMessageSchema,
+  chatResponseSchema,
+  swapResultSchema,
+  type ChatInput,
+  type ChatMessage,
+  type ChatResponse,
+  type SwapInput,
+  type SwapResult,
   recipeSchema,
   recipesResponseSchema,
   savedRecipeSchema,
@@ -228,4 +236,41 @@ export function deleteSavedRecipe(id: string): Promise<void> {
 
 export function patchSettings(patch: SettingsPatch): Promise<UserSettings> {
   return request<UserSettings>('/me/settings', { method: 'PATCH', body: JSON.stringify(patch) });
+}
+
+/** RCP-4: a swap from the pantry for a missing ingredient; null = show "Missing" only. */
+export async function aiSwap(input: SwapInput): Promise<SwapResult | null> {
+  if (!navigator.onLine) return null;
+  try {
+    return swapResultSchema.parse(
+      await request<unknown>('/ai/swap', { method: 'POST', body: JSON.stringify(input) }),
+    );
+  } catch {
+    return null;
+  }
+}
+
+export type ChatOutcome =
+  { ok: true; response: ChatResponse } | { ok: false; reason: 'offline' | 'unavailable' | 'limit' };
+
+/** RCP-8: one chat message. Failures say why, so the panel can explain (rule 2). */
+export async function aiChat(input: ChatInput): Promise<ChatOutcome> {
+  if (!navigator.onLine) return { ok: false, reason: 'offline' };
+  try {
+    const body = await request<unknown>('/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return { ok: true, response: chatResponseSchema.parse(body) };
+  } catch (err) {
+    if (err instanceof NetworkError) return { ok: false, reason: 'offline' };
+    if (err instanceof ApiRequestError && err.code === 'ai_limit')
+      return { ok: false, reason: 'limit' };
+    return { ok: false, reason: 'unavailable' };
+  }
+}
+
+export async function fetchChatThread(threadId: string): Promise<ChatMessage[]> {
+  const body = await request<{ messages: unknown[] }>(`/ai/chat/${encodeURIComponent(threadId)}`);
+  return body.messages.map((m) => chatMessageSchema.parse(m));
 }

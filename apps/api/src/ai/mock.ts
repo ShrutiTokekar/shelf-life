@@ -69,6 +69,53 @@ export function mockProvider(): AiProvider {
         })),
       };
     },
+    async suggestSwap({ missing, pantry }) {
+      // Same dictionary category as the missing item (cheddar → paneer): a believable stand-in.
+      const want = foodByName(missing.toLowerCase())?.category;
+      const swap = want ? pantry.find((p) => foodByName(p.toLowerCase())?.category === want) : null;
+      return swap
+        ? {
+            swap,
+            amount: 'the same amount',
+            note: `Use your ${swap.toLowerCase()} instead of ${missing.toLowerCase()} (mock).`,
+            adjustments: '',
+          }
+        : {
+            swap: null,
+            amount: '',
+            note: 'Nothing in your pantry is a good match (mock).',
+            adjustments: '',
+          };
+    },
+    async chat({ message, servings, step, recipe, pantry }) {
+      const forN = /\bfor (\d{1,2})\b/i.exec(message);
+      if (forN)
+        return {
+          reply: `Done: here it is for ${forN[1]} servings (mock).`,
+          actions: [{ type: 'updateServings' as const, servings: Number(forN[1]) }],
+        };
+      const missing = recipe.ingredients.find((i) =>
+        message.toLowerCase().includes(i.name.toLowerCase().split(/[ ,(]/)[0]!),
+      );
+      if (missing && /don.t have|missing|out of|no /i.test(message)) {
+        const swap = pantry.find((p) => p.toLowerCase() !== missing.name.toLowerCase());
+        return {
+          reply: swap
+            ? `Try your ${swap.toLowerCase()} instead (mock).`
+            : `Add ${missing.name.toLowerCase()} to your list (mock).`,
+          actions: [
+            ...(swap
+              ? [{ type: 'swap' as const, from: missing.name, to: swap, amount: 'same amount' }]
+              : []),
+            { type: 'addToList' as const, name: missing.name },
+          ],
+        };
+      }
+      return {
+        reply: `Mock answer for ${servings} servings${step ? `, step ${step}` : ''}: ${message}`,
+        actions: [],
+      };
+    },
     async estimateShelfLives({ items }) {
       return {
         items: items.map(({ name, location }) => {

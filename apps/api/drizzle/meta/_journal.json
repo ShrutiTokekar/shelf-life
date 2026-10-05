@@ -36,6 +36,13 @@
       "when": 1790903634904,
       "tag": "0004_recipes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791168031687,
+      "tag": "0005_chat",
+      "breakpoints": true
     }
   ]
 }

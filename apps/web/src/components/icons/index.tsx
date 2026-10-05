@@ -411,3 +411,22 @@ export const HeartIcon = (p: IconProps) => (
     <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
   </Icon>
 );
+
+export const MicIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+  </Icon>
+);
+
+export const SendIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M21 3 10 14M21 3l-7 18-4-7-7-4 18-7Z" />
+  </Icon>
+);
+
+export const SwapIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 8h14l-3-3M20 16H6l3 3" />
+  </Icon>
+);

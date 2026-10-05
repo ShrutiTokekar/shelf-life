@@ -25,7 +25,7 @@ afterEach(() => {
   cleanup();
   resetDocsForTests();
   useRecipeStore.getState().clear();
-  useCookSession.setState({ servings: {} });
+  useCookSession.setState(useCookSession.getInitialState());
   useTimers.setState({ timers: {} });
   // Fresh device storage for every test.
   globalThis.indexedDB = new IDBFactory();

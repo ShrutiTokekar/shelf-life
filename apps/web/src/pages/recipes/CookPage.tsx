@@ -5,7 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '../../components/Button/Button';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from '../../components/icons';
+import {
+  CheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  SparkIcon,
+} from '../../components/icons';
 import { StepIllustration } from '../../components/Recipe/StepIllustration';
 import { TimerButton } from '../../components/Recipe/TimerButton';
 import { PageSkeleton } from '../../components/Skeleton/Skeleton';
@@ -17,7 +23,9 @@ import { cx } from '../../lib/cx';
 import { useMe } from '../../lib/session';
 import { useReceipts } from '../../lib/sync/useDocs';
 import { useUiSettings } from '../../stores/uiSettings';
-import { useServings } from './RecipePage';
+import { useSessionRecipe } from '../../features/cooking/useSessionRecipe';
+import { RecipeChat } from '../../features/cooking/RecipeChat';
+import { BottomSheet } from '../../components/BottomSheet/BottomSheet';
 
 /** RCP-7: keep the screen on while cooking (Wake Lock API), again after coming back to the tab. */
 function useWakeLock() {
@@ -61,14 +69,15 @@ export function CookPage() {
   const me = useMe();
   const { doc } = useReceipts(data.pantry.id);
   const recipe = load.state === 'ready' ? load.recipe : null;
-  const { ingredients } = useServings(recipe);
+  const session = useSessionRecipe(recipe);
+  const [chatOpen, setChatOpen] = useState(false);
   const textSize = useUiSettings((s) => s.textSize);
   const setTextSize = useUiSettings((s) => s.setTextSize);
   const [making, setMaking] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   useWakeLock();
 
-  const total = recipe?.steps.length ?? 0;
+  const total = session.recipe?.steps.length ?? 0;
   // ?step=N is 1-based; total + 1 is the "All done" screen.
   const step = Math.min(Math.max(1, Number(params.get('step')) || 1), total + 1);
   const go = (n: number) => setParams({ step: String(n) }, { replace: true });
@@ -79,10 +88,8 @@ export function CookPage() {
 
   const match = useMemo(
     () =>
-      recipe
-        ? matchRecipe({ ...recipe, ingredients }, data.items, data.listItems, data.today)
-        : null,
-    [recipe, ingredients, data.items, data.listItems, data.today],
+      session.recipe ? matchRecipe(session.recipe, data.items, data.listItems, data.today) : null,
+    [session.recipe, data.items, data.listItems, data.today],
   );
 
   if (load.state === 'loading' || data.status === 'loading') return <PageSkeleton />;
@@ -103,7 +110,8 @@ export function CookPage() {
     );
 
   const done = step > total;
-  const current = done ? null : recipe.steps[step - 1]!;
+  const steps = match.recipe.steps;
+  const current = done ? null : steps[step - 1]!;
   const recipeHref = `/recipes/${encodeURIComponent(recipe.id)}`;
   const nextSize = TEXT_SIZES[(TEXT_SIZES.indexOf(textSize) + 1) % TEXT_SIZES.length]!;
 
@@ -138,7 +146,7 @@ export function CookPage() {
             })}
             className="mt-1.5 flex gap-1.5"
           >
-            {recipe.steps.map((_, i) => (
+            {steps.map((_, i) => (
               <span
                 key={i}
                 className={cx('h-2 flex-1 rounded-chip', i < step ? 'bg-navy' : 'bg-line')}
@@ -217,7 +225,30 @@ export function CookPage() {
           </Button>
         )}
       </div>
+      {data.pantry.canEdit ? (
+        <Button
+          variant="ghost"
+          icon={<SparkIcon size={20} />}
+          onClick={() => setChatOpen(true)}
+          className="self-center"
+        >
+          {t('chat.open')}
+        </Button>
+      ) : null}
       <p className="text-center text-sm text-secondary">{t('cook.along.awake')}</p>
+
+      {/* RCP-8 chat during cook-along (Figma 16): knows the current step. */}
+      <BottomSheet open={chatOpen} title={t('chat.title')} onClose={() => setChatOpen(false)}>
+        <RecipeChat
+          base={recipe}
+          recipe={match.recipe}
+          servings={session.servings}
+          step={done ? null : step}
+          data={data}
+          showTitle={false}
+          className="pb-2"
+        />
+      </BottomSheet>
 
       {making ? (
         <MadeThisSheet

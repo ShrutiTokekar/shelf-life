@@ -10,6 +10,13 @@ import {
   newId,
   recipeSchema,
   shelfLifeResultSchema,
+  swapResultSchema,
+  type ChatAction,
+  type ChatInput,
+  type ChatMessage,
+  type ChatResponse,
+  type SwapInput,
+  type SwapResult,
   type AiRecipe,
   type CleanedLine,
   type CleanupLinesInput,
@@ -20,7 +27,7 @@ import {
   type RecipePrefs,
   type RecipesInput,
 } from '@shelf-life/shared';
-import { and, eq, gt, inArray, lt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, lt, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import { schema } from '../db/client';
 import { docAccess } from '../services/access';
@@ -87,6 +94,42 @@ export function toRecipe(ai: AiRecipe, prefs: RecipePrefs): Recipe | null {
   if (prefs.maxMinutes !== null && r.minutes > prefs.maxMinutes) return null;
   if (avoidedIn(r, prefs.avoid).length > 0) return null;
   return r;
+}
+
+/** SRS 10: chat threads and messages are kept 30 days. */
+export const CHAT_KEEP_MS = 30 * 24 * 3600_000;
+/** SRS 9.2: the last 10 messages go to the model with each new one. */
+export const CHAT_HISTORY = 10;
+
+const lower = (s: string) => s.trim().toLowerCase();
+
+/** The pantry item a name refers to, exactly as listed (case-insensitive), or null. */
+function inPantry(name: string, pantry: readonly string[]): string | null {
+  return pantry.find((p) => lower(p) === lower(name)) ?? null;
+}
+
+/**
+ * SRS 9.3 "never invent items as have": keep a chat action only if it's grounded. A swap must
+ * name a pantry item; an updated recipe must still respect the avoid list.
+ */
+export function groundAction(
+  a: ChatAction,
+  input: Pick<ChatInput, 'pantry' | 'preferences' | 'recipe'>,
+): ChatAction | null {
+  if (a.type === 'swap') {
+    const to = inPantry(a.to, input.pantry);
+    return to ? { ...a, to } : null;
+  }
+  if (a.type === 'updateRecipe') {
+    const next = {
+      ...input.recipe,
+      ingredients: a.ingredients ?? input.recipe.ingredients,
+      steps: a.steps ?? input.recipe.steps,
+    };
+    if (!a.ingredients && !a.steps) return null;
+    return avoidedIn(next, input.preferences.avoid).length ? null : a;
+  }
+  return a;
 }
 
 /**
@@ -299,6 +342,131 @@ export function aiService(deps: {
           });
       });
       return { recipes, createdAt: createdAt.toISOString() };
+    },
+
+    /**
+     * RCP-4 ingredient swap. Cached by the recipe, the missing item and the pantry's names (a
+     * hash; shared, nothing personal). A swap that isn't in the pantry becomes "no swap".
+     */
+    async suggestSwap(userId: string, input: SwapInput): Promise<SwapResult> {
+      await requireEditor(userId, input.pantryId);
+      const basis = JSON.stringify([
+        input.recipe.title,
+        lower(input.missing),
+        [...new Set(input.pantry.map(lower))].sort(),
+      ]);
+      const key = `swap:${createHash('sha256').update(basis).digest('hex')}`;
+      const [row] = await db
+        .select()
+        .from(schema.aiCache)
+        .where(eq(schema.aiCache.key, key))
+        .limit(1);
+      const cached = row ? swapResultSchema.safeParse(row.value) : null;
+      if (cached?.success) return cached.data;
+      const ai = need();
+      await spend(input.pantryId);
+      const raw = await ai.suggestSwap({
+        recipe: input.recipe,
+        missing: input.missing,
+        pantry: input.pantry,
+      });
+      const swap = raw.swap ? inPantry(raw.swap, input.pantry) : null;
+      const result: SwapResult = swap
+        ? { ...raw, swap }
+        : { swap: null, amount: '', note: raw.swap ? '' : raw.note, adjustments: '' };
+      await db.insert(schema.aiCache).values({ key, value: result }).onConflictDoNothing();
+      return result;
+    },
+
+    /**
+     * RCP-8 recipe chat: one message, answered with the thread's last 10 messages for context.
+     * Each message spends one call (SRS 9.4). Threads belong to one person; messages older than
+     * 30 days are deleted as new ones arrive.
+     */
+    async chat(userId: string, input: ChatInput): Promise<ChatResponse> {
+      await requireEditor(userId, input.pantryId);
+      let threadId = input.threadId ?? null;
+      if (threadId) {
+        const [thread] = await db
+          .select()
+          .from(schema.chatThread)
+          .where(and(eq(schema.chatThread.id, threadId), eq(schema.chatThread.userId, userId)))
+          .limit(1);
+        if (!thread || thread.recipeId !== input.recipe.id) threadId = null;
+      }
+      const history: ChatMessage[] = threadId
+        ? (
+            await db
+              .select()
+              .from(schema.chatMessage)
+              .where(eq(schema.chatMessage.threadId, threadId))
+              .orderBy(desc(schema.chatMessage.createdAt))
+              .limit(CHAT_HISTORY)
+          )
+            .reverse()
+            .map((m) => ({ role: m.role, text: m.text, actions: m.actions }))
+        : [];
+      const ai = need();
+      await spend(input.pantryId);
+      const answer = await ai.chat({
+        recipe: input.recipe,
+        step: input.step,
+        servings: input.servings,
+        preferences: input.preferences,
+        pantry: input.pantry,
+        message: input.message,
+        history,
+      });
+      const actions = answer.actions
+        .map((a) => groundAction(a, input))
+        .filter((a): a is ChatAction => a !== null);
+      const t = now();
+      await db.transaction(async (tx) => {
+        if (!threadId) {
+          threadId = newId();
+          await tx
+            .insert(schema.chatThread)
+            .values({ id: threadId, userId, recipeId: input.recipe.id, createdAt: new Date(t) });
+        }
+        await tx.insert(schema.chatMessage).values([
+          {
+            id: newId(),
+            threadId,
+            role: 'user',
+            text: input.message,
+            actions: [],
+            createdAt: new Date(t),
+          },
+          {
+            id: newId(),
+            threadId,
+            role: 'ai',
+            text: answer.reply,
+            actions,
+            createdAt: new Date(t + 1),
+          },
+        ]);
+        const cutoff = new Date(t - CHAT_KEEP_MS);
+        await tx.delete(schema.chatMessage).where(lt(schema.chatMessage.createdAt, cutoff));
+        await tx.delete(schema.chatThread).where(lt(schema.chatThread.createdAt, cutoff));
+      });
+      return { reply: answer.reply, actions, threadId: threadId! };
+    },
+
+    /** The thread's messages, oldest first (reopening the chat). */
+    async chatThread(userId: string, threadId: string): Promise<ChatMessage[]> {
+      const [thread] = await db
+        .select()
+        .from(schema.chatThread)
+        .where(and(eq(schema.chatThread.id, threadId), eq(schema.chatThread.userId, userId)))
+        .limit(1);
+      if (!thread) throw new NotFoundError('Chat not found.');
+      const rows = await db
+        .select()
+        .from(schema.chatMessage)
+        .where(eq(schema.chatMessage.threadId, threadId))
+        .orderBy(asc(schema.chatMessage.createdAt));
+      return rows.map((m) => ({ role: m.role, text: m.text, actions: m.actions }));
     },
   };
 }

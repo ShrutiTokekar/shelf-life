@@ -984,5 +984,57 @@
       "doneTitle": "All done!",
       "doneBody": "Enjoy your {{title}}. Tell us what you used so your pantry stays right."
     }
+  },
+  "chat": {
+    "title": "Ask Shelf Life AI",
+    "subtitle": "Knows this recipe and your pantry",
+    "open": "Ask AI",
+    "context": "Using: {{count}} pantry items · {{servings}} servings · {{diet}}",
+    "log": "Conversation",
+    "empty": "Ask about amounts, swaps or any step.",
+    "you": "You",
+    "ai": "Shelf Life AI",
+    "typing": "Thinking…",
+    "done": "done",
+    "suggestions": "Suggested questions",
+    "suggest": {
+      "amounts": "Exact amounts",
+      "missing": "I’m missing something",
+      "servings": "Make it for {{count}}",
+      "explain": "Explain step {{n}}",
+      "spicier": "Make it spicier"
+    },
+    "inputLabel": "Ask about this recipe",
+    "placeholder": "Ask about amounts, swaps or steps",
+    "voice": "Speak your question",
+    "send": "Send",
+    "voiceNote": "Your browser turns your speech into text. Chrome uses Google’s servers to do this.",
+    "footer": "AI can make mistakes. Double-check allergens and cooking temperatures.",
+    "offline": "Chat needs a connection. Your recipe is still here.",
+    "unavailable": "AI help isn’t available right now. Your recipe is still here.",
+    "limit": "You’ve used today’s AI help for this pantry. It resets tomorrow; your recipe is still here.",
+    "actions": {
+      "swap": "Swap in {{to}}",
+      "addToList": "Add {{name}} to list",
+      "servings_one": "Make it for {{count}}",
+      "servings_other": "Make it for {{count}}",
+      "recipe": "Update recipe"
+    },
+    "applied": {
+      "swap": "Swapped in {{to}} for {{from}}",
+      "servings_one": "Now for {{count}} serving",
+      "servings_other": "Now for {{count}} servings",
+      "recipe": "Recipe updated: {{summary}}"
+    },
+    "swap": {
+      "label": "AI swap suggestion",
+      "title": "No {{missing}}? Use your {{swap}}",
+      "use": "Use it",
+      "used": "Using it",
+      "ai": "Suggested by AI"
+    },
+    "changed": "Changed for this session: {{what}}",
+    "reset": "Back to the original",
+    "swapped": "Swapped in for {{from}}"
   }
 }
