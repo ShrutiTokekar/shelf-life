@@ -1,12 +1,33 @@
 import { Hono } from 'hono';
-import { ERROR_CODES, settingsPatchSchema } from '@shelf-life/shared';
+import { ERROR_CODES, profilePatchSchema, settingsPatchSchema } from '@shelf-life/shared';
 import { apiError } from '../middleware/errors';
+import { deleteAccount, exportData, updateProfile } from '../services/account';
 import { getMe, patchSettings } from '../services/me';
 import { listSaved, saveRecipe, unsaveRecipe } from '../services/recipes';
 import type { AppEnv } from '../types';
 
 export const meRoutes = new Hono<AppEnv>()
   .get('/', async (c) => c.json(await getMe(c.var.db, c.var.user)))
+  // PRO-1 Edit profile.
+  .patch('/profile', async (c) => {
+    const { displayName } = profilePatchSchema.parse(await c.req.json().catch(() => ({})));
+    await updateProfile(c.var.db, c.var.user.id, displayName);
+    return c.body(null, 204);
+  })
+  // PRO-6 Download my data.
+  .get('/export', async (c) => {
+    const data = await exportData(c.var.db, c.var.user);
+    c.header(
+      'content-disposition',
+      `attachment; filename="shelf-life-${data.exportedAt.slice(0, 10)}.json"`,
+    );
+    return c.json(data);
+  })
+  // PRO-6 Delete account.
+  .delete('/', async (c) => {
+    await deleteAccount(c.var.db, c.var.user.id);
+    return c.body(null, 204);
+  })
   .patch('/settings', async (c) => {
     const patch = settingsPatchSchema.strict().parse(await c.req.json().catch(() => ({})));
     return c.json(await patchSettings(c.var.db, c.var.user.id, patch));

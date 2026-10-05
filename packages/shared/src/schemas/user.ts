@@ -33,3 +33,9 @@ export type Pantry = z.infer<typeof pantrySchema>;
 /** PATCH /me/settings: any subset of the settings. */
 export const settingsPatchSchema = userSettingsSchema.partial();
 export type SettingsPatch = z.infer<typeof settingsPatchSchema>;
+
+/** PATCH /me/profile (PRO-1 Edit profile). */
+export const profilePatchSchema = z.object({
+  displayName: z.string().trim().min(1, 'Add your name.').max(60, 'Keep it under 60 characters.'),
+});
+export type ProfilePatch = z.infer<typeof profilePatchSchema>;

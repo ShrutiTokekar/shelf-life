@@ -53,6 +53,7 @@ async function seed() {
 
 describe('dbStore (SRS 8.7 yjs_docs)', () => {
   it('saves, overwrites and loads doc state; tracks waiting carts', async () => {
+    await seed();
     const store = dbStore(db);
     expect(await store.load(`list:${LIST}`)).toBeNull();
     await store.save(`list:${LIST}`, new Uint8Array([1, 2, 3]), true);
@@ -70,5 +71,18 @@ describe('dbStore (SRS 8.7 yjs_docs)', () => {
     expect(await store.access('friend', `list:${LIST}`)).toBeNull();
     expect(await store.pantryOf(LIST)).toBe(PANTRY);
     expect(await store.pantryOf('0192f0c0-0000-7000-8000-0000000000ff')).toBeNull();
+  });
+
+  it('PRO-6 never writes back a doc whose list or pantry was deleted', async () => {
+    await seed();
+    const store = dbStore(db);
+    await store.save(`list:${LIST}`, new Uint8Array([1]), false);
+    await db.delete(schema.yjsDoc);
+    await db.delete(schema.pantry).where(eq(schema.pantry.id, PANTRY));
+    // Someone still had them open: the next save must not bring them back.
+    await store.save(`list:${LIST}`, new Uint8Array([2]), false);
+    await store.save(`pantry:${PANTRY}`, new Uint8Array([3]), false);
+    await store.save('other:x', new Uint8Array([4]), false);
+    expect(await db.select().from(schema.yjsDoc)).toEqual([]);
   });
 });

@@ -12,6 +12,15 @@ export type Store = {
   pendingCarts(): Promise<string[]>;
 };
 
+/** Is the pantry or list behind "pantry:<id>" / "list:<id>" still there? */
+async function exists(db: Db, name: string): Promise<boolean> {
+  const [kind, id] = name.split(':') as [string, string];
+  const table = kind === 'pantry' ? schema.pantry : kind === 'list' ? schema.list : null;
+  if (!table || !id) return false;
+  const [row] = await db.select({ id: table.id }).from(table).where(eq(table.id, id)).limit(1);
+  return !!row;
+}
+
 export function dbStore(db: Db): Store {
   return {
     async load(name) {
@@ -23,6 +32,9 @@ export function dbStore(db: Db): Store {
       return row ? new Uint8Array(row.state) : null;
     },
     async save(name, state, hasCart) {
+      // Never write back a doc whose list or pantry was deleted (list deleted, account deleted,
+      // PRO-6) while someone still had it open: that would bring the data back.
+      if (!(await exists(db, name))) return;
       await db
         .insert(schema.yjsDoc)
         .values({ name, state, hasCart })
