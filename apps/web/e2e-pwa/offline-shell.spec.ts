@@ -26,6 +26,16 @@ async function waitForPantryWrites(page: Page) {
   });
 }
 
+/**
+ * Create the home list and wait until it exists. Navigating straight away (e.g. `goto('/pantry')`)
+ * can abort the create request mid-flight; with no home list the app correctly sends you back to
+ * setup, and the test then can't find the pantry (seen ~1 in 10 suite runs).
+ */
+async function createHomeList(page: Page) {
+  await page.getByRole('button', { name: 'Create home list' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
+}
+
 // SEC-1: the production build's Content Security Policy must not block anything the app does.
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -59,8 +69,7 @@ test('SRS 12.4 the installed app opens offline: shell from the service worker, a
   expect(login.ok()).toBe(true);
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'Create home list' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
+  await createHomeList(page);
 
   // Wait for the service worker to install and take control of the page.
   await page.evaluate(() => navigator.serviceWorker.ready);
@@ -87,7 +96,7 @@ test('SRS 12.4 the pantry opens offline from this device', async ({ page, contex
     headers: { origin: baseURL! },
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Create home list' }).click();
+  await createHomeList(page);
   await page.goto('/pantry');
   // Production build: no sample loader, so add an item by hand.
   await expect(page.getByRole('button', { name: 'Load sample pantry' })).toHaveCount(0);
@@ -118,7 +127,7 @@ test('rule 3 SRS 12.4 an item added while offline is still there after an offlin
   });
   expect(login.ok(), `test login failed: ${login.status()} ${await login.text()}`).toBe(true);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Create home list' }).click();
+  await createHomeList(page);
   await page.goto('/pantry');
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
@@ -152,8 +161,7 @@ test('rule 3 decision 1: after the first scan, scanning works offline (engine ca
   });
   expect(login.ok()).toBe(true);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Create home list' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
+  await createHomeList(page);
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
@@ -202,8 +210,7 @@ test('rule 3 LST-10 the grocery list works offline and syncs when back online', 
     headers: { origin: baseURL! },
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Create home list' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: /today/i })).toBeVisible();
+  await createHomeList(page);
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
