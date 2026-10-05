@@ -364,6 +364,14 @@ export function PantryPage() {
               }
             : undefined
         }
+        onRunningLow={
+          editing
+            ? (low) => {
+                actions.runningLow(editing, low);
+                setSheet(null);
+              }
+            : undefined
+        }
         onDelete={
           editing
             ? () => {

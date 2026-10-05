@@ -10,6 +10,7 @@ import {
   type ItemForm,
   type ListWithRole,
   type PantryItem,
+  withQuantity,
 } from '@shelf-life/shared';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -125,6 +126,21 @@ export function usePantryActions(opts: {
     [doc, today, t, undoable, activity],
   );
 
+  /** SRS 8.6: mark or unmark "Running low" (Reminders). */
+  const runningLow = useCallback(
+    (item: PantryItem, low: boolean) => {
+      if (!doc) return;
+      const before = updateItem(doc, item.id, { lowAt: low ? today : null });
+      undoable(
+        low
+          ? t('pantry.toast.low', { name: item.name })
+          : t('pantry.toast.notLow', { name: item.name }),
+        before,
+      );
+    },
+    [doc, today, t, undoable],
+  );
+
   const remove = useCallback(
     (item: PantryItem) => {
       if (!doc) return;
@@ -188,7 +204,9 @@ export function usePantryActions(opts: {
       const entries = out && existing.status !== 'out' ? [activity(existing, 'ran_out')] : [];
       let before: PantryItem | null = null;
       doc.transact(() => {
-        before = updateItem(doc, existing.id, { ...form, ...expiry, status, outAt });
+        // SRS 8.6: a lower quantity remembers what there was; a higher one is a restock.
+        const amounts = withQuantity(existing, form.quantity);
+        before = updateItem(doc, existing.id, { ...form, ...amounts, ...expiry, status, outAt });
         if (before && entries.length) recordActivity(doc, entries);
       });
       undoable(
@@ -248,5 +266,5 @@ export function usePantryActions(opts: {
     [lists, userId, t, toast, undoLabel],
   );
 
-  return { usedIt, ranOut, remove, save, addToList };
+  return { usedIt, ranOut, runningLow, remove, save, addToList };
 }

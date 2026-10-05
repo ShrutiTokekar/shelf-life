@@ -270,6 +270,9 @@ export function planCartMove(
           status: 'active',
           outAt: null,
           quantity: quantity === 0 ? null : quantity,
+          // Full again (SRS 8.6): running low starts over from here.
+          startQuantity: quantity === 0 ? null : quantity,
+          lowAt: null,
           unit: item.unit || restock.unit,
           purchasedOn,
           expiresOn: addDays(purchasedOn, Math.max(1, days)),

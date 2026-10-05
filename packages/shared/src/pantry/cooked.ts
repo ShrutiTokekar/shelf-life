@@ -1,5 +1,6 @@
 import type { IsoDate } from '../dates';
 import type { RecipeIngredient } from '../recipes/types';
+import { withQuantity } from './reminders';
 import type { UsedItResult } from './usedIt';
 import type { PantryItem } from './types';
 
@@ -56,12 +57,16 @@ export type CookedChoice = { kind: 'all' } | { kind: 'some'; left: number | null
  * with a known amount updates the quantity (0 left also runs it out); unknown leaves it as is.
  */
 export function applyCooked(
-  item: Pick<PantryItem, 'quantity'>,
+  item: Pick<PantryItem, 'quantity' | 'startQuantity' | 'lowAt'>,
   choice: CookedChoice,
   today: IsoDate,
 ): UsedItResult | null {
   if (choice.kind === 'all' || choice.left === 0)
     return { patch: { quantity: 0, status: 'out', outAt: today }, ranOut: true };
   if (choice.left === null || choice.left === item.quantity) return null;
-  return { patch: { quantity: choice.left, status: 'active', outAt: null }, ranOut: false };
+  // SRS 8.6: remember the starting amount, for "running low".
+  return {
+    patch: { ...withQuantity(item, choice.left), status: 'active', outAt: null },
+    ranOut: false,
+  };
 }

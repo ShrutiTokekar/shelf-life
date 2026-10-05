@@ -43,7 +43,8 @@
     "receipts": "Skip to receipts",
     "list": "Skip to items to buy",
     "recipes": "Skip to ranked recipes",
-    "recipe": "Skip to recipe steps"
+    "recipe": "Skip to recipe steps",
+    "reminders": "Skip to reminders"
   },
   "offline": {
     "banner": "Offline, changes will sync"
@@ -425,7 +426,9 @@
       "addedToList": "{{name}} added to {{list}}.",
       "sampleLoaded": "Sample pantry loaded.",
       "undo": "Undo",
-      "listUnavailable": "Couldn’t add {{name}} to {{list}}. Try again."
+      "listUnavailable": "Couldn’t add {{name}} to {{list}}. Try again.",
+      "low": "{{name}} marked running low. It’s on Reminders.",
+      "notLow": "{{name}} isn’t running low anymore."
     },
     "removedList": "Removed list",
     "whichPantry": "Showing",
@@ -468,7 +471,9 @@
     "close": "Close",
     "errors": {
       "quantity": "Enter a number, or leave it blank."
-    }
+    },
+    "runningLow": "Running low",
+    "notLow": "Not running low"
   },
   "statusTag": {
     "ai": "AI, confirmed",
@@ -1112,5 +1117,41 @@
     "changed": "Changed for this session: {{what}}",
     "reset": "Back to the original",
     "swapped": "Swapped in for {{from}}"
+  },
+  "reminders": {
+    "title": "Reminders",
+    "back": "Back",
+    "markAll": "Mark all read",
+    "ranOut": "Ran out",
+    "low": "Running low",
+    "unread": "Unread",
+    "ranOutToday": "Ran out today",
+    "ranOutYesterday": "Ran out yesterday",
+    "ranOutDays": "Ran out {{count}} days ago",
+    "by": "{{name}} used the last of it",
+    "byYou": "You used the last of it",
+    "left": "About {{amount}} left",
+    "leftShare": "{{amount}} of {{start}} left",
+    "marked": "Marked running low",
+    "addToList": "Add to list",
+    "addToListLabel": "Add {{name}} to the list",
+    "later": "Later",
+    "laterLabel": "Remind me about {{name}} later",
+    "notNeeded": "Not needed",
+    "notNeededLabel": "{{name}} not needed",
+    "snooze": "Snooze",
+    "snoozeLabel": "Snooze {{name}}",
+    "toast": {
+      "later": "We’ll remind you about {{name}} tomorrow.",
+      "notNeeded": "Got it. No more reminders about {{name}} for now.",
+      "snoozed": "Snoozed {{name}} for 2 days.",
+      "undo": "Undo",
+      "allRead": "All caught up."
+    },
+    "emptyTitle": "Nothing needs restocking",
+    "emptyBody": "When something runs out or runs low, it shows up here so it makes it onto the list.",
+    "emptyAction": "Open your pantry",
+    "error": "We couldn’t open your pantry on this device.",
+    "viewOnly": "You can see these reminders; ask an editor of this pantry to add things to the list."
   }
 }

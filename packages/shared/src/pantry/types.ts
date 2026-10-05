@@ -45,6 +45,13 @@ export const pantryItemSchema = z.object({
   status: z.enum(ITEM_STATUSES),
   /** When the item ran out, for "Ran out 2 days ago". */
   outAt: isoDate.nullable(),
+  /**
+   * How much there was before it started being used (SRS 8.6 running low): recorded the first
+   * time the quantity goes down, reset when restocked. Missing on older items.
+   */
+  startQuantity: z.number().min(0).nullable().optional(),
+  /** Marked "Running low" by someone (SRS 8.6), cleared when restocked. */
+  lowAt: isoDate.nullable().optional(),
   addedBy: z.string().min(1),
   receiptLineId: z.string().nullable(),
   updatedAt: z.string(),
