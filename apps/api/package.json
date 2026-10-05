@@ -23,11 +23,13 @@
     "hono": "^4.13.12",
     "jose": "^6.2.12",
     "postgres": "^3.4.9",
+    "web-push": "^3.6.7",
     "yjs": "^13.6.33",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
+    "@types/web-push": "^3.6.4",
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15"
   },

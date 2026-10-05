@@ -17,6 +17,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import {
   DIETS,
+  EXPIRY_ALERTS,
   LIST_COLORS,
   LIST_ROLES,
   TEXT_SIZES,
@@ -159,6 +160,7 @@ export const listMember = pgTable(
 );
 
 export const diet = pgEnum('diet', DIETS);
+export const expiryAlert = pgEnum('expiry_alert', EXPIRY_ALERTS);
 
 /** Display settings (Milestone 1) and recipe preferences (Milestone 6); notifications in 8. */
 export const userSettings = pgTable('user_settings', {
@@ -180,6 +182,13 @@ export const userSettings = pgTable('user_settings', {
     .array()
     .notNull()
     .default(sql`'{}'::text[]`),
+  // PRO-5 notifications (Milestone 8).
+  notifyRanOut: boolean('notify_ran_out').notNull().default(true),
+  expiryAlert: expiryAlert('expiry_alert').notNull().default('1_day'),
+  weeklyReminder: boolean('weekly_reminder').notNull().default(false),
+  weeklyDay: integer('weekly_day').notNull().default(6),
+  weeklyTime: text('weekly_time').notNull().default('10:00'),
+  timeZone: text('time_zone').notNull().default('UTC'),
   updatedAt: updatedAt(),
 });
 
@@ -317,4 +326,37 @@ export const chatMessage = pgTable(
     index('chat_message_thread_id_idx').on(t.threadId, t.createdAt),
     index('chat_message_created_at_idx').on(t.createdAt),
   ],
+);
+
+/** SRS 10 PushSubscription: one per device that turned notifications on (SRS 8.8). */
+export const pushSubscription = pgTable(
+  'push_subscription',
+  {
+    id: uuid('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    userAgent: text('user_agent'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('push_subscription_user_id_idx').on(t.userId)],
+);
+
+/**
+ * Pushes sent (SRS 8.8): each notification's key once per user (no repeats), and the count per
+ * day (at most 3). Rows older than a week are deleted as new ones are written.
+ */
+export const pushSent = pgTable(
+  'push_sent',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.key] }), index('push_sent_sent_at_idx').on(t.sentAt)],
 );

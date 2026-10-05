@@ -1,5 +1,10 @@
 import { eq, inArray } from 'drizzle-orm';
-import { DEFAULT_RECIPE_PREFS, type MeResponse, type SettingsPatch } from '@shelf-life/shared';
+import {
+  DEFAULT_NOTIFICATION_SETTINGS,
+  DEFAULT_RECIPE_PREFS,
+  type MeResponse,
+  type SettingsPatch,
+} from '@shelf-life/shared';
 import type { SessionUser } from '../auth';
 import type { Db } from '../db/client';
 import { schema } from '../db/client';
@@ -10,6 +15,7 @@ const DEFAULT_SETTINGS: MeResponse['settings'] = {
   reduceMotion: false,
   language: 'en',
   ...DEFAULT_RECIPE_PREFS,
+  ...DEFAULT_NOTIFICATION_SETTINGS,
 };
 
 type SettingsRow = typeof schema.userSettings.$inferSelect;
@@ -25,6 +31,12 @@ function settingsFrom(row: SettingsRow | undefined): MeResponse['settings'] {
     cuisines: row.cuisines,
     maxMinutes: row.maxMinutes,
     avoid: row.avoid,
+    notifyRanOut: row.notifyRanOut,
+    expiryAlert: row.expiryAlert,
+    weeklyReminder: row.weeklyReminder,
+    weeklyDay: row.weeklyDay,
+    weeklyTime: row.weeklyTime,
+    timeZone: row.timeZone,
   };
 }
 

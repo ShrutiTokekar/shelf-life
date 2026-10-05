@@ -12,6 +12,35 @@ export const userSchema = z.object({
 export type User = z.infer<typeof userSchema>;
 
 /** Settings stored server-side: display (Milestone 1) and recipe preferences (Milestone 6). */
+/** PRO-5 expiry alert timing ("off" added Oct 5, 2026). */
+export const EXPIRY_ALERTS = ['off', 'same_day', '1_day', '2_days'] as const;
+export type ExpiryAlert = (typeof EXPIRY_ALERTS)[number];
+
+/** PRO-5 / RMD-4 / RMD-5 notification settings. Quiet hours are fixed: 10 PM to 8 AM local. */
+export const notificationSettingsSchema = z.object({
+  /** "When something runs out": notify the others on that item's list. */
+  notifyRanOut: z.boolean(),
+  expiryAlert: z.enum(EXPIRY_ALERTS),
+  weeklyReminder: z.boolean(),
+  /** 0 = Sunday … 6 = Saturday. */
+  weeklyDay: z.number().int().min(0).max(6),
+  /** "HH:MM", 24-hour, local. */
+  weeklyTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  /** IANA time zone from the device, for quiet hours and the weekly reminder. */
+  timeZone: z.string().min(1).max(64),
+});
+export type NotificationSettings = z.infer<typeof notificationSettingsSchema>;
+
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  notifyRanOut: true,
+  expiryAlert: '1_day',
+  weeklyReminder: false,
+  weeklyDay: 6,
+  weeklyTime: '10:00',
+  timeZone: 'UTC',
+};
+
+/** Settings stored server-side: display (Milestone 1), recipes (6) and notifications (8). */
 export const userSettingsSchema = z
   .object({
     textSize: z.enum(TEXT_SIZES),
@@ -19,7 +48,8 @@ export const userSettingsSchema = z
     reduceMotion: z.boolean(),
     language: z.enum(['en', 'hi']),
   })
-  .extend(recipePrefsSchema.shape);
+  .extend(recipePrefsSchema.shape)
+  .extend(notificationSettingsSchema.shape);
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 
 export const pantrySchema = z.object({
