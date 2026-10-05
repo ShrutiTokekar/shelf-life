@@ -25,7 +25,12 @@
     "label": "Text size",
     "default": "Default text size",
     "large": "Large text size",
-    "largest": "Largest text size"
+    "largest": "Largest text size",
+    "short": {
+      "default": "Default",
+      "large": "Large",
+      "largest": "Largest"
+    }
   },
   "skip": {
     "main": "Skip to main content",
@@ -243,7 +248,6 @@
     "signOut": "Sign out",
     "signOutFailed": "We couldn’t sign you out. Check your connection and try again.",
     "signOutOffline": "You’re offline. Signing out needs a connection.",
-    "comingSoon": "Lists and people, AI preferences, display and notification settings arrive in a later update.",
     "receiptHistory": "Receipt history",
     "receiptHistoryBody": "Every scanned receipt, as text",
     "ai": {
@@ -268,6 +272,78 @@
       "avoid": "Ingredients to avoid",
       "avoidHint": "Separate with commas, e.g. peanuts, mushrooms. Recipes with these are never suggested.",
       "saved": "Saved"
+    },
+    "skip": "Skip to settings",
+    "joined": "joined {{date}}",
+    "owner": "{{list}} owner",
+    "editProfile": "Edit profile",
+    "edit": {
+      "title": "Edit profile",
+      "name": "Your name",
+      "hint": "Shown to people on your lists.",
+      "save": "Save",
+      "saved": "Name updated",
+      "failed": "We couldn’t save your name. Check your connection and try again."
+    },
+    "stats": {
+      "label": "Your impact",
+      "saved_one": "item saved from waste this month",
+      "saved_other": "items saved from waste this month",
+      "savedShort": "saved from waste",
+      "receipts_one": "receipt scanned",
+      "receipts_other": "receipts scanned",
+      "receiptsShort": "receipts",
+      "cooked_one": "recipe cooked",
+      "cooked_other": "recipes cooked",
+      "cookedShort": "recipes cooked"
+    },
+    "lists": {
+      "title": "Lists & people",
+      "body": "Share different grocery lists with different people. Everything bought lands in one pantry, labeled by list.",
+      "you": "You",
+      "youAnd": "You, {{names}}",
+      "friends_one": "You + {{count}} friend",
+      "friends_other": "You + {{count}} friends",
+      "toBuy": "{{count}} to buy",
+      "private": "Private",
+      "items_one": "{{count}} item",
+      "items_other": "{{count}} items",
+      "manage": "Manage {{name}}",
+      "new": "New shared list"
+    },
+    "display": {
+      "title": "Display & accessibility",
+      "textSize": "Text size",
+      "textSizeHint": "Applies to every page and the app",
+      "contrast": "High contrast",
+      "contrastHint": "Darker text and stronger borders",
+      "motion": "Reduce motion",
+      "motionHint": "Turns off animations and the scan sweep",
+      "language": "Language",
+      "languageHint": "Hindi is coming soon",
+      "english": "English"
+    },
+    "privacy": {
+      "title": "Privacy & account",
+      "photos": "Receipt photos stay on your device",
+      "photosHint": "Only the item names are saved. Photos are deleted after scanning.",
+      "receipts_one": "{{count}} receipt · review or delete any of them",
+      "receipts_other": "{{count}} receipts · review or delete any of them",
+      "download": "Download my data",
+      "downloadHint": "Pantry, lists, receipts and saved recipes as a file",
+      "downloading": "Preparing your file…",
+      "downloadFailed": "We couldn’t prepare your file. Check your connection and try again.",
+      "offline": "Needs a connection.",
+      "delete": "Delete account",
+      "deleteHint": "Removes your account and everything in it"
+    },
+    "delete": {
+      "title": "Delete your account?",
+      "body": "This removes your account, your pantry, your saved recipes and your chats. It can’t be undone.",
+      "shared": "These shared lists will be deleted for everyone on them: {{lists}}.",
+      "confirm": "Delete account",
+      "cancel": "Keep my account",
+      "failed": "We couldn’t delete your account. Check your connection and try again."
     }
   },
   "pantry": {

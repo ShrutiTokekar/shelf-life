@@ -430,3 +430,9 @@ export const SwapIcon = (p: IconProps) => (
     <path d="M4 8h14l-3-3M20 16H6l3 3" />
   </Icon>
 );
+
+export const DownloadIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+  </Icon>
+);

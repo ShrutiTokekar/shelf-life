@@ -274,3 +274,36 @@ export async function fetchChatThread(threadId: string): Promise<ChatMessage[]> 
   const body = await request<{ messages: unknown[] }>(`/ai/chat/${encodeURIComponent(threadId)}`);
   return body.messages.map((m) => chatMessageSchema.parse(m));
 }
+
+// ---- Profile and account (PRO-1, PRO-6) ----
+
+export function updateProfile(displayName: string): Promise<void> {
+  return request<void>('/me/profile', { method: 'PATCH', body: JSON.stringify({ displayName }) });
+}
+
+export function deleteAccount(): Promise<void> {
+  return request<void>('/me', { method: 'DELETE' });
+}
+
+/** PRO-6: the export as a file the browser downloads. */
+export async function downloadMyData(): Promise<void> {
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/me/export`, { credentials: 'include' });
+  } catch {
+    throw new NetworkError('Network request failed');
+  }
+  if (!res.ok) throw new ApiRequestError(res.status, 'unknown', res.statusText);
+  const blob = await res.blob();
+  const name =
+    /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ??
+    'shelf-life-export.json';
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

@@ -2,7 +2,7 @@ import { CUISINES, DIETS, type Diet } from '@shelf-life/shared';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chip } from '../../components/Chip/Chip';
-import { CheckIcon } from '../../components/icons';
+import { CheckIcon, PotIcon } from '../../components/icons';
 import { Select } from '../../components/Select/Select';
 import { cuisineName } from './text';
 import { useRecipePrefs } from './useRecipes';
@@ -32,9 +32,13 @@ export function RecipePrefsCard() {
   return (
     <section
       aria-labelledby="ai-prefs-heading"
-      className="flex flex-col gap-5 rounded-card bg-white p-6 bordered"
+      className="flex flex-col gap-5 rounded-hero bg-white p-5 bordered lg:p-6"
     >
-      <h2 id="ai-prefs-heading" className="text-2xl">
+      <h2
+        id="ai-prefs-heading"
+        className="flex items-center gap-2.5 text-[1.375rem] lg:text-[1.625rem]"
+      >
+        <PotIcon size={22} className="text-navy" />
         {t('profile.ai.title')}
       </h2>
       <div className="grid gap-4 sm:grid-cols-2">

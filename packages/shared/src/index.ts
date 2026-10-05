@@ -32,3 +32,4 @@ export * from './recipes/types';
 export * from './recipes/prefs';
 export * from './pantry/cooked';
 export * from './recipes/scale';
+export * from './pantry/stats';

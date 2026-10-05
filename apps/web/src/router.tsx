@@ -182,7 +182,13 @@ export const routes: RouteObject[] = [
         } satisfies RouteHandle,
       },
       placeholder('reminders', 'pages.reminders'),
-      { path: 'profile', element: <ProfilePage /> },
+      {
+        path: 'profile',
+        element: <ProfilePage />,
+        handle: {
+          skipLink: { targetId: 'settings', textKey: 'profile.skip' },
+        } satisfies RouteHandle,
+      },
       {
         // One page for the list and a receipt: mobile shows one at a time, desktop both (web 16).
         path: 'profile/receipts/:id?',
