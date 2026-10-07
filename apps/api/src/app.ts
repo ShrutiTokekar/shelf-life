@@ -7,7 +7,7 @@ import type { Env } from './env';
 import { sameOriginOnly } from './middleware/csrf';
 import { apiError, onError } from './middleware/errors';
 import { rateLimitPerUser } from './middleware/rateLimit';
-import { requireSession } from './middleware/requireSession';
+import { authIdleCheck, requireSession } from './middleware/requireSession';
 import { providerFromEnv } from './ai';
 import { aiService } from './ai/service';
 import type { AiProvider } from './ai/provider';
@@ -19,6 +19,7 @@ import { meRoutes } from './routes/me';
 import { pushService, type PushSender } from './push/service';
 import { pushRoutes } from './routes/push';
 import { recipeRoutes } from './routes/recipes';
+import { sessionRoutes } from './routes/session';
 import { syncTokenRoutes } from './routes/syncToken';
 import type { AppEnv } from './types';
 
@@ -38,10 +39,18 @@ export type AppDeps = {
 export function createApp({ env, db, auth, extraRoutes, ai, pushSend, now }: AppDeps) {
   const app = new Hono<AppEnv>();
 
-  app.use('*', secureHeaders({ strictTransportSecurity: 'max-age=31536000; includeSubDomains' }));
+  app.use(
+    '*',
+    secureHeaders({
+      strictTransportSecurity: 'max-age=31536000; includeSubDomains',
+      // SEC-1: the API only returns JSON; nothing it sends may run or be framed.
+      contentSecurityPolicy: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] },
+    }),
+  );
   app.use('*', async (c, next) => {
     c.set('db', db);
     c.set('auth', auth);
+    c.set('now', now ?? (() => new Date()));
     await next();
   });
   // SEC-2: reject cross-site mutating requests by checking Origin.
@@ -53,6 +62,7 @@ export function createApp({ env, db, auth, extraRoutes, ai, pushSend, now }: App
   // SRS 8.8: the hourly reminders job (GitHub Actions, bearer secret; not a browser route).
   app.route('/jobs', jobRoutes({ secret: env.CRON_SECRET, push, now }));
 
+  app.use('/api/v1/auth/*', authIdleCheck);
   app.on(['GET', 'POST'], '/api/v1/auth/*', (c) => auth.handler(c.req.raw));
 
   if (extraRoutes) app.route('/api/v1', extraRoutes);
@@ -60,6 +70,7 @@ export function createApp({ env, db, auth, extraRoutes, ai, pushSend, now }: App
   const api = new Hono<AppEnv>();
   api.use('*', requireSession, rateLimitPerUser());
   api.route('/me', meRoutes);
+  api.route('/session', sessionRoutes);
   api.route('/lists', listRoutes(env.APP_URL));
   api.route('/invites', inviteRoutes());
   api.route('/recipes', recipeRoutes);

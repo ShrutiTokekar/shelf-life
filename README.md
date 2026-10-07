@@ -230,6 +230,14 @@ It checks the page, its security headers and policy, the `/api` proxy and the se
 
 The automated two-device test runs in CI against the same API and sync code on every PR. It can't run against production, because signing in there needs real Google accounts and the test-only login never exists in production.
 
+## Security and privacy
+
+- Everything except sign-in needs a signed-in session, and every pantry and list request checks that you're a member (`apps/api/test/security.test.ts` fails if any route is left open).
+- Sessions time out: in a browser after 5 hours without use, in the installed app (added to the Home Screen) 30 days after sign-in. Profile → **Sign out on all devices** ends every session. Deleting the account asks you to sign in again if your last sign-in was over 15 minutes ago.
+- When a session ends, the app removes this account's data from the device (pantry, lists, receipts, saved recipes).
+- Receipt photos never leave the device; other members see your name, never your email; AI requests carry no personal details; logs never include what you typed.
+- Keys and secrets live only in the hosts' environment variables (Render, Vercel), never in the app or the repo.
+
 ## Commands
 
 | Command                                               | What it does                                                                               |

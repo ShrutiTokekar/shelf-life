@@ -9,7 +9,8 @@ import { SkipLink } from '../../components/SkipLink/SkipLink';
 import { LogoStacked } from '../../components/Wordmark/Wordmark';
 import { startGoogleSignIn } from '../../lib/api';
 import { pendingInvite } from '../../lib/pendingInvite';
-import { useSession } from '../../lib/session';
+import { markActive } from '../../lib/sessionTimeout';
+import { forgetExpired, useSession } from '../../lib/session';
 import { useOnlineStatus } from '../../lib/useOnlineStatus';
 
 /** Welcome and sign in (SRS 6.1, Figma mobile 01). */
@@ -27,6 +28,9 @@ export function WelcomePage() {
   async function signIn() {
     setFailed(false);
     setStarting(true);
+    // SEC-9: a fresh sign-in starts the 5-hour idle clock again.
+    markActive();
+    forgetExpired();
     try {
       await startGoogleSignIn();
     } catch {
@@ -58,6 +62,12 @@ export function WelcomePage() {
           tabIndex={-1}
           className="flex w-full flex-col items-center gap-3 outline-none"
         >
+          {session.status === 'signedOut' && session.reason === 'expired' && !failed ? (
+            <p role="status" className="flex items-center gap-2 text-sm text-ink">
+              <LockIcon size={18} />
+              {t('welcome.expired')}
+            </p>
+          ) : null}
           {failed ? <ErrorState message={t('welcome.signInFailed')} /> : null}
           {!online ? (
             <p className="flex items-center gap-2 text-sm text-ink">

@@ -63,7 +63,8 @@
     "invitePending": "Sign in to join the list you were invited to.",
     "privacy": "Receipts are read on your phone, never uploaded.",
     "signInFailed": "Google sign-in didn’t finish. Please try again.",
-    "offline": "You’re offline. Signing in needs a connection."
+    "offline": "You’re offline. Signing in needs a connection.",
+    "expired": "You were signed out to keep your account safe. Sign in again to carry on."
   },
   "onboarding": {
     "title": "Name your home list",
@@ -249,6 +250,9 @@
     "signOut": "Sign out",
     "signOutFailed": "We couldn’t sign you out. Check your connection and try again.",
     "signOutOffline": "You’re offline. Signing out needs a connection.",
+    "signOutEverywhere": "Sign out on all devices",
+    "signOutEverywhereHint": "Ends every session, here and on your other phones and computers",
+    "signOutEverywhereFailed": "We couldn’t sign you out everywhere. Check your connection and try again.",
     "receiptHistory": "Receipt history",
     "receiptHistoryBody": "Every scanned receipt, as text",
     "ai": {
@@ -344,7 +348,9 @@
       "shared": "These shared lists will be deleted for everyone on them: {{lists}}.",
       "confirm": "Delete account",
       "cancel": "Keep my account",
-      "failed": "We couldn’t delete your account. Check your connection and try again."
+      "failed": "We couldn’t delete your account. Check your connection and try again.",
+      "reauth": "For your safety, sign in again, then delete your account.",
+      "reauthButton": "Sign in again"
     }
   },
   "pantry": {

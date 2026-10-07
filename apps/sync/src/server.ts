@@ -50,6 +50,11 @@ export type SyncServerOptions = {
   saveEveryMs?: number;
   /** How often waiting carts are checked for the 2-hour rule (LST-7). */
   cartCheckEveryMs?: number;
+  /**
+   * SEC-3 / SEC-9: how often open connections are checked again. Someone removed from the list,
+   * or signed out everywhere, is disconnected within this time.
+   */
+  recheckEveryMs?: number;
   /** SRS 11.2: 50 updates per second per connection. */
   maxMessagesPerSecond?: number;
   log?: (msg: string) => void;
@@ -320,6 +325,25 @@ export function createSyncServer(opts: SyncServerOptions) {
     for (const room of rooms.values()) if (room.name.startsWith('list:')) void moveCart(room);
   }, opts.cartCheckEveryMs ?? 60_000);
 
+  /** SEC-3 / SEC-9: a token is checked only on connect, so check open connections again. */
+  async function recheck() {
+    const at = new Date(now());
+    for (const room of rooms.values())
+      for (const conn of room.conns) {
+        try {
+          const [access, live] = await Promise.all([
+            opts.store.access(conn.userId, room.name),
+            opts.store.signedIn(conn.userId, at),
+          ]);
+          if (!access || !live) conn.ws.close(CLOSE.forbidden, 'access ended');
+          else if (access === 'read') conn.canWrite = false;
+        } catch (err) {
+          log(`recheck failed on ${room.name}: ${String(err)}`);
+        }
+      }
+  }
+  const recheckTimer = setInterval(() => void recheck(), opts.recheckEveryMs ?? 60_000);
+
   return {
     server,
     rooms,
@@ -342,6 +366,7 @@ export function createSyncServer(opts: SyncServerOptions) {
     async close() {
       clearInterval(saveTimer);
       clearInterval(cartTimer);
+      clearInterval(recheckTimer);
       for (const t of cartTimers.values()) clearTimeout(t);
       for (const client of wss.clients) client.terminate();
       await Promise.all([...rooms.values()].map(save));

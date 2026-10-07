@@ -1,4 +1,4 @@
-import type { Auth, SessionUser } from './auth';
+import type { Auth, SessionRecord, SessionUser } from './auth';
 import type { Db } from './db/client';
 
 export type AppEnv = {
@@ -6,5 +6,8 @@ export type AppEnv = {
     db: Db;
     auth: Auth;
     user: SessionUser;
+    session: SessionRecord;
+    /** The clock (swapped in tests). */
+    now: () => Date;
   };
 };

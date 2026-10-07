@@ -56,9 +56,49 @@ describe('ProfilePage', () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     renderApp('/profile', returningUserMe);
     expect(
-      await screen.findByText('You’re offline. Signing out needs a connection.'),
-    ).toBeInTheDocument();
+      await screen.findAllByText('You’re offline. Signing out needs a connection.'),
+    ).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Sign out on all devices/ })).toBeDisabled();
+  });
+
+  it('SEC-9 Sign out on all devices ends every session and wipes this device', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    const { router } = renderApp('/profile', returningUserMe);
+    await userEvent.click(await screen.findByRole('button', { name: /Sign out on all devices/ }));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/session/sign-out-everywhere',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await waitFor(() => expect(router.state.location.pathname).toBe('/welcome'));
+    expect(window.localStorage.getItem('shelf-life:me')).toBeNull();
+  });
+
+  it('SEC-9 PRO-6 Delete account after 15 minutes asks to sign in again first', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              code: 'reauth_required',
+              message: 'For your safety, sign in again to delete your account.',
+            },
+          }),
+          { status: 403 },
+        ),
+    );
+    const { router } = renderApp('/profile', returningUserMe);
+    await userEvent.click(await screen.findByRole('button', { name: /Delete account/ }));
+    const dialog = await screen.findByRole('alertdialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete account' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'For your safety, sign in again, then delete your account.',
+    );
+    expect(screen.getByRole('button', { name: 'Sign in again' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/profile');
+    expect(window.localStorage.getItem('shelf-life:me')).not.toBeNull();
   });
 
   it('is reachable from the mobile Today top bar', async () => {

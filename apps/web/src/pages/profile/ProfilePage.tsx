@@ -29,7 +29,15 @@ import { Switch } from '../../components/Switch/Switch';
 import { useToast } from '../../components/Toast/Toast';
 import { RecipePrefsCard } from '../../features/recipes/RecipePrefsCard';
 import { NotificationsCard } from '../../features/settings/NotificationsCard';
-import { deleteAccount, downloadMyData, signOut, updateProfile } from '../../lib/api';
+import {
+  ApiRequestError,
+  deleteAccount,
+  downloadMyData,
+  signOut,
+  signOutEverywhere,
+  startGoogleSignIn,
+  updateProfile,
+} from '../../lib/api';
 import { cx } from '../../lib/cx';
 import { usePeople } from '../../lib/people';
 import { useMe, useSession } from '../../lib/session';
@@ -420,8 +428,10 @@ function PrivacyCard() {
   const navigate = useNavigate();
   const online = useOnlineStatus();
   const { receipts } = useReceipts(me.pantry?.id ?? null);
-  const [busy, setBusy] = useState<'download' | 'signout' | 'delete' | null>(null);
+  const [busy, setBusy] = useState<'download' | 'signout' | 'everywhere' | 'delete' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // SEC-9: deleting needs a sign-in from the last 15 minutes.
+  const [reauth, setReauth] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   // Lists that go with the account and that other people use (named before deleting).
@@ -433,10 +443,12 @@ function PrivacyCard() {
 
   async function leave(action: () => Promise<void>, failure: string) {
     setError(null);
+    setReauth(false);
     try {
       await action();
-    } catch {
-      setError(failure);
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.code === 'reauth_required') setReauth(true);
+      else setError(failure);
       setBusy(null);
       return;
     }
@@ -500,6 +512,17 @@ function PrivacyCard() {
           }}
         />
         <RowButton
+          title={t('profile.signOutEverywhere')}
+          hint={online ? t('profile.signOutEverywhereHint') : t('profile.signOutOffline')}
+          icon={<LockIcon size={20} className="shrink-0 text-navy" />}
+          disabled={!online || busy !== null}
+          aria-busy={busy === 'everywhere'}
+          onClick={() => {
+            setBusy('everywhere');
+            void leave(signOutEverywhere, t('profile.signOutEverywhereFailed'));
+          }}
+        />
+        <RowButton
           title={t('profile.privacy.delete')}
           hint={t('profile.privacy.deleteHint')}
           danger
@@ -511,6 +534,22 @@ function PrivacyCard() {
       {error ? (
         <div className="mt-3">
           <ErrorState message={error} />
+        </div>
+      ) : null}
+      {reauth ? (
+        <div role="alert" className="mt-3 flex flex-col items-start gap-3">
+          <p className="text-ink">{t('profile.delete.reauth')}</p>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setReauth(false);
+              void startGoogleSignIn('/profile#privacy').catch(() =>
+                setError(t('welcome.signInFailed')),
+              );
+            }}
+          >
+            {t('profile.delete.reauthButton')}
+          </Button>
         </div>
       ) : null}
       <ConfirmDialog

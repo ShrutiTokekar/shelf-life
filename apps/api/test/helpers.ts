@@ -49,6 +49,12 @@ export async function setup(
     return { user, cookie: headers.get('cookie') ?? '' };
   }
 
+  /** Another session (another device) for a user who already signed in. */
+  async function newSession(userId: string) {
+    const ctx = await testAuth.$context;
+    return (await ctx.test.getAuthHeaders({ userId })).get('cookie') ?? '';
+  }
+
   function request(path: string, init: RequestInit & { cookie?: string } = {}) {
     const headers = new Headers(init.headers);
     if (init.cookie) headers.set('cookie', init.cookie);
@@ -57,5 +63,5 @@ export async function setup(
     return app.request(path, { ...init, headers });
   }
 
-  return { db, app, auth, signIn, request, close: () => client.close() };
+  return { db, app, auth, signIn, newSession, request, close: () => client.close() };
 }

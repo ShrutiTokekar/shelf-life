@@ -1,7 +1,9 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { seriousViolations } from '../../test/axe';
+import { sessionEvents } from '../../lib/api';
+import { returningUserMe } from '../../test/fixtures';
 import { renderApp } from '../../test/renderApp';
 
 afterEach(() => vi.restoreAllMocks());
@@ -93,5 +95,31 @@ describe('WelcomePage', () => {
     const { container } = renderApp('/welcome', 'signedOut');
     await screen.findByRole('button', { name: 'Continue with Google' });
     expect(await seriousViolations(container)).toEqual([]);
+  });
+
+  it('SEC-9 a session that ran out wipes this device and says why', async () => {
+    window.localStorage.setItem('shelf-life:me', JSON.stringify(returningUserMe));
+    window.localStorage.setItem('shelf-life:recipes', '{}');
+    renderApp('/welcome', 'signedOut');
+    expect(await screen.findByText(/You were signed out to keep your account safe/)).toBeVisible();
+    expect(window.localStorage.getItem('shelf-life:me')).toBeNull();
+    expect(window.localStorage.getItem('shelf-life:recipes')).toBeNull();
+  });
+
+  it('SEC-9 a first visit doesn’t say "signed out"', async () => {
+    renderApp('/welcome', 'signedOut');
+    await screen.findByRole('button', { name: 'Continue with Google' });
+    expect(screen.queryByText(/You were signed out/)).toBeNull();
+  });
+
+  it('SEC-9 when the server ends the session mid-use, the app signs out and says why', async () => {
+    const { router } = renderApp('/profile', returningUserMe);
+    await screen.findByRole('heading', { level: 1, name: 'Profile' });
+    act(() => {
+      sessionEvents.dispatchEvent(new Event('unauthorized'));
+    });
+    expect(await screen.findByText(/You were signed out to keep your account safe/)).toBeVisible();
+    expect(router.state.location.pathname).toBe('/welcome');
+    expect(window.localStorage.getItem('shelf-life:me')).toBeNull();
   });
 });
