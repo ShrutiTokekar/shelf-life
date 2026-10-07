@@ -69,8 +69,15 @@ export function pushService(deps: {
       };
   }
 
-  /** Send one notification to one person, if the rules allow. */
-  async function notify(userId: string, key: string, payload: PushPayload): Promise<PushOutcome> {
+  /**
+   * Send one notification to one person, if the rules allow. `key` may be several keys (one push
+   * about several things): all are recorded, and it's a repeat only if every one was sent before.
+   */
+  async function notify(
+    userId: string,
+    key: string | readonly string[],
+    payload: PushPayload,
+  ): Promise<PushOutcome> {
     if (!enabled) return 'off';
     const t = now();
     const { timeZone } = (await settingsOf([userId]))(userId);
@@ -90,9 +97,11 @@ export function pushService(deps: {
         ),
       )) as [{ n: number }];
     if (n >= MAX_PUSHES_PER_DAY) return 'limit';
+    const keys = typeof key === 'string' ? [key] : [...key];
+    if (keys.length === 0) return 'repeat';
     const claimed = await db
       .insert(schema.pushSent)
-      .values({ userId, key, sentAt: t })
+      .values(keys.map((k) => ({ userId, key: k, sentAt: t })))
       .onConflictDoNothing()
       .returning();
     if (claimed.length === 0) return 'repeat';
@@ -115,11 +124,22 @@ export function pushService(deps: {
     return 'sent';
   }
 
+  /** Which of these keys this person has already been sent. */
+  async function sentKeys(userId: string, keys: readonly string[]): Promise<Set<string>> {
+    if (keys.length === 0) return new Set();
+    const rows = await db
+      .select({ key: schema.pushSent.key })
+      .from(schema.pushSent)
+      .where(and(eq(schema.pushSent.userId, userId), inArray(schema.pushSent.key, [...keys])));
+    return new Set(rows.map((r) => r.key));
+  }
+
   return {
     enabled,
     publicKey: enabled ? env.VAPID_PUBLIC_KEY! : null,
     settingsOf,
     notify,
+    sentKeys,
 
     /** POST /push/subscriptions: this device, for this person (a device moves with sign-in). */
     async subscribe(userId: string, sub: PushSubscriptionInput, userAgent: string | null) {

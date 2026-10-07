@@ -35,3 +35,4 @@ export * from './recipes/scale';
 export * from './pantry/stats';
 export * from './pantry/reminders';
 export * from './notifications';
+export * from './reminderPushes';
