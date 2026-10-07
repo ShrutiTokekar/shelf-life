@@ -5,9 +5,9 @@ import {
   type Reminder,
   type ReminderState,
 } from '@shelf-life/shared';
-import { useId } from 'react';
+import { useEffect, useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../../components/Button/Button';
 import { ClaimPill } from '../../components/ClaimPill/ClaimPill';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
@@ -16,6 +16,7 @@ import { ChevronLeftIcon, EmptyJarIcon, JarIcon } from '../../components/icons';
 import { PageSkeleton } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/Toast';
 import { useReminders } from '../../features/reminders/useReminders';
+import { NotificationsCard } from '../../features/settings/NotificationsCard';
 import { cx } from '../../lib/cx';
 import { usePeople } from '../../lib/people';
 import { useMe } from '../../lib/session';
@@ -25,7 +26,8 @@ import { usePantryActions } from '../pantry/usePantryActions';
  * Reminders (SRS 6.10, Figma mobile 11): what ran out (Add to list / Later / Not needed) and what
  * is running low (Add to list / Snooze); things already on a list show who's getting them
  * (RMD-3). Unread ones have a terra dot; Mark all read clears them (RMD-2). Built from this
- * device's pantry copy, so it works offline. Push notifications and their settings come in 8c.
+ * device's pantry copy, so it works offline. Quick notification settings at the bottom (RMD-1);
+ * a notification's "Add to list" opens this page with ?add=<item> and adds it (RMD-4).
  */
 export function RemindersPage() {
   const { t } = useTranslation();
@@ -94,6 +96,14 @@ export function RemindersPage() {
         ) : null}
       </div>
 
+      {/* RMD-4: a notification's "Add to list" lands here with ?add=<item>. */}
+      <AddFromNotification
+        reminders={all}
+        onAdd={(rem) => {
+          r.update((s) => markRead(s, [rem.key]));
+          void actions.addToList(rem.item);
+        }}
+      />
       {r.status === 'error' ? (
         <ErrorState message={t('reminders.error')} onRetry={r.retry} />
       ) : all.length === 0 ? (
@@ -160,8 +170,29 @@ export function RemindersPage() {
           )}
         </div>
       )}
+      {/* RMD-1 quick settings. */}
+      <NotificationsCard compact />
     </div>
   );
+}
+
+function AddFromNotification({
+  reminders,
+  onAdd,
+}: {
+  reminders: readonly Reminder[];
+  onAdd: (r: Reminder) => void;
+}) {
+  const [params, setParams] = useSearchParams();
+  const id = params.get('add');
+  useEffect(() => {
+    if (!id) return;
+    const rem = reminders.find((x) => x.item.id === id);
+    if (!rem) return;
+    if (!rem.listItem) onAdd(rem);
+    setParams({}, { replace: true });
+  }, [id, reminders, onAdd, setParams]);
+  return null;
 }
 
 function ReminderCard({

@@ -3,6 +3,7 @@ import { usePlace } from '../stores/place';
 import { useRecipeStore } from '../stores/recipes';
 import { useReviewDraft } from '../stores/reviewDraft';
 import { useTimers } from '../stores/timers';
+import { disablePush } from './push';
 import { safeStorage } from './storage';
 import { closeAllDocs } from './sync/docs';
 
@@ -12,6 +13,8 @@ import { closeAllDocs } from './sync/docs';
  * Display settings stay (they belong to the device, not the account).
  */
 export async function wipeDeviceData(): Promise<void> {
+  // A shared phone must stop getting this person's notifications (SRS 8.8).
+  await disablePush().catch(() => undefined);
   closeAllDocs();
   useRecipeStore.getState().clear();
   useCookSession.setState(useCookSession.getInitialState());

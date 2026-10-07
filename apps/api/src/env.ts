@@ -40,6 +40,16 @@ const envSchema = z.object({
    */
   AI_GLOBAL_DAILY_LIMIT: z.coerce.number().int().min(0).default(500),
   AI_PER_MINUTE_LIMIT: z.coerce.number().int().min(1).default(10),
+  /**
+   * Web Push (SRS 8.8): VAPID keys from `npx web-push generate-vapid-keys`. Without them push is
+   * off and reminders stay in the app (SRS 12.3 graceful degradation).
+   */
+  VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  /** Contact for push services: a mailto: or https: URL. Defaults to APP_URL. */
+  VAPID_SUBJECT: z.string().min(1).optional(),
+  /** Bearer secret the hourly reminders job (GitHub Actions) sends (Milestone 8d). */
+  CRON_SECRET: z.string().min(32, 'CRON_SECRET must be at least 32 characters').optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

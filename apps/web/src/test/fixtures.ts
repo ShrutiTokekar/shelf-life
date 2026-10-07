@@ -1,4 +1,4 @@
-import { DEFAULT_RECIPE_PREFS } from '@shelf-life/shared';
+import { DEFAULT_NOTIFICATION_SETTINGS, DEFAULT_RECIPE_PREFS } from '@shelf-life/shared';
 import type { MeResponse } from '@shelf-life/shared';
 
 export const newUserMe: MeResponse = {
@@ -18,6 +18,7 @@ export const newUserMe: MeResponse = {
     reduceMotion: false,
     language: 'en',
     ...DEFAULT_RECIPE_PREFS,
+    ...DEFAULT_NOTIFICATION_SETTINGS,
   },
 };
 

@@ -61,3 +61,26 @@ test.describe('Profile (SRS 6.11)', () => {
     await expectNoHorizontalScroll(page);
   });
 });
+
+test('PRO-5 notification settings save to the account; without push keys the device switch explains', async ({
+  page,
+}) => {
+  await openSeededPantry(page);
+  await page.goto('/profile');
+  const card = page.getByRole('region', { name: 'Notifications' });
+  await card.getByRole('switch', { name: 'Weekly shopping reminder' }).click();
+  await expect
+    .poll(async () => {
+      const res = await page.request.get('/api/v1/me');
+      return ((await res.json()) as { settings: { weeklyReminder: boolean; timeZone: string } })
+        .settings;
+    })
+    .toMatchObject({ weeklyReminder: true, timeZone: expect.any(String) });
+  await expectNoSeriousA11yViolations(page);
+  // The E2E API has no VAPID keys: turning push on explains instead of failing silently.
+  const device = card.getByRole('switch', { name: 'Notifications on this device' });
+  if (await device.isEnabled()) {
+    await device.click();
+    await expect(device).toHaveAttribute('aria-checked', 'false');
+  }
+});

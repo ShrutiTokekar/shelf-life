@@ -28,6 +28,7 @@ import { SegmentedControl } from '../../components/SegmentedControl/SegmentedCon
 import { Switch } from '../../components/Switch/Switch';
 import { useToast } from '../../components/Toast/Toast';
 import { RecipePrefsCard } from '../../features/recipes/RecipePrefsCard';
+import { NotificationsCard } from '../../features/settings/NotificationsCard';
 import { deleteAccount, downloadMyData, signOut, updateProfile } from '../../lib/api';
 import { cx } from '../../lib/cx';
 import { usePeople } from '../../lib/people';
@@ -69,9 +70,8 @@ function Card({
 
 /**
  * Profile (SRS 6.11, Figma mobile 12, web 15): who you are and your impact, Lists & people, what
- * the AI should know, display and accessibility, privacy and account. Notification settings
- * (PRO-5) join with Web Push in Milestone 8c. Everything but sign-out, download and delete works
- * offline.
+ * the AI should know, display and accessibility, notifications (PRO-5), privacy and account.
+ * Everything but notifications, sign-out, download and delete works offline.
  */
 export function ProfilePage() {
   const { t } = useTranslation();
@@ -90,6 +90,7 @@ export function ProfilePage() {
         </div>
         <div className="flex flex-col gap-6">
           <DisplayCard />
+          <NotificationsCard />
           <PrivacyCard />
         </div>
       </div>

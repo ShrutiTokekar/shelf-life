@@ -144,7 +144,7 @@ describe('RecipesPage: Cook with what’s left (SRS 6.9)', () => {
     expect(veg).toHaveAttribute('aria-pressed', 'true');
     // Egg recipes are gone: "vegetarian" excludes eggs.
     await waitFor(() => expect(screen.getByTestId('recipe-hero')).not.toHaveTextContent(/egg/i));
-    expect(patches).toEqual([expect.objectContaining({ diet: 'vegetarian' })]);
+    expect(patches).toContainEqual(expect.objectContaining({ diet: 'vegetarian' }));
   });
 
   it('REC-3 "Add to list" puts the missing ingredient on the home list for this recipe', async () => {

@@ -15,6 +15,8 @@ import { aiRoutes } from './routes/ai';
 import { inviteRoutes } from './routes/invites';
 import { listRoutes } from './routes/lists';
 import { meRoutes } from './routes/me';
+import { pushService, type PushSender } from './push/service';
+import { pushRoutes } from './routes/push';
 import { recipeRoutes } from './routes/recipes';
 import { syncTokenRoutes } from './routes/syncToken';
 import type { AppEnv } from './types';
@@ -27,9 +29,12 @@ export type AppDeps = {
   extraRoutes?: Hono<AppEnv>;
   /** Override the AI provider (tests). Default: from the environment; null turns AI off. */
   ai?: AiProvider | null;
+  /** Override how pushes are sent, and the clock (tests). */
+  pushSend?: PushSender;
+  now?: () => Date;
 };
 
-export function createApp({ env, db, auth, extraRoutes, ai }: AppDeps) {
+export function createApp({ env, db, auth, extraRoutes, ai, pushSend, now }: AppDeps) {
   const app = new Hono<AppEnv>();
 
   app.use('*', secureHeaders({ strictTransportSecurity: 'max-age=31536000; includeSubDomains' }));
@@ -66,6 +71,7 @@ export function createApp({ env, db, auth, extraRoutes, ai }: AppDeps) {
     ),
   );
   api.route('/sync-token', syncTokenRoutes(env.SYNC_JWT_SECRET, env.SYNC_URL));
+  api.route('/push', pushRoutes(pushService({ db, env, send: pushSend, now })));
   app.route('/api/v1', api);
 
   app.notFound((c) => apiError(c, 404, ERROR_CODES.notFound, 'Not found.'));
