@@ -36,6 +36,10 @@ export function onError(err: Error, c: Context) {
       err.message || 'Request rejected.',
     );
   }
-  console.error(err);
+  // Log what's needed to fix it, never the user's data: no request body, and only the error's
+  // message and stack (a database error's `detail` can hold the values that were written).
+  console.error(
+    `[api] ${c.req.method} ${c.req.routePath}: ${err.name}: ${err.message}\n${err.stack?.split('\n').slice(1).join('\n') ?? ''}`,
+  );
   return apiError(c, 500, ERROR_CODES.internal, 'Something went wrong on our side. Try again.');
 }

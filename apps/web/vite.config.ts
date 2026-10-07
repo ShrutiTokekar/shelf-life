@@ -29,6 +29,7 @@ function contentSecurityPolicy(): Plugin {
     `connect-src 'self'${sync}`,
     "manifest-src 'self'",
     "object-src 'none'",
+    "frame-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
   ].join('; ');

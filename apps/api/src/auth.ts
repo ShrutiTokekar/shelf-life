@@ -7,8 +7,12 @@ import type { Env } from './env';
 
 /**
  * Better Auth with Google sign-in only (SRS 2.5: no email/password in MVP).
- * Session cookie is HttpOnly, Secure, SameSite=Lax (SEC-2).
+ * Session cookie is HttpOnly, Secure, SameSite=Lax (SEC-2). Sessions end 30 days after sign-in,
+ * never extended; browsers also sign out after 5 hours without use (SEC-9, middleware/session.ts).
  */
+/** SEC-9: every session ends 30 days after sign-in. */
+export const SESSION_MAX_AGE_S = 30 * 24 * 3600;
+
 export function authOptions(env: Env, db: Db) {
   return {
     appName: 'Shelf Life',
@@ -33,6 +37,25 @@ export function authOptions(env: Env, db: Db) {
       },
     },
     emailAndPassword: { enabled: false },
+    session: {
+      expiresIn: SESSION_MAX_AGE_S,
+      // A fixed 30 days from sign-in: using the app doesn't push it back (SEC-9).
+      disableSessionRefresh: true,
+      additionalFields: {
+        client: { type: 'string' as const, required: false, input: false, defaultValue: 'browser' },
+        lastSeenAt: { type: 'date' as const, required: false, input: false },
+      },
+    },
+    // Per-IP limits on sign-in and the other auth endpoints (SEC-9; SRS 11.3).
+    rateLimit: {
+      enabled: env.NODE_ENV === 'production',
+      window: 60,
+      max: 60,
+      customRules: {
+        '/sign-in/*': { window: 60, max: 10 },
+        '/callback/*': { window: 60, max: 10 },
+      },
+    },
     advanced: {
       cookiePrefix: 'shelf-life',
       useSecureCookies: true,
@@ -48,3 +71,4 @@ export function createAuth(env: Env, db: Db) {
 
 export type Auth = ReturnType<typeof createAuth>;
 export type SessionUser = Auth['$Infer']['Session']['user'];
+export type SessionRecord = Auth['$Infer']['Session']['session'];

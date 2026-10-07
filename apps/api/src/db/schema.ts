@@ -57,6 +57,12 @@ export const session = pgTable(
       .references(() => user.id, { onDelete: 'cascade' }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
+    /** SEC-9: "browser" signs out after 5 h without use; "app" (installed PWA) lasts 30 days. */
+    client: text('client', { enum: ['browser', 'app'] })
+      .notNull()
+      .default('browser'),
+    /** Last API request on this session (updated at most every 5 minutes). */
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('session_user_id_idx').on(t.userId)],
 );

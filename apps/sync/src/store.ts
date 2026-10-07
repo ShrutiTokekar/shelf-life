@@ -1,11 +1,13 @@
 import { docAccess, schema, type Db, type DocAccess } from '@shelf-life/api/sync';
-import { eq } from 'drizzle-orm';
+import { and, eq, gt } from 'drizzle-orm';
 
 /** Everything the sync server needs from Postgres (SRS 8.7). An interface so tests can fake it. */
 export type Store = {
   load(name: string): Promise<Uint8Array | null>;
   save(name: string, state: Uint8Array, hasCart: boolean): Promise<void>;
   access(userId: string, name: string): Promise<DocAccess | null>;
+  /** SEC-9: does this person still have a session that hasn't run out (on any device)? */
+  signedIn(userId: string, at: Date): Promise<boolean>;
   /** The pantry a list stocks (SRS 8.9), or null if the list is gone. */
   pantryOf(listId: string): Promise<string | null>;
   /** Lists with items waiting to move into a pantry, to reload after a restart. */
@@ -44,6 +46,14 @@ export function dbStore(db: Db): Store {
         });
     },
     access: (userId, name) => docAccess(db, userId, name),
+    async signedIn(userId, at) {
+      const [row] = await db
+        .select({ id: schema.session.id })
+        .from(schema.session)
+        .where(and(eq(schema.session.userId, userId), gt(schema.session.expiresAt, at)))
+        .limit(1);
+      return !!row;
+    },
     async pantryOf(listId) {
       const [row] = await db
         .select({ pantryId: schema.list.pantryId })

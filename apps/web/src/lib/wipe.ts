@@ -26,8 +26,10 @@ export async function wipeDeviceData(): Promise<void> {
     'shelf-life:place',
     'shelf-life:recipes',
     'shelf-life:timers',
+    'shelf-life:last-active',
   ])
     safeStorage.remove(key);
+
   try {
     window.sessionStorage.removeItem('shelf-life:cook-session');
   } catch {

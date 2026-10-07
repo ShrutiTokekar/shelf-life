@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { ERROR_CODES, profilePatchSchema, settingsPatchSchema } from '@shelf-life/shared';
 import { apiError } from '../middleware/errors';
+import { REAUTH_WINDOW_MS } from '../middleware/requireSession';
 import { deleteAccount, exportData, updateProfile } from '../services/account';
 import { getMe, patchSettings } from '../services/me';
 import { listSaved, saveRecipe, unsaveRecipe } from '../services/recipes';
@@ -23,8 +24,16 @@ export const meRoutes = new Hono<AppEnv>()
     );
     return c.json(data);
   })
-  // PRO-6 Delete account.
+  // PRO-6 Delete account. SEC-9: only right after signing in (the last 15 minutes).
   .delete('/', async (c) => {
+    const signedInAt = new Date(c.var.session.createdAt).getTime();
+    if (c.var.now().getTime() - signedInAt > REAUTH_WINDOW_MS)
+      return apiError(
+        c,
+        403,
+        ERROR_CODES.reauthRequired,
+        'For your safety, sign in again to delete your account.',
+      );
     await deleteAccount(c.var.db, c.var.user.id);
     return c.body(null, 204);
   })

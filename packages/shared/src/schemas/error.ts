@@ -11,6 +11,10 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 
 export const ERROR_CODES = {
   unauthorized: 'unauthorized',
+  // SEC-9: the session ran out (5 h idle in a browser, 30 days at most); sign in again.
+  sessionExpired: 'session_expired',
+  // SEC-9: deleting the account needs a sign-in from the last 15 minutes.
+  reauthRequired: 'reauth_required',
   forbidden: 'forbidden',
   notFound: 'not_found',
   validation: 'validation_error',

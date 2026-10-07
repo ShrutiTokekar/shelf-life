@@ -24,14 +24,17 @@ const PANTRY = '0192f0c0-0000-7000-8000-00000000000b';
 /** In-memory stand-in for Postgres: saved docs plus who may open what. */
 function memoryStore(access: Record<string, Record<string, DocAccess>>) {
   const saved = new Map<string, { state: Uint8Array; hasCart: boolean }>();
+  /** People whose every session ended (SEC-9). */
+  const signedOut = new Set<string>();
   const store: Store = {
     load: async (name) => saved.get(name)?.state ?? null,
     save: async (name, state, hasCart) => void saved.set(name, { state, hasCart }),
     access: async (userId, name) => access[userId]?.[name] ?? null,
+    signedIn: async (userId) => !signedOut.has(userId),
     pantryOf: async (listId) => (listId === LIST ? PANTRY : null),
     pendingCarts: async () => [...saved].filter(([, v]) => v.hasCart).map(([k]) => k),
   };
-  return { store, saved };
+  return { store, saved, signedOut };
 }
 
 const ACCESS = {
@@ -49,8 +52,14 @@ afterEach(async () => {
   servers = [];
 });
 
-async function start(store: Store, now?: () => number) {
-  const sync = createSyncServer({ store, secret: SECRET, now, saveEveryMs: 60_000 });
+async function start(store: Store, now?: () => number, recheckEveryMs?: number) {
+  const sync = createSyncServer({
+    store,
+    secret: SECRET,
+    now,
+    saveEveryMs: 60_000,
+    recheckEveryMs,
+  });
   servers.push(sync);
   await new Promise<void>((r) => sync.server.listen(0, r));
   return { sync, port: (sync.server.address() as AddressInfo).port };
@@ -169,6 +178,24 @@ describe('sync service (SRS 11.2)', () => {
       Date.now() - 10 * 60_000,
     );
     expect(await closeCode(`list:${LIST}`, expired.token)).toBe(CLOSE.badToken);
+  });
+
+  it('SEC-3 SEC-9 open connections end when someone is removed or signs out everywhere', async () => {
+    const access: Record<string, Record<string, DocAccess>> = structuredClone(ACCESS);
+    const mem = memoryStore(access);
+    const { port } = await start(mem.store, undefined, 50);
+    const closed = (p: WebsocketProvider) =>
+      new Promise<number>((resolve) =>
+        p.on('connection-close', (e: CloseEvent | null) => resolve(e?.code ?? 0)),
+      );
+    const friend = await connect(port, 'friend', `list:${LIST}`);
+    const owner = await connect(port, 'owner', `list:${LIST}`);
+    const friendClosed = closed(friend.provider);
+    delete access.friend![`list:${LIST}`];
+    expect(await friendClosed).toBe(CLOSE.forbidden);
+    const ownerClosed = closed(owner.provider);
+    mem.signedOut.add('owner');
+    expect(await ownerClosed).toBe(CLOSE.forbidden);
   });
 
   it('SRS 8.7 saves the doc when the last person leaves and serves it after a restart', async () => {

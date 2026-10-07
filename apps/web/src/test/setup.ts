@@ -31,6 +31,7 @@ afterEach(() => {
   globalThis.indexedDB = new IDBFactory();
   try {
     window.localStorage.clear();
+    window.sessionStorage.clear();
   } catch {
     // ignore
   }

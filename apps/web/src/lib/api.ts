@@ -55,6 +55,12 @@ export class ApiRequestError extends Error {
 /** Thrown when the request never reached the server (offline, DNS, CORS…). */
 export class NetworkError extends Error {}
 
+/**
+ * SEC-9: any request the server refuses for lack of a session (it ran out, or this person
+ * signed out everywhere). The session provider listens and signs out this device.
+ */
+export const sessionEvents = new EventTarget();
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let res: Response;
   try {
@@ -70,6 +76,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const parsed = apiErrorSchema.safeParse(body);
+    if (res.status === 401) sessionEvents.dispatchEvent(new Event('unauthorized'));
     throw new ApiRequestError(
       res.status,
       parsed.success ? parsed.data.error.code : 'unknown',
@@ -91,13 +98,13 @@ export function createList(input: CreateListInput): Promise<ListWithRole> {
  * WEL-2: start Google OAuth. Better Auth returns the Google URL; we navigate to it.
  * After Google, the user lands on `/`, and the auth guard sends new users to home list setup.
  */
-export async function startGoogleSignIn(): Promise<void> {
+export async function startGoogleSignIn(returnTo = '/'): Promise<void> {
   const origin = window.location.origin;
   const { url } = await request<{ url: string }>('/auth/sign-in/social', {
     method: 'POST',
     body: JSON.stringify({
       provider: 'google',
-      callbackURL: `${origin}/`,
+      callbackURL: `${origin}${returnTo}`,
       errorCallbackURL: `${origin}/welcome?error=signin`,
     }),
   });
@@ -106,6 +113,16 @@ export async function startGoogleSignIn(): Promise<void> {
 
 export function signOut(): Promise<void> {
   return request<void>('/auth/sign-out', { method: 'POST', body: '{}' });
+}
+
+/** SEC-9: ends every session of this person, on every device. */
+export function signOutEverywhere(): Promise<void> {
+  return request<void>('/session/sign-out-everywhere', { method: 'POST', body: '{}' });
+}
+
+/** SEC-9: the installed app keeps its session for 30 days (asked right after sign-in). */
+export function claimAppSession(): Promise<{ client: 'app' | 'browser' }> {
+  return request('/session/client', { method: 'POST', body: JSON.stringify({ client: 'app' }) });
 }
 
 // ---- Lists and sharing (SRS 11.1, 6.13) ----
