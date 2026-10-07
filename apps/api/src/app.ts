@@ -7,7 +7,9 @@ import type { Env } from './env';
 import { sameOriginOnly } from './middleware/csrf';
 import { apiError, onError } from './middleware/errors';
 import { rateLimitPerUser } from './middleware/rateLimit';
+import { authGuards } from './middleware/authGuards';
 import { authIdleCheck, requireSession } from './middleware/requireSession';
+import { hibpCheck, offlinePwnedCheck, type PwnedCheck } from './email/pwned';
 import { providerFromEnv } from './ai';
 import { aiService } from './ai/service';
 import type { AiProvider } from './ai/provider';
@@ -34,9 +36,11 @@ export type AppDeps = {
   /** Override how pushes are sent, and the clock (tests). */
   pushSend?: PushSender;
   now?: () => Date;
+  /** Override the breached-password check (tests). Default: Have I Been Pwned, offline in tests. */
+  pwned?: PwnedCheck;
 };
 
-export function createApp({ env, db, auth, extraRoutes, ai, pushSend, now }: AppDeps) {
+export function createApp({ env, db, auth, extraRoutes, ai, pushSend, now, pwned }: AppDeps) {
   const app = new Hono<AppEnv>();
 
   app.use(
@@ -62,7 +66,15 @@ export function createApp({ env, db, auth, extraRoutes, ai, pushSend, now }: App
   // SRS 8.8: the hourly reminders job (GitHub Actions, bearer secret; not a browser route).
   app.route('/jobs', jobRoutes({ secret: env.CRON_SECRET, push, now }));
 
+  // Milestone 9b: is email sign-in available? (Welcome asks before anyone is signed in.)
+  const emailSignIn = auth.options.emailAndPassword?.enabled === true;
+  app.get('/api/v1/config', (c) => c.json({ emailSignIn }));
+
   app.use('/api/v1/auth/*', authIdleCheck);
+  app.use(
+    '/api/v1/auth/*',
+    authGuards({ pwned: pwned ?? (env.NODE_ENV === 'test' ? offlinePwnedCheck : hibpCheck()) }),
+  );
   app.on(['GET', 'POST'], '/api/v1/auth/*', (c) => auth.handler(c.req.raw));
 
   if (extraRoutes) app.route('/api/v1', extraRoutes);

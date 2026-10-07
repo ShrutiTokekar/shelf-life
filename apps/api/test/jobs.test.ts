@@ -163,6 +163,7 @@ describe('SRS 8.8 hourly reminders job (POST /jobs/reminders)', () => {
     expect(await json(await run(`Bearer ${SECRET}`))).toEqual({
       people: 2,
       sent: { expiry: 1, ranOut: 1, weekly: 1 },
+      unconfirmedDeleted: 0,
     });
     expect(sent.every((s) => s.endpoint === 'https://push.example.com/2')).toBe(true);
     expect(sent.map((s) => s.payload.title)).toEqual([
@@ -176,6 +177,7 @@ describe('SRS 8.8 hourly reminders job (POST /jobs/reminders)', () => {
     expect(await json(await run(`Bearer ${SECRET}`))).toEqual({
       people: 2,
       sent: { expiry: 0, ranOut: 0, weekly: 0 },
+      unconfirmedDeleted: 0,
     });
     expect(sent).toHaveLength(3);
   });
@@ -187,6 +189,7 @@ describe('SRS 8.8 hourly reminders job (POST /jobs/reminders)', () => {
     expect(await json(await run(`Bearer ${SECRET}`))).toEqual({
       people: 0,
       sent: { expiry: 0, ranOut: 0, weekly: 0 },
+      unconfirmedDeleted: 0,
     });
   });
 });

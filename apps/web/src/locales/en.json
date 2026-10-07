@@ -64,7 +64,10 @@
     "privacy": "Receipts are read on your phone, never uploaded.",
     "signInFailed": "Google sign-in didn’t finish. Please try again.",
     "offline": "You’re offline. Signing in needs a connection.",
-    "expired": "You were signed out to keep your account safe. Sign in again to carry on."
+    "expired": "You were signed out to keep your account safe. Sign in again to carry on.",
+    "signInWithEmail": "Sign in with email",
+    "createAccount": "New here? Create an account",
+    "notLinked": "This email has an account waiting to be confirmed. Open the link we emailed you, or sign in with email."
   },
   "onboarding": {
     "title": "Name your home list",
@@ -1189,5 +1192,70 @@
     "quiet": "Quiet hours: no notifications between 10 PM and 8 AM, and at most 3 a day.",
     "offline": "Changing notification settings needs a connection.",
     "failed": "We couldn’t save that. Check your connection and try again."
+  },
+  "auth": {
+    "skip": "Skip to the form",
+    "home": "Shelf Life home",
+    "email": "Email",
+    "password": "Password",
+    "newPassword": "New password",
+    "name": "Your name",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "errors": {
+      "email": "Enter an email address like name@example.com.",
+      "name": "Enter your name.",
+      "passwordMissing": "Enter your password.",
+      "passwordShort": "Use at least 12 characters.",
+      "breached": "That password has appeared in a data breach. Choose a different one.",
+      "invalid_credentials": "That email and password don’t match. Try again, or reset your password.",
+      "too_many": "Too many tries. Wait 15 minutes, or reset your password.",
+      "network": "You’re offline or the server can’t be reached. Check your connection and try again.",
+      "unknown": "Something went wrong. Please try again."
+    },
+    "signIn": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "unconfirmed": "Confirm your email first. We’ve sent a new link to {{email}}.",
+      "new": "New here?",
+      "create": "Create an account"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "intro": "Track what’s in your kitchen and share grocery lists. We’ll email you a link to confirm your address.",
+      "passwordHint": "At least 12 characters. A few words together is easy to remember.",
+      "privacy": "Your email is only used to sign in and for the reminders you choose. Others on your lists see your name, never your email.",
+      "submit": "Create account",
+      "have": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "checkEmail": {
+      "title": "Check your email",
+      "body": "We’ve sent a link to {{email}}. Open it to finish creating your account. It works for 24 hours.",
+      "spam": "Didn’t get it? Check your spam folder, or send it again.",
+      "resend": "Send the link again",
+      "resent": "Sent. Check your email.",
+      "toSignIn": "Back to sign in"
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "intro": "Enter the email you sign in with. We’ll send you a link to choose a new password.",
+      "submit": "Send reset link",
+      "sent": "If there’s an account for {{email}}, we’ve sent a link to reset its password. It works for 1 hour."
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "submit": "Save new password",
+      "doneTitle": "Password changed",
+      "done": "Sign in with your new password. You’ve been signed out on your other devices.",
+      "expiredTitle": "This link has expired",
+      "expired": "Reset links work once, for 1 hour. Ask for a new one.",
+      "again": "Send a new link"
+    },
+    "verified": {
+      "expiredTitle": "This link has expired",
+      "expired": "Confirmation links work once, for 24 hours. Sign in and we’ll send you a new one."
+    }
   }
 }

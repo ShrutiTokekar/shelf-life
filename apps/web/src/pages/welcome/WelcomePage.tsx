@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../../components/Button/Button';
@@ -8,6 +8,8 @@ import { OfflineBanner } from '../../components/OfflineBanner/OfflineBanner';
 import { SkipLink } from '../../components/SkipLink/SkipLink';
 import { LogoStacked } from '../../components/Wordmark/Wordmark';
 import { startGoogleSignIn } from '../../lib/api';
+import { fetchAuthConfig } from '../../lib/authApi';
+import { ButtonLink } from '../auth/AuthLayout';
 import { pendingInvite } from '../../lib/pendingInvite';
 import { markActive } from '../../lib/sessionTimeout';
 import { forgetExpired, useSession } from '../../lib/session';
@@ -20,7 +22,18 @@ export function WelcomePage() {
   const online = useOnlineStatus();
   const [params] = useSearchParams();
   const [starting, setStarting] = useState(false);
-  const [failed, setFailed] = useState(params.get('error') !== null);
+  const errorParam = params.get('error');
+  const [failed, setFailed] = useState(errorParam !== null);
+  // Google sign-in refused: this email has an email account that isn't confirmed yet.
+  const notLinked = errorParam === 'account_not_linked';
+  const [emailSignIn, setEmailSignIn] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void fetchAuthConfig().then((c) => live && setEmailSignIn(c.emailSignIn));
+    return () => {
+      live = false;
+    };
+  }, []);
   const hasInvite = pendingInvite.get() !== null;
 
   if (session.status === 'ready') return <Navigate to="/" replace />;
@@ -68,7 +81,9 @@ export function WelcomePage() {
               {t('welcome.expired')}
             </p>
           ) : null}
-          {failed ? <ErrorState message={t('welcome.signInFailed')} /> : null}
+          {failed ? (
+            <ErrorState message={t(notLinked ? 'welcome.notLinked' : 'welcome.signInFailed')} />
+          ) : null}
           {!online ? (
             <p className="flex items-center gap-2 text-sm text-ink">
               <CloudOffIcon size={18} />
@@ -78,6 +93,14 @@ export function WelcomePage() {
           <Button fullWidth loading={starting} disabled={!online} onClick={() => void signIn()}>
             {t('welcome.continueWithGoogle')}
           </Button>
+          {emailSignIn ? (
+            <>
+              <ButtonLink to="/sign-in">{t('welcome.signInWithEmail')}</ButtonLink>
+              <ButtonLink to="/sign-up" variant="ghost">
+                {t('welcome.createAccount')}
+              </ButtonLink>
+            </>
+          ) : null}
           <p className="text-sm text-secondary">
             {hasInvite ? t('welcome.invitePending') : t('welcome.inviteHelper')}
           </p>

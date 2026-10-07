@@ -48,6 +48,14 @@ const envSchema = z.object({
   VAPID_PRIVATE_KEY: z.string().min(1).optional(),
   /** Contact for push services: a mailto: or https: URL. Defaults to APP_URL. */
   VAPID_SUBJECT: z.string().min(1).optional(),
+  /**
+   * Milestone 9b: Brevo (free, 300 emails a day) for sign-up, password reset and expiry emails.
+   * EMAIL_FROM must be a sender address verified in Brevo. Without both, email accounts are off
+   * in production (Google sign-in still works); development and tests keep emails in memory.
+   */
+  BREVO_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.email().optional(),
+  EMAIL_FROM_NAME: z.string().min(1).default('Shelf Life'),
   /** Bearer secret the hourly reminders job (GitHub Actions) sends (Milestone 8d). */
   CRON_SECRET: z.string().min(32, 'CRON_SECRET must be at least 32 characters').optional(),
 });

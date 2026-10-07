@@ -1,6 +1,7 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { Hono } from 'hono';
 import { ERROR_CODES } from '@shelf-life/shared';
+import { deleteUnconfirmedAccounts } from '../jobs/cleanup';
 import { runReminders } from '../jobs/reminders';
 import { apiError } from '../middleware/errors';
 import type { PushService } from '../push/service';
@@ -22,6 +23,8 @@ export function jobRoutes(opts: {
     const given = c.req.header('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
     if (!opts.secret || !timingSafeEqual(digest(given), digest(opts.secret)))
       return apiError(c, 401, ERROR_CODES.unauthorized, 'Not allowed.');
-    return c.json(await runReminders({ db: c.var.db, push: opts.push, now: opts.now }));
+    const run = await runReminders({ db: c.var.db, push: opts.push, now: opts.now });
+    const unconfirmedDeleted = await deleteUnconfirmedAccounts(c.var.db, c.var.now());
+    return c.json({ ...run, unconfirmedDeleted });
   });
 }
