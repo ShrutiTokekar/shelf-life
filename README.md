@@ -190,7 +190,31 @@ Render's free instance sleeps after 15 minutes without traffic and takes about a
 
 In Google Cloud → APIs & Services → Credentials → your OAuth client, add the authorized redirect URI `https://<your Vercel domain>/api/v1/auth/callback/google`. While the OAuth app is in testing, add each person who will sign in under **OAuth consent screen → Test users**.
 
-### 6. Check it
+### 6. Phone notifications (optional, free)
+
+Reminders always show in the app. To also send phone notifications (Web Push), give the server a pair of push keys:
+
+1. On your computer, in this repo, run:
+
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+
+   It prints a **public key** and a **private key**. Keep the private key secret: don't commit it or paste it anywhere public.
+
+2. In Render → `shelf-life-server` → **Environment**, add:
+
+   | Variable            | Value                            |
+   | ------------------- | -------------------------------- |
+   | `VAPID_PUBLIC_KEY`  | the public key                   |
+   | `VAPID_PRIVATE_KEY` | the private key                  |
+   | `VAPID_SUBJECT`     | `mailto:` followed by your email |
+
+   Save; Render redeploys. Each person then turns notifications on per device in **Profile → Notifications**. On iPhone and iPad, they add Shelf Life to the Home Screen first (Share → Add to Home Screen) and turn it on from there.
+
+The hourly reminders job (expiry alerts, the weekly shopping reminder) is set up separately; see the next milestone's notes.
+
+### 7. Check it
 
 ```bash
 node scripts/deploy-check.mjs https://<your Vercel domain> wss://<Render host>/sync

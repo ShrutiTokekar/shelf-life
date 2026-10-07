@@ -1153,5 +1153,35 @@
     "emptyAction": "Open your pantry",
     "error": "We couldn’t open your pantry on this device.",
     "viewOnly": "You can see these reminders; ask an editor of this pantry to add things to the list."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "quick": "Notification settings",
+    "device": {
+      "label": "Notifications on this device",
+      "hint": "Shows alerts even when the app is closed",
+      "ios": "On iPhone and iPad, add Shelf Life to your Home Screen first (Share → Add to Home Screen), then turn this on there.",
+      "unsupported": "This browser can’t show notifications. Reminders still appear in the app.",
+      "denied": "Notifications are blocked for this site. Allow them in your browser’s settings, then try again.",
+      "unavailable": "Notifications aren’t available right now. Reminders still appear in the app."
+    },
+    "ranOut": "When something runs out",
+    "ranOutHint": "Notify everyone on that item’s list in {{list}}",
+    "expiry": "Expiry alerts",
+    "expiryHint": "How early to warn you",
+    "alerts": {
+      "off": "Off",
+      "same_day": "Same day",
+      "1_day": "1 day before",
+      "2_days": "2 days before"
+    },
+    "weekly": "Weekly shopping reminder",
+    "weeklyHint": "A summary of your lists once a week",
+    "weeklyWhen": "{{day}}s at {{time}}",
+    "day": "Day",
+    "time": "Time",
+    "quiet": "Quiet hours: no notifications between 10 PM and 8 AM, and at most 3 a day.",
+    "offline": "Changing notification settings needs a connection.",
+    "failed": "We couldn’t save that. Check your connection and try again."
   }
 }

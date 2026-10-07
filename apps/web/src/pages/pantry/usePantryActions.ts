@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import type * as Y from 'yjs';
 import { useToast } from '../../components/Toast/Toast';
 import { aiShelfLives } from '../../lib/api';
+import { notifyRanOut } from '../../lib/push';
 import { getDoc, listDocName } from '../../lib/sync/docs';
 import {
   addItems,
@@ -100,6 +101,8 @@ export function usePantryActions(opts: {
         before = updateItem(doc, item.id, result.patch);
         if (before) recordActivity(doc, entries);
       });
+      if (result.ranOut)
+        notifyRanOut({ pantryId, listId: item.listId, itemId: item.id, itemName: item.name });
       undoable(
         result.ranOut
           ? t('pantry.toast.ranOut', { name: item.name })
@@ -109,7 +112,7 @@ export function usePantryActions(opts: {
         alsoUndo,
       );
     },
-    [doc, today, t, undoable, activity],
+    [doc, today, t, undoable, activity, pantryId],
   );
 
   const ranOut = useCallback(
@@ -121,9 +124,10 @@ export function usePantryActions(opts: {
         before = updateItem(doc, item.id, { quantity: 0, status: 'out', outAt: today });
         if (before) recordActivity(doc, [entry]);
       });
+      notifyRanOut({ pantryId, listId: item.listId, itemId: item.id, itemName: item.name });
       undoable(t('pantry.toast.ranOut', { name: item.name }), before, [entry.id]);
     },
-    [doc, today, t, undoable, activity],
+    [doc, today, t, undoable, activity, pantryId],
   );
 
   /** SRS 8.6: mark or unmark "Running low" (Reminders). */

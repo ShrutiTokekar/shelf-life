@@ -89,6 +89,8 @@ export default defineConfig({
         ],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/sync\//],
+        // RMD-4 Web Push: shows notifications and handles their buttons (public/push-sw.js).
+        importScripts: ['push-sw.js'],
       },
     }),
   ],

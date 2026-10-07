@@ -27,6 +27,19 @@ export function useSettingsSync() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me.user.id]);
 
+  // RMD-5: quiet hours and the weekly reminder use this device's time zone.
+  useEffect(() => {
+    if (!online) return;
+    let zone = 'UTC';
+    try {
+      zone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    } catch {
+      // keep UTC
+    }
+    if (zone !== me.settings.timeZone)
+      void patchSettings({ timeZone: zone }).catch(() => undefined);
+  }, [online, me.settings.timeZone]);
+
   useEffect(() => {
     if (!online || !s.dirty) return;
     const sent = {

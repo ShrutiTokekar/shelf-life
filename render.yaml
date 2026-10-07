@@ -35,3 +35,12 @@ services:
       # its non-AI fallbacks.
       - key: GEMINI_API_KEY
         sync: false
+      # Optional: Web Push keys (`npx web-push generate-vapid-keys`). Without them phone
+      # notifications are off and reminders stay in the app.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      # mailto:you@example.com: who push services can contact about this app's pushes.
+      - key: VAPID_SUBJECT
+        sync: false
