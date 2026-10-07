@@ -212,7 +212,13 @@ Reminders always show in the app. To also send phone notifications (Web Push), g
 
    Save; Render redeploys. Each person then turns notifications on per device in **Profile → Notifications**. On iPhone and iPad, they add Shelf Life to the Home Screen first (Share → Add to Home Screen) and turn it on from there.
 
-The hourly reminders job (expiry alerts, the weekly shopping reminder) is set up separately; see the next milestone's notes.
+3. Turn on the hourly reminders (expiry alerts, "still out of" follow-ups and the weekly shopping reminder). Render's cron jobs aren't free, so a GitHub Actions workflow (`.github/workflows/reminders-cron.yml`) calls the server once an hour:
+   1. Make a secret: run `openssl rand -hex 32`.
+   2. In Render → `shelf-life-server` → **Environment**, add `CRON_SECRET` with that value.
+   3. In GitHub → the repo → **Settings → Secrets and variables → Actions**, add two repository secrets: `CRON_SECRET` (the same value) and `API_URL` (the server's address, e.g. `https://shelf-life-server.onrender.com`).
+   4. To check it: **Actions → Hourly reminders → Run workflow**. The run's summary shows how many reminders were sent.
+
+   GitHub may start the job a few minutes late; that's fine. GitHub pauses scheduled workflows in a repo with no commits for 60 days; if that happens, re-enable it on the Actions tab.
 
 ### 7. Check it
 

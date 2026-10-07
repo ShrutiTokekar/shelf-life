@@ -1,0 +1,38 @@
+# SRS 8.8 hourly reminders job (Milestone 8d). Render's cron jobs aren't free, so GitHub Actions
+# calls the API's protected endpoint every hour; the call also wakes the sleeping free server.
+# Needs two repository secrets: API_URL (the Render server's https origin) and CRON_SECRET (the
+# same value as on Render). Without them this does nothing.
+name: Hourly reminders
+
+on:
+  schedule:
+    # Minute 7, away from the top of the hour when GitHub's scheduler is busiest.
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: reminders-cron
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Run the reminders job
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::notice::API_URL or CRON_SECRET isn't set; skipping (README: Phone notifications)."
+            exit 0
+          fi
+          # Generous timeout and retries: a sleeping free server takes about a minute to start.
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-all-errors --retry-delay 20 --max-time 180 \
+            -X POST -H "Authorization: Bearer $CRON_SECRET" \
+            "${API_URL%/}/jobs/reminders" | tee result.json
+          echo "Sent: $(cat result.json)" >> "$GITHUB_STEP_SUMMARY"

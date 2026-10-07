@@ -56,6 +56,8 @@ export default defineConfig({
         GOOGLE_CLIENT_ID: 'e2e-google-client-id',
         GOOGLE_CLIENT_SECRET: 'e2e-google-client-secret',
         APP_URL: WEB,
+        // SRS 8.8 hourly reminders job (e2e/reminders.spec.ts calls it like the workflow does).
+        CRON_SECRET: 'e2e-cron-secret-e2e-cron-secret-e2e-c',
       },
     },
     {

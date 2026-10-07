@@ -35,3 +35,15 @@ test.describe('Reminders (SRS 6.10)', () => {
     await expectNoHorizontalScroll(page);
   });
 });
+
+// The hourly job as the GitHub Actions workflow calls it: straight to the API with the secret.
+// E2E runs without VAPID keys, so push is off and nothing is sent (reminders stay in the app).
+test('SRS 8.8 hourly reminders job runs only with the cron secret', async ({ request }) => {
+  const url = 'http://localhost:8788/jobs/reminders';
+  expect((await request.post(url)).status()).toBe(401);
+  const res = await request.post(url, {
+    headers: { authorization: 'Bearer e2e-cron-secret-e2e-cron-secret-e2e-c' },
+  });
+  expect(res.status()).toBe(200);
+  expect(await res.json()).toEqual({ people: 0, sent: { expiry: 0, ranOut: 0, weekly: 0 } });
+});

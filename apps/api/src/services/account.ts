@@ -8,7 +8,7 @@ import { getMe } from './me';
 import { listSaved } from './recipes';
 
 /** A saved Yjs doc ("pantry:<id>" / "list:<id>") as of its last save (every 30 s, SRS 8.7). */
-async function loadDoc(db: Db, name: string): Promise<Y.Doc | null> {
+export async function loadDoc(db: Db, name: string): Promise<Y.Doc | null> {
   const [row] = await db
     .select({ state: schema.yjsDoc.state })
     .from(schema.yjsDoc)

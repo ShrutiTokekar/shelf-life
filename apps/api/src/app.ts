@@ -13,6 +13,7 @@ import { aiService } from './ai/service';
 import type { AiProvider } from './ai/provider';
 import { aiRoutes } from './routes/ai';
 import { inviteRoutes } from './routes/invites';
+import { jobRoutes } from './routes/jobs';
 import { listRoutes } from './routes/lists';
 import { meRoutes } from './routes/me';
 import { pushService, type PushSender } from './push/service';
@@ -48,6 +49,10 @@ export function createApp({ env, db, auth, extraRoutes, ai, pushSend, now }: App
 
   app.get('/health', (c) => c.json({ ok: true }));
 
+  const push = pushService({ db, env, send: pushSend, now });
+  // SRS 8.8: the hourly reminders job (GitHub Actions, bearer secret; not a browser route).
+  app.route('/jobs', jobRoutes({ secret: env.CRON_SECRET, push, now }));
+
   app.on(['GET', 'POST'], '/api/v1/auth/*', (c) => auth.handler(c.req.raw));
 
   if (extraRoutes) app.route('/api/v1', extraRoutes);
@@ -71,7 +76,7 @@ export function createApp({ env, db, auth, extraRoutes, ai, pushSend, now }: App
     ),
   );
   api.route('/sync-token', syncTokenRoutes(env.SYNC_JWT_SECRET, env.SYNC_URL));
-  api.route('/push', pushRoutes(pushService({ db, env, send: pushSend, now })));
+  api.route('/push', pushRoutes(push));
   app.route('/api/v1', api);
 
   app.notFound((c) => apiError(c, 404, ERROR_CODES.notFound, 'Not found.'));
