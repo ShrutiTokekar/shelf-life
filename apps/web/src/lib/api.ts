@@ -105,7 +105,7 @@ export async function startGoogleSignIn(returnTo = '/'): Promise<void> {
     body: JSON.stringify({
       provider: 'google',
       callbackURL: `${origin}${returnTo}`,
-      errorCallbackURL: `${origin}/welcome?error=signin`,
+      errorCallbackURL: `${origin}/welcome`,
     }),
   });
   window.location.assign(url);

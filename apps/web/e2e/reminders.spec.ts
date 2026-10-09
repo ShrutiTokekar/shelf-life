@@ -45,5 +45,9 @@ test('SRS 8.8 hourly reminders job runs only with the cron secret', async ({ req
     headers: { authorization: 'Bearer e2e-cron-secret-e2e-cron-secret-e2e-c' },
   });
   expect(res.status()).toBe(200);
-  expect(await res.json()).toEqual({ people: 0, sent: { expiry: 0, ranOut: 0, weekly: 0 } });
+  expect(await res.json()).toEqual({
+    people: 0,
+    sent: { expiry: 0, ranOut: 0, weekly: 0 },
+    unconfirmedDeleted: 0,
+  });
 });

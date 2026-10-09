@@ -9,6 +9,11 @@ import { PlaceholderPage } from './pages/placeholder/PlaceholderPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { TodayPage } from './pages/today/TodayPage';
 import { WelcomePage } from './pages/welcome/WelcomePage';
+import { EmailVerifiedPage } from './pages/auth/EmailVerifiedPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import { SignInPage } from './pages/auth/SignInPage';
+import { SignUpPage } from './pages/auth/SignUpPage';
 
 // Pantry, Review and Receipts pull in Yjs, IndexedDB and Radix dialogs; Scan pulls in the OCR
 // pipeline. Load them only when opened (PERF-2).
@@ -55,6 +60,12 @@ const placeholder = (path: string, titleKey: string): RouteObject => ({
 /** Routes from SRS 5.2. Pages not built yet render a placeholder with the right h1. */
 export const routes: RouteObject[] = [
   { path: '/welcome', element: <WelcomePage /> },
+  // Milestone 9b: email + password accounts.
+  { path: '/sign-in', element: <SignInPage /> },
+  { path: '/sign-up', element: <SignUpPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
+  { path: '/email-verified', element: <EmailVerifiedPage /> },
   { path: '/join/:token', element: <JoinPage /> },
   {
     path: '/onboarding',

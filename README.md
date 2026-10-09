@@ -220,7 +220,25 @@ Reminders always show in the app. To also send phone notifications (Web Push), g
 
    GitHub may start the job a few minutes late; that's fine. GitHub pauses scheduled workflows in a repo with no commits for 60 days; if that happens, re-enable it on the Actions tab.
 
-### 7. Check it
+### 7. Email sign-up and password reset (optional, free)
+
+People can also create an account with an email and password. Shelf Life emails them a link to confirm the address and, when they forget it, a link to reset the password. These emails go through Brevo's free plan (300 emails a day). Without it, the app offers Google sign-in only.
+
+1. Create a free account at brevo.com.
+2. In Brevo → **Senders, domains & dedicated IPs → Senders**, add the address emails should come from (for example your Gmail) and confirm it from the email Brevo sends.
+3. In Brevo → **SMTP & API → API keys**, create a key. Copy it straight into Render; don't paste it anywhere else.
+4. In Render → `shelf-life-server` → **Environment**, add:
+
+   | Variable        | Value                            |
+   | --------------- | -------------------------------- |
+   | `BREVO_API_KEY` | the key from step 3              |
+   | `EMAIL_FROM`    | the sender address you confirmed |
+
+   Save; Render redeploys. The Welcome page then shows **Sign in with email** and **Create an account**.
+
+Locally you don't need Brevo: in `pnpm dev` the emails are printed in the terminal running the API, links included.
+
+### 8. Check it
 
 ```bash
 node scripts/deploy-check.mjs https://<your Vercel domain> wss://<Render host>/sync

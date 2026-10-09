@@ -33,7 +33,13 @@ describe('SEC-3 nothing is public', () => {
       const key = `${r.method} ${r.path}`;
       if (seen.has(key) || r.path.startsWith('/api/v1/test')) continue;
       seen.add(key);
-      if (key === 'GET /health' || r.path.startsWith('/api/v1/auth/')) continue;
+      // Public on purpose: health, sign-in itself, and whether email sign-in is on (Welcome).
+      if (
+        key === 'GET /health' ||
+        key === 'GET /api/v1/config' ||
+        r.path.startsWith('/api/v1/auth/')
+      )
+        continue;
       const path = r.path
         .replace(/:[A-Za-z]+/g, '00000000-0000-4000-8000-000000000000')
         .replace(/\*/g, 'x');
@@ -45,6 +51,11 @@ describe('SEC-3 nothing is public', () => {
     }
     expect(seen.size).toBeGreaterThan(30);
     expect(open).toEqual([]);
+  });
+
+  it('the public config says only whether email sign-in is on', async () => {
+    t = await setup();
+    expect(await (await t.request('/api/v1/config')).json()).toEqual({ emailSignIn: true });
   });
 
   it('the test-only sign-in route can’t exist outside tests', () => {

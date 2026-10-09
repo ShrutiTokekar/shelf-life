@@ -32,14 +32,15 @@ describe('WelcomePage', () => {
   });
 
   it('WEL-2 "Continue with Google" starts OAuth via the API and navigates to Google', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(
-        JSON.stringify({ url: 'https://accounts.google.com/o/oauth2/auth?x=1', redirect: true }),
-        {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        },
-      ),
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({ url: 'https://accounts.google.com/o/oauth2/auth?x=1', redirect: true }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
     );
     const assign = vi.fn();
     vi.spyOn(window, 'location', 'get').mockReturnValue({
@@ -55,8 +56,13 @@ describe('WelcomePage', () => {
       '/api/v1/auth/sign-in/social',
       expect.objectContaining({ method: 'POST' }),
     );
-    const body = JSON.parse(fetchSpy.mock.calls[0]![1]!.body as string);
-    expect(body).toMatchObject({ provider: 'google', callbackURL: 'https://localhost:5173/' });
+    const social = fetchSpy.mock.calls.find(([url]) => url === '/api/v1/auth/sign-in/social')!;
+    const body = JSON.parse(social[1]!.body as string);
+    expect(body).toMatchObject({
+      provider: 'google',
+      callbackURL: 'https://localhost:5173/',
+      errorCallbackURL: 'https://localhost:5173/welcome',
+    });
     expect(assign).toHaveBeenCalledWith('https://accounts.google.com/o/oauth2/auth?x=1');
   });
 

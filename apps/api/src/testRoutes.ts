@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { authOptions } from './auth';
 import { seedDemoData } from './db/seedData';
+import { outbox } from './email/send';
 import type { Db } from './db/client';
 import type { Env } from './env';
 import type { AppEnv } from './types';
@@ -34,6 +35,11 @@ export function createTestRoutes(env: Env, db: Db) {
           }
         }
         return c.json({ userId: user.id });
+      })
+      // Milestone 9b E2E: the emails "sent" to an address (kept in memory in tests).
+      .get('/test/emails', (c) => {
+        const to = (c.req.query('to') ?? '').toLowerCase();
+        return c.json({ emails: outbox.filter((e) => e.to.toLowerCase() === to) });
       })
       // Same as `pnpm db:seed` for the signed-in user: extra lists + demo members (Milestone 2 E2E).
       .post('/test/seed-demo', async (c) => {

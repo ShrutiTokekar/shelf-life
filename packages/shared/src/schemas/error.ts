@@ -15,6 +15,8 @@ export const ERROR_CODES = {
   sessionExpired: 'session_expired',
   // SEC-9: deleting the account needs a sign-in from the last 15 minutes.
   reauthRequired: 'reauth_required',
+  // Milestone 9b: a new password found in a known data breach.
+  passwordBreached: 'password_breached',
   forbidden: 'forbidden',
   notFound: 'not_found',
   validation: 'validation_error',

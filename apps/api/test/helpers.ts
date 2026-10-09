@@ -8,6 +8,8 @@ import type { AiProvider } from '../src/ai/provider';
 import { createApp } from '../src/app';
 import { authOptions, createAuth } from '../src/auth';
 import { type Db, schema } from '../src/db/client';
+import type { EmailSender } from '../src/email/send';
+import type { PwnedCheck } from '../src/email/pwned';
 import { loadEnv, type Env } from '../src/env';
 import type { PushSender } from '../src/push/service';
 import { createTestRoutes } from '../src/testRoutes';
@@ -21,6 +23,8 @@ export async function setup(
     pushSend?: PushSender;
     env?: Partial<Env>;
     now?: () => Date;
+    email?: EmailSender | null;
+    pwned?: PwnedCheck;
   } = {},
 ) {
   const client = new PGlite();
@@ -29,9 +33,12 @@ export async function setup(
   // PGlite and postgres-js drivers share Drizzle's query API; the types just differ by driver.
   const db = pg as unknown as Db;
   const env = { ...loadEnv(), ...opts.env };
-  const auth = createAuth(env, db);
+  const auth = createAuth(env, db, { email: opts.email });
   // Same database, plus test helpers for creating signed-in users without Google.
-  const testAuth = betterAuth({ ...authOptions(env, db), plugins: [testUtils()] });
+  const testAuth = betterAuth({
+    ...authOptions(env, db, { email: opts.email }),
+    plugins: [testUtils()],
+  });
   const app = createApp({
     env,
     db,
@@ -40,6 +47,7 @@ export async function setup(
     ai: opts.ai,
     pushSend: opts.pushSend,
     now: opts.now,
+    pwned: opts.pwned,
   });
 
   async function signIn(email = 'ananya@example.com', name = 'Ananya Mehta') {

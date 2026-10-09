@@ -44,6 +44,13 @@ services:
       # mailto:you@example.com: who push services can contact about this app's pushes.
       - key: VAPID_SUBJECT
         sync: false
+      # Optional: email sign-up, password reset and (9c) expiry emails, via Brevo's free plan.
+      # BREVO_API_KEY from Brevo → SMTP & API → API keys; EMAIL_FROM must be a sender you verified
+      # in Brevo. Without them, email accounts are off and Google sign-in still works.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
       # Hourly reminders job (SRS 8.8): the GitHub Actions workflow sends this as a bearer token.
       # Generate with `openssl rand -hex 32`; put the same value in the repo's CRON_SECRET secret.
       - key: CRON_SECRET
