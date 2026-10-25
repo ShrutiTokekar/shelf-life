@@ -20,7 +20,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite": "^0.5.11",
     "@types/ws": "^8.18.2",
     "tsx": "^4.23.15",
     "y-websocket": "^3.1.0"
